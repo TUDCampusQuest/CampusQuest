@@ -10,11 +10,9 @@ import Checkbox from '@mui/material/Checkbox';
 import Link from '@mui/material/Link';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
-
 import Typography from '@mui/material/Typography';
 import Container from '@mui/material/Container';
 import {ThemeProvider } from '@mui/material/styles';
-
 import { createTheme } from '@mui/material/styles';
 import { green, purple } from '@mui/material/colors';
 import { useState, useEffect } from 'react'

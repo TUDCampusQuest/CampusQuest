@@ -3,7 +3,6 @@
 import * as React from 'react';
 import Avatar from '@mui/material/Avatar';
 import Button from '@mui/material/Button';
-
 import TextField from '@mui/material/TextField';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
@@ -28,7 +27,7 @@ export default function Home() {
         console.log("Sent pass:" + pass)
 
         runDBCallAsync(`http://localhost:3000/api/login?text=${text}tel=${tel}&email=${email}&pass=${pass}`)
-    }; // end handle submit
+    };
 
 
     async function runDBCallAsync(url) {
@@ -120,5 +119,5 @@ export default function Home() {
                 </Box>
             </Box>
         </Container>
-    ); // end return
+    );
 }
