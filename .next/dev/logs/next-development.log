@@ -1,48 +1,11 @@
-[00:00:01.178] Server  LOG     ✓ Ready in 786ms
-[00:00:21.781] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
-[00:00:21.947] Browser ERROR   uncaughtError: Error: Element type is invalid. Received a promise that resolves to: [object Object]. Lazy element type must resolve to a class or function.
-[00:01:37.752] Server  WARN    ⚠ Fast Refresh had to perform a full reload due to a runtime error.
-[00:01:37.836] Server  LOG     ✓ Compiled in 137ms
-[00:01:38.706] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
-[00:01:40.932] Browser ERROR   uncaughtError: Error: Element type is invalid. Received a promise that resolves to: [object Object]. Lazy element type must resolve to a class or function.
-[00:01:54.791] Server  WARN    ⚠ Fast Refresh had to perform a full reload due to a runtime error.
-[00:01:54.795] Server  LOG     ✓ Compiled in 91ms
-[00:01:55.306] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
-[00:01:55.936] Browser ERROR   uncaughtError: Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
-
-- A server/client branch `if (typeof window !== 'undefined')`.
-- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
-- Date formatting in a user's locale which doesn't match the server.
-- External changing data without sending a snapshot of it along with the HTML.
-- Invalid HTML tag nesting.
-
-It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
-
-https://react.dev/link/hydration-mismatch
-
-  ...
-    <InnerScrollAndFocusHandler segmentPath={[...]} focusAndScrollRef={{apply:false, ...}}>
-      <ErrorBoundary errorComponent={undefined} errorStyles={undefined} errorScripts={undefined}>
-        <LoadingBoundary name="/" loading={null}>
-          <HTTPAccessFallbackBoundary notFound={<SegmentViewNode>} forbidden={undefined} unauthorized={undefined}>
-            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={<SegmentViewNode>} forbidden={undefined} ...>
-              <RedirectBoundary>
-                <RedirectErrorBoundary router={{...}}>
-                  <InnerLayoutRouter url="/" tree={[...]} params={{}} cacheNode={{rsc:<Fragment>, ...}} ...>
-                    <SegmentViewNode type="page" pagePath="page.js">
-                      <SegmentTrieNode>
-                      <ClientPageRoot Component={function Home} serverProvidedParams={{...}}>
-                        <Home params={Promise} searchParams={Promise}>
-                          <Container maxWidth={false} disableGutters={true} sx={{height:"100vh", ...}}>
-                            <MuiContainer-root as="div" ownerState={{maxWidth:false, ...}} className="MuiContain..." ...>
-                              <Insertion>
-+                             <div
-+                               className="MuiContainer-root MuiContainer-disableGutters css-12uuz0s-MuiContainer-root"
-+                             >
--                             <style data-emotion="css 12uuz0s-MuiContainer-root" data-s="">
-                    ...
-                  ...
-      ...
-
-[00:02:32.074] Server  LOG     ✓ Compiled in 8ms
-[00:02:37.785] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:00.967] Server  LOG     ✓ Ready in 611ms
+[00:00:01.585] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:06.469] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:02:34.792] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:02:35.449] Browser WARN    Google Maps JavaScript API has been loaded directly without loading=async. This can result in suboptimal performance. For best-practice loading patterns please see https://goo.gle/js-api-loading
+[00:02:35.449] Browser WARN    As of February 21st, 2024, google.maps.Marker is deprecated. Please use google.maps.marker.AdvancedMarkerElement instead. At this time, google.maps.Marker is not scheduled to be discontinued, but google.maps.marker.AdvancedMarkerElement is recommended over google.maps.Marker. While google.maps.Marker will continue to receive bug fixes for any major regressions, existing bugs in google.maps.Marker will not be addressed. At least 12 months notice will be given before support is discontinued. Please see https://developers.google.com/maps/deprecations for additional details and https://developers.google.com/maps/documentation/javascript/advanced-markers/migration for the migration guide.
+[00:02:36.886] Browser ERROR   Google Maps JavaScript API error: ApiTargetBlockedMapError
+https://developers.google.com/maps/documentation/javascript/error-messages#api-target-blocked-map-error
+[00:09:28.242] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:09:28.596] Browser WARN    Google Maps JavaScript API has been loaded directly without loading=async. This can result in suboptimal performance. For best-practice loading patterns please see https://goo.gle/js-api-loading
+[00:09:28.596] Browser WARN    As of February 21st, 2024, google.maps.Marker is deprecated. Please use google.maps.marker.AdvancedMarkerElement instead. At this time, google.maps.Marker is not scheduled to be discontinued, but google.maps.marker.AdvancedMarkerElement is recommended over google.maps.Marker. While google.maps.Marker will continue to receive bug fixes for any major regressions, existing bugs in google.maps.Marker will not be addressed. At least 12 months notice will be given before support is discontinued. Please see https://developers.google.com/maps/deprecations for additional details and https://developers.google.com/maps/documentation/javascript/advanced-markers/migration for the migration guide.
