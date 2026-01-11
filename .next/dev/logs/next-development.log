@@ -1,6 +1,14 @@
-[00:00:01.848] Server  LOG     ✓ Ready in 1704ms
-[00:00:07.668] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
-[00:00:07.799] Browser ERROR   uncaughtError: Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
+[00:00:01.178] Server  LOG     ✓ Ready in 786ms
+[00:00:21.781] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:00:21.947] Browser ERROR   uncaughtError: Error: Element type is invalid. Received a promise that resolves to: [object Object]. Lazy element type must resolve to a class or function.
+[00:01:37.752] Server  WARN    ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[00:01:37.836] Server  LOG     ✓ Compiled in 137ms
+[00:01:38.706] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:01:40.932] Browser ERROR   uncaughtError: Error: Element type is invalid. Received a promise that resolves to: [object Object]. Lazy element type must resolve to a class or function.
+[00:01:54.791] Server  WARN    ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[00:01:54.795] Server  LOG     ✓ Compiled in 91ms
+[00:01:55.306] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:01:55.936] Browser ERROR   uncaughtError: Error: Hydration failed because the server rendered HTML didn't match the client. As a result this tree will be regenerated on the client. This can happen if a SSR-ed Client Component used:
 
 - A server/client branch `if (typeof window !== 'undefined')`.
 - Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
@@ -25,13 +33,16 @@ https://react.dev/link/hydration-mismatch
                       <SegmentTrieNode>
                       <ClientPageRoot Component={function Home} serverProvidedParams={{...}}>
                         <Home params={Promise} searchParams={Promise}>
-                          <Container maxWidth="sm">
-                            <MuiContainer-root as="div" ownerState={{maxWidth:"sm", ...}} className="MuiContain..." ...>
+                          <Container maxWidth={false} disableGutters={true} sx={{height:"100vh", ...}}>
+                            <MuiContainer-root as="div" ownerState={{maxWidth:false, ...}} className="MuiContain..." ...>
                               <Insertion>
-+                             <div className="MuiContainer-root MuiContainer-maxWidthSm css-zzzaw2-MuiContainer-root">
--                             <style data-emotion="css zzzaw2-MuiContainer-root" data-s="">
++                             <div
++                               className="MuiContainer-root MuiContainer-disableGutters css-12uuz0s-MuiContainer-root"
++                             >
+-                             <style data-emotion="css 12uuz0s-MuiContainer-root" data-s="">
                     ...
                   ...
       ...
 
-[00:00:09.195] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold
+[00:02:32.074] Server  LOG     ✓ Compiled in 8ms
+[00:02:37.785] Browser INFO    %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold

@@ -1,61 +1,8 @@
 'use client';
 
-<<<<<<< HEAD
 import * as React from 'react';
-import { Container, Box, Button, Typography } from '@mui/material';
-import MapView from './components/MapView';
-import InfoPanel from './components/InfoPanel';
-
-export default function Home() {
-    const [selectedLocation, setSelectedLocation] = React.useState(null);
-
-    return (
-        <Container
-            maxWidth={false}
-            disableGutters
-            sx={{
-                height: '100vh',
-                display: 'flex',
-                flexDirection: 'column',
-            }}
-        >
-            {/* Header */}
-            <Box
-                sx={{
-                    p: 2,
-                    borderBottom: '1px solid #e0e0e0',
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                }}
-            >
-                <Typography variant="h6" fontWeight="bold">
-                    Campus Quest
-                </Typography>
-
-                <Button
-                    variant="contained"
-                    size="small"
-                    onClick={() => alert('QR scanner coming next')}
-                >
-                    Scan QR Code
-                </Button>
-            </Box>
-
-            {/* Main Content */}
-            <Box sx={{ flex: 1, position: 'relative' }}>
-                <MapView onSelectLocation={setSelectedLocation} />
-            </Box>
-
-            {/* Info Panel */}
-            <InfoPanel
-                location={selectedLocation}
-                onClose={() => setSelectedLocation(null)}
-            />
-        </Container>
-    );
-=======
 import dynamic from 'next/dynamic';
+import { Container, Box, Button, Typography } from '@mui/material';
 
 const MapView = dynamic(() => import('./components/MapView'), {
   ssr: false,
@@ -64,6 +11,7 @@ const MapView = dynamic(() => import('./components/MapView'), {
 const InfoPanel = dynamic(() => import('./components/InfoPanel'), {
   ssr: false,
 });
+
 
 export default function Home() {
   const [selectedLocation, setSelectedLocation] = React.useState(null);
@@ -75,17 +23,18 @@ export default function Home() {
       sx={{
         height: '100vh',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
       }}
     >
       {/* Header */}
       <Box
         sx={{
-          p: 2,
+          px: 2,
+          py: 1.5,
           borderBottom: '1px solid #e0e0e0',
           display: 'flex',
           justifyContent: 'space-between',
-          alignItems: 'center'
+          alignItems: 'center',
         }}
       >
         <Typography variant="h6" fontWeight="bold">
@@ -101,22 +50,21 @@ export default function Home() {
         </Button>
       </Box>
 
-      {/* Main Content */}
+      {/* Map Area */}
       <Box
         sx={{
           flex: 1,
-          position: 'relative'
+          position: 'relative',
         }}
       >
         <MapView onSelectLocation={setSelectedLocation} />
       </Box>
 
-      {/* Info Panel */}
+      {/* Location Info Panel */}
       <InfoPanel
         location={selectedLocation}
         onClose={() => setSelectedLocation(null)}
       />
     </Container>
   );
->>>>>>> ab8813af496206c026a2b4dceacb34b9df17a699
 }
