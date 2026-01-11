@@ -12,21 +12,22 @@ const InfoPanel = dynamic(() => import('./components/InfoPanel'), {
   ssr: false,
 });
 
-
 export default function Home() {
+  const [mounted, setMounted] = React.useState(false);
   const [selectedLocation, setSelectedLocation] = React.useState(null);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!mounted) return null;
 
   return (
     <Container
       maxWidth={false}
       disableGutters
-      sx={{
-        height: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
+      sx={{ height: '100vh', display: 'flex', flexDirection: 'column' }}
     >
-      {/* Header */}
       <Box
         sx={{
           px: 2,
@@ -41,26 +42,15 @@ export default function Home() {
           Campus Quest
         </Typography>
 
-        <Button
-          variant="contained"
-          size="small"
-          onClick={() => alert('QR scanner coming next')}
-        >
+        <Button variant="contained" size="small">
           Scan QR Code
         </Button>
       </Box>
 
-      {/* Map Area */}
-      <Box
-        sx={{
-          flex: 1,
-          position: 'relative',
-        }}
-      >
+      <Box sx={{ flex: 1, position: 'relative' }}>
         <MapView onSelectLocation={setSelectedLocation} />
       </Box>
 
-      {/* Location Info Panel */}
       <InfoPanel
         location={selectedLocation}
         onClose={() => setSelectedLocation(null)}
