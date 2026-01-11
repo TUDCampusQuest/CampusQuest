@@ -15,7 +15,7 @@ export default function Home() {
             sx={{
                 height: '100vh',
                 display: 'flex',
-                flexDirection: 'column'
+                flexDirection: 'column',
             }}
         >
             {/* Header */}
@@ -25,7 +25,7 @@ export default function Home() {
                     borderBottom: '1px solid #e0e0e0',
                     display: 'flex',
                     justifyContent: 'space-between',
-                    alignItems: 'center'
+                    alignItems: 'center',
                 }}
             >
                 <Typography variant="h6" fontWeight="bold">
@@ -42,12 +42,7 @@ export default function Home() {
             </Box>
 
             {/* Main Content */}
-            <Box
-                sx={{
-                    flex: 1,
-                    position: 'relative'
-                }}
-            >
+            <Box sx={{ flex: 1, position: 'relative' }}>
                 <MapView onSelectLocation={setSelectedLocation} />
             </Box>
 
