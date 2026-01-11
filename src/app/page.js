@@ -1,9 +1,14 @@
 'use client';
 
-import * as React from 'react';
-import { Container, Box, Button, Typography } from '@mui/material';
-import MapView from './components/MapView';
-import InfoPanel from './components/InfoPanel';
+import dynamic from 'next/dynamic';
+
+const MapView = dynamic(() => import('./components/MapView'), {
+  ssr: false,
+});
+
+const InfoPanel = dynamic(() => import('./components/InfoPanel'), {
+  ssr: false,
+});
 
 export default function Home() {
   const [selectedLocation, setSelectedLocation] = React.useState(null);
