@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 4, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/Blast/OneDrive/CampusQuestRepo/CampusQuest/src/app/components/MapView.jsx"],"sourcesContent":["'use client';\r\n\r\nimport { Box } from '@mui/material';\r\n\r\nexport default function MapView({ onSelectLocation }) {\r\n  return (\r\n    <Box\r\n      sx={{\r\n        height: '100%',\r\n        width: '100%',\r\n        backgroundColor: '#f0f0f0',\r\n      }}\r\n    >\r\n      {/* Map will go here */}\r\n    </Box>\r\n  );\r\n}\r\n"],"names":[],"mappings":";;;;;AAEA;AAFA;;;AAIe,SAAS,QAAQ,EAAE,gBAAgB,EAAE;IAClD,qBACE,6LAAC,kMAAG;QACF,IAAI;YACF,QAAQ;YACR,OAAO;YACP,iBAAiB;QACnB;;;;;;AAKN;KAZwB"}}]
-}

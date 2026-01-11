@@ -7,20 +7,24 @@ import locations from '../data/locations';
 const GOOGLE_MAPS_SRC = (key) =>
     `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(
         key
-    )}&loading=async`;
+    )}&v=weekly&loading=async`;
 
 function loadGoogleMapsScript(apiKey) {
     return new Promise((resolve, reject) => {
-        // Already loaded
-        if (window.google?.maps) return resolve();
+        // If already available (including importLibrary)
+        if (window.google?.maps?.importLibrary) return resolve();
 
-        // If script tag already exists, wait for it
         const existing = document.querySelector('script[data-google-maps="true"]');
         if (existing) {
-            existing.addEventListener('load', () => resolve());
-            existing.addEventListener('error', () =>
-                reject(new Error('Google Maps script failed to load'))
-            );
+            // If script exists but maps not ready yet, wait a bit
+            const start = Date.now();
+            const tick = () => {
+                if (window.google?.maps?.importLibrary) return resolve();
+                if (Date.now() - start > 5000)
+                    return reject(new Error('Google Maps loaded but importLibrary is missing.'));
+                requestAnimationFrame(tick);
+            };
+            tick();
             return;
         }
 
@@ -29,9 +33,19 @@ function loadGoogleMapsScript(apiKey) {
         script.async = true;
         script.defer = true;
         script.dataset.googleMaps = 'true';
-        script.onload = () => resolve();
-        script.onerror = () => reject(new Error('Google Maps script failed to load'));
 
+        script.onload = () => {
+            const start = Date.now();
+            const tick = () => {
+                if (window.google?.maps?.importLibrary) return resolve();
+                if (Date.now() - start > 5000)
+                    return reject(new Error('Google Maps loaded but importLibrary is missing.'));
+                requestAnimationFrame(tick);
+            };
+            tick();
+        };
+
+        script.onerror = () => reject(new Error('Google Maps script failed to load'));
         document.head.appendChild(script);
     });
 }
@@ -58,10 +72,14 @@ export default function MapView({ onSelectLocation }) {
                 await loadGoogleMapsScript(apiKey);
                 if (cancelled || !mapRef.current) return;
 
-                // Create the map once
+                // Modern API: import libraries
+                const { Map } = await window.google.maps.importLibrary('maps');
+                const { Marker } = await window.google.maps.importLibrary('marker');
+
+                // Create map once
                 if (!mapInstanceRef.current) {
-                    mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
-                        center: { lat: 53.405292, lng: -6.378240 }, // center of campus
+                    mapInstanceRef.current = new Map(mapRef.current, {
+                        center: { lat: 53.405292, lng: -6.378240 },
                         zoom: 16,
                         mapTypeControl: false,
                         fullscreenControl: false,
@@ -70,29 +88,40 @@ export default function MapView({ onSelectLocation }) {
 
                 const map = mapInstanceRef.current;
 
-                // Clear old markers (if any) before adding
-                markersRef.current.forEach((m) => m.setMap(null));
+                // Clear old markers
+                markersRef.current.forEach((m) => {
+                    // AdvancedMarkerElement uses map = null
+                    if ('map' in m) m.map = null;
+                    // Classic marker uses setMap
+                    if (typeof m.setMap === 'function') m.setMap(null);
+                });
                 markersRef.current = [];
 
+                // Add markers
                 locations.forEach((location) => {
-                    const marker = new window.google.maps.Marker({
+                    // Marker here will be AdvancedMarkerElement in newer API
+                    const marker = new Marker({
                         position: { lat: location.lat, lng: location.lng },
                         map,
                         title: location.name,
                     });
 
-                    marker.addListener('click', () => onSelectLocation?.(location));
+                    // AdvancedMarkerElement uses addListener? Some versions use event system.
+                    // This works for classic markers; for AdvancedMarkerElement, use click listener if present.
+                    if (typeof marker.addListener === 'function') {
+                        marker.addListener('click', () => onSelectLocation?.(location));
+                    } else if (marker.element) {
+                        marker.element.addEventListener('click', () => onSelectLocation?.(location));
+                    }
+
                     markersRef.current.push(marker);
                 });
             } catch (err) {
                 console.error(err);
-
-                // If you still see net::ERR_BLOCKED_BY_CLIENT, it's usually an ad blocker.
             }
         }
 
         init();
-
         return () => {
             cancelled = true;
         };
@@ -103,7 +132,7 @@ export default function MapView({ onSelectLocation }) {
             ref={mapRef}
             sx={{
                 position: 'absolute',
-                inset: 0,       // top:0 right:0 bottom:0 left:0
+                inset: 0,
                 width: '100%',
                 height: '100%',
             }}

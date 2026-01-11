@@ -3,7 +3,7 @@
     "id": "[project]/src/app/components/MapView.jsx [app-client] (ecmascript, next/dynamic entry)",
     "files": [
       "static/chunks/src_app_3d04431a._.js",
-      "static/chunks/src_app_components_MapView_jsx_2263920e._.js"
+      "static/chunks/src_app_components_MapView_jsx_88b7e5a8._.js"
     ]
   },
   "[project]/src/app/components/InfoPanel.jsx [app-client] (ecmascript, next/dynamic entry)": {
@@ -11,7 +11,7 @@
     "files": [
       "static/chunks/node_modules_348ac8e3._.js",
       "static/chunks/src_app_components_InfoPanel_jsx_b518116e._.js",
-      "static/chunks/src_app_components_InfoPanel_jsx_2263920e._.js"
+      "static/chunks/src_app_components_InfoPanel_jsx_88b7e5a8._.js"
     ]
   }
 }
