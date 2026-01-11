@@ -1,84 +1,61 @@
 'use client';
 
 import * as React from 'react';
-import Avatar from '@mui/material/Avatar';
-import Button from '@mui/material/Button';
-
-import TextField from '@mui/material/TextField';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Checkbox from '@mui/material/Checkbox';
-import Link from '@mui/material/Link';
-import Container from '@mui/material/Container';
-import Box from '@mui/material/Box';
+import { Container, Box, Button, Typography } from '@mui/material';
+import MapView from './components/MapView';
+import InfoPanel from './components/InfoPanel';
 
 export default function Home() {
+  const [selectedLocation, setSelectedLocation] = React.useState(null);
 
-    const handleSubmit = (event) => {
+  return (
+    <Container
+      maxWidth={false}
+      disableGutters
+      sx={{
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
+      {/* Header */}
+      <Box
+        sx={{
+          p: 2,
+          borderBottom: '1px solid #e0e0e0',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}
+      >
+        <Typography variant="h6" fontWeight="bold">
+          Campus Quest
+        </Typography>
 
-        console.log("handling submit");
-        event.preventDefault();
-        const data = new FormData(event.currentTarget);
+        <Button
+          variant="contained"
+          size="small"
+          onClick={() => alert('QR scanner coming next')}
+        >
+          Scan QR Code
+        </Button>
+      </Box>
 
-        let email = data.get('email')
-        let pass = data.get('pass')
+      {/* Main Content */}
+      <Box
+        sx={{
+          flex: 1,
+          position: 'relative'
+        }}
+      >
+        <MapView onSelectLocation={setSelectedLocation} />
+      </Box>
 
-        console.log("Sent email:" + email)
-        console.log("Sent pass:" + pass)
-
-        runDBCallAsync(`http://localhost:3000/api/login?email=${email}&pass=${pass}`)
-    }; // end handle submit
-
-
-    async function runDBCallAsync(url) {
-
-        const res = await fetch(url);
-        const data = await res.json();
-
-        if(data.data== "valid"){
-            console.log("login is valid!")
-        } else {
-            console.log("not valid  ")
-        }
-    }
-
-    return (
-        <Container maxWidth="sm">
-            <Box sx={{ height: '100vh' }} >
-                <Box component="form" onSubmit={handleSubmit} noValidate sx={{ mt: 1 }}>
-                    <TextField
-                        margin="normal"
-                        required
-                        fullWidth
-                        id="email"
-                        label="Email Address"
-                        name="email"
-                        autoComplete="email"
-                        autoFocus
-                    />
-                    <TextField
-                        margin="normal"
-                        required
-                        fullWidth
-                        name="pass"
-                        label="Password"
-                        type="pass"
-                        id="pass"
-                        autoComplete="current-password"
-                    />
-                    <FormControlLabel
-                        control={<Checkbox value="remember" color="primary" />}
-                        label="Remember me"
-                    />
-                    <Button
-                        type="submit"
-                        fullWidth
-                        variant="contained"
-                        sx={{ mt: 3, mb: 2 }}
-                    >
-                        Sign In
-                    </Button>
-                </Box>
-            </Box>
-        </Container>
-    ); // end return
+      {/* Info Panel */}
+      <InfoPanel
+        location={selectedLocation}
+        onClose={() => setSelectedLocation(null)}
+      />
+    </Container>
+  );
 }
