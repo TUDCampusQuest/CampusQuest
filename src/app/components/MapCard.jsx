@@ -12,9 +12,7 @@ import MapView from './MapView';
 
 const trails = [
   'Technology Trail',
-  'History Trail',
   'Sports Trail',
-  'Library & Literature Trail',
 ];
 
 export default function MapCard({
