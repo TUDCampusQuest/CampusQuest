@@ -10,12 +10,13 @@ export default function MapView({ onSelectLocation }) {
   useEffect(() => {
     if (!window.google || !window.google.maps) return;
 
-    const map = new window.google.maps.Map(mapRef.current, {
-      center: { lat: 53.405292, lng: -6.378240 }, // TU Dublin Blanchardstown
-      zoom: 16,
-      mapTypeControl: false,
-      fullscreenControl: false,
-    });
+      const map = new window.google.maps.Map(mapRef.current, {
+          center: { lat: 53.405292, lng: -6.378240 },
+          zoom: 18,
+          mapTypeId: 'hybrid',
+          mapTypeControl: false,
+          fullscreenControl: false,
+      });
 
     locations.forEach((location) => {
       const marker = new window.google.maps.Marker({

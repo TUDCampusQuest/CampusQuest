@@ -57,7 +57,8 @@ function MapView({ onSelectLocation }) {
                 lat: 53.405292,
                 lng: -6.378240
             },
-            zoom: 16,
+            zoom: 18,
+            mapTypeId: 'hybrid',
             mapTypeControl: false,
             fullscreenControl: false
         });
@@ -85,7 +86,7 @@ function MapView({ onSelectLocation }) {
         }
     }, void 0, false, {
         fileName: "[project]/src/app/components/MapView.jsx",
-        lineNumber: 34,
+        lineNumber: 35,
         columnNumber: 5
     }, this);
 }
