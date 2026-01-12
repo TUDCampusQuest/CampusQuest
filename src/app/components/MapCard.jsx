@@ -17,7 +17,7 @@ const trails = [
   'Library & Literature Trail',
 ];
 
-export default function MapCard({ onSelectLocation }) {
+export default function MapCard({ selectedTrail, onSelectLocation }) {
   return (
     <Card
       sx={{
@@ -27,7 +27,7 @@ export default function MapCard({ onSelectLocation }) {
         boxShadow: 4,
       }}
     >
-      {/* Header */}
+      {/* HEADER */}
       <Box
         sx={{
           px: 3,
@@ -52,56 +52,52 @@ export default function MapCard({ onSelectLocation }) {
               label={trail}
               size="small"
               sx={{
-                bgcolor: 'white',
+                bgcolor:
+                  selectedTrail === trail
+                    ? 'white'
+                    : 'rgba(255,255,255,0.85)',
                 color: '#4F46E5',
-                fontWeight: 500,
+                fontWeight:
+                  selectedTrail === trail ? 700 : 500,
               }}
             />
           ))}
         </Stack>
       </Box>
 
-      {/* MAP CONTAINER — MapView stays untouched */}
+      {/* MAP LOGIC */}
       <Box
         sx={{
-          height: { xs: 350, md: 500 }, // responsive
+          height: { xs: 350, md: 500 },
           width: '100%',
         }}
       >
-        <MapView onSelectLocation={onSelectLocation} />
+        <MapView
+          selectedTrail={selectedTrail}
+          onSelectLocation={onSelectLocation}
+        />
       </Box>
 
-      {/* Legend */}
+      {/* LEGEND */}
       <Divider />
       <Box sx={{ px: 3, py: 2 }}>
-        <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-          Map Legend
-        </Typography>
+<Typography variant="subtitle2" fontWeight="bold" gutterBottom>
+  Map Legend
+</Typography>
 
-        <Stack direction="row" spacing={3} flexWrap="wrap">
-          <LegendItem color="#22C55E" label="Completed" />
-          <LegendItem color="#EAB308" label="Next Stop" />
-          <LegendItem color="#3B82F6" label="Available" />
-          <LegendItem color="#9CA3AF" label="Inactive" />
-          <LegendItem color="#6366F1" label="Your Location" />
-        </Stack>
+<Stack direction="row" spacing={1} alignItems="center">
+  <Box
+    sx={{
+      width: 10,
+      height: 10,
+      borderRadius: '50%',
+      bgcolor: '#EF4444',
+    }}
+  />
+  <Typography variant="caption">Stops</Typography>
+</Stack>
+
       </Box>
     </Card>
-  );
-}
-
-function LegendItem({ color, label }) {
-  return (
-    <Stack direction="row" spacing={1} alignItems="center">
-      <Box
-        sx={{
-          width: 10,
-          height: 10,
-          borderRadius: '50%',
-          bgcolor: color,
-        }}
-      />
-      <Typography variant="caption">{label}</Typography>
-    </Stack>
   );
 }

@@ -21,6 +21,9 @@ const InfoPanel = dynamic(() => import('./components/InfoPanel'), {
 export default function Home() {
   const [mounted, setMounted] = React.useState(false);
   const [selectedLocation, setSelectedLocation] = React.useState(null);
+  const [selectedTrail, setSelectedTrail] = React.useState(
+    'Technology Trail'
+  );
 
   React.useEffect(() => {
     setMounted(true);
@@ -30,6 +33,7 @@ export default function Home() {
 
   return (
     <Container maxWidth="lg">
+      {/* HEADER */}
       <Box
         sx={{
           py: 2,
@@ -47,6 +51,7 @@ export default function Home() {
         </Button>
       </Box>
 
+      {/* HERO */}
       <Box sx={{ py: 4, textAlign: 'center' }}>
         <Typography variant="h4" fontWeight="bold">
           Interactive Campus Map
@@ -56,50 +61,62 @@ export default function Home() {
         </Typography>
       </Box>
 
-      <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
-          <Card>
-            <CardContent>
-              <Typography fontWeight="bold">Live GPS Tracking</Typography>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mt: 1 }}
-              >
-                Click start to begin GPS tracking.
-              </Typography>
-              <Button variant="outlined" sx={{ mt: 2 }} disabled>
-                Start
-              </Button>
-            </CardContent>
-          </Card>
-        </Grid>
+      {/* TRAIL SELECTION */}
+      <Card sx={{ mb: 4 }}>
+        <CardContent>
+          <Typography fontWeight="bold" gutterBottom>
+            Trail Selection
+          </Typography>
 
-        <Grid item xs={12} md={8}>
-          <Card>
-            <CardContent>
-              <Typography fontWeight="bold">Trail Selection</Typography>
-
-              <Grid container spacing={2} sx={{ mt: 1 }}>
-                {[
-                  'Technology Trail',
-                  'History Trail',
-                  'Sports Trail',
-                  'Library & Literature Trail',
-                ].map((trail) => (
-                  <Grid item xs={12} sm={6} key={trail}>
-                    <Card variant="outlined" sx={{ p: 2 }}>
-                      <Typography fontWeight={500}>{trail}</Typography>
-                    </Card>
-                  </Grid>
-                ))}
+          <Grid container spacing={2}>
+            {[
+              { name: 'Technology Trail', color: '#3B82F6' },
+              { name: 'History Trail', color: '#EF4444' },
+              { name: 'Sports Trail', color: '#F97316' },
+              { name: 'Library & Literature Trail', color: '#8B5CF6' },
+            ].map((trail) => (
+              <Grid item xs={12} sm={6} md={3} key={trail.name}>
+                <Button
+                  fullWidth
+                  variant={
+                    selectedTrail === trail.name
+                      ? 'contained'
+                      : 'outlined'
+                  }
+                  sx={{
+                    height: 48,
+                    bgcolor:
+                      selectedTrail === trail.name
+                        ? trail.color
+                        : 'transparent',
+                    borderColor: trail.color,
+                    color:
+                      selectedTrail === trail.name
+                        ? 'white'
+                        : trail.color,
+                    fontWeight: 500,
+                    '&:hover': {
+                      bgcolor: trail.color,
+                      color: 'white',
+                    },
+                  }}
+                  onClick={() => setSelectedTrail(trail.name)}
+                >
+                  {trail.name}
+                </Button>
               </Grid>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+            ))}
+          </Grid>
+        </CardContent>
+      </Card>
 
-      <MapCard onSelectLocation={setSelectedLocation} />
+      {/* MAP CARD */}
+      <MapCard
+        selectedTrail={selectedTrail}
+        onSelectLocation={setSelectedLocation}
+      />
+
+      {/* INFO PANEL */}
       <InfoPanel
         location={selectedLocation}
         onClose={() => setSelectedLocation(null)}

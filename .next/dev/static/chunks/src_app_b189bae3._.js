@@ -127,7 +127,7 @@ const trails = [
     'Sports Trail',
     'Library & Literature Trail'
 ];
-function MapCard({ onSelectLocation }) {
+function MapCard({ selectedTrail, onSelectLocation }) {
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Card$2f$Card$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Card$3e$__["Card"], {
         sx: {
             mt: 4,
@@ -164,9 +164,9 @@ function MapCard({ onSelectLocation }) {
                                 label: trail,
                                 size: "small",
                                 sx: {
-                                    bgcolor: 'white',
+                                    bgcolor: selectedTrail === trail ? 'white' : 'rgba(255,255,255,0.85)',
                                     color: '#4F46E5',
-                                    fontWeight: 500
+                                    fontWeight: selectedTrail === trail ? 700 : 500
                                 }
                             }, trail, false, {
                                 fileName: "[project]/src/app/components/MapCard.jsx",
@@ -193,20 +193,21 @@ function MapCard({ onSelectLocation }) {
                     width: '100%'
                 },
                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$MapView$2e$jsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
+                    selectedTrail: selectedTrail,
                     onSelectLocation: onSelectLocation
                 }, void 0, false, {
                     fileName: "[project]/src/app/components/MapCard.jsx",
-                    lineNumber: 71,
+                    lineNumber: 75,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/components/MapCard.jsx",
-                lineNumber: 65,
+                lineNumber: 69,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Divider$2f$Divider$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Divider$3e$__["Divider"], {}, void 0, false, {
                 fileName: "[project]/src/app/components/MapCard.jsx",
-                lineNumber: 75,
+                lineNumber: 82,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Box$3e$__["Box"], {
@@ -222,64 +223,44 @@ function MapCard({ onSelectLocation }) {
                         children: "Map Legend"
                     }, void 0, false, {
                         fileName: "[project]/src/app/components/MapCard.jsx",
-                        lineNumber: 77,
-                        columnNumber: 9
+                        lineNumber: 84,
+                        columnNumber: 1
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Stack$2f$Stack$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Stack$3e$__["Stack"], {
                         direction: "row",
-                        spacing: 3,
-                        flexWrap: "wrap",
+                        spacing: 1,
+                        alignItems: "center",
                         children: [
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(LegendItem, {
-                                color: "#22C55E",
-                                label: "Completed"
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Box$3e$__["Box"], {
+                                sx: {
+                                    width: 10,
+                                    height: 10,
+                                    borderRadius: '50%',
+                                    bgcolor: '#EF4444'
+                                }
                             }, void 0, false, {
                                 fileName: "[project]/src/app/components/MapCard.jsx",
-                                lineNumber: 82,
-                                columnNumber: 11
+                                lineNumber: 89,
+                                columnNumber: 3
                             }, this),
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(LegendItem, {
-                                color: "#EAB308",
-                                label: "Next Stop"
+                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Typography$2f$Typography$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Typography$3e$__["Typography"], {
+                                variant: "caption",
+                                children: "Stops"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/components/MapCard.jsx",
-                                lineNumber: 83,
-                                columnNumber: 11
-                            }, this),
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(LegendItem, {
-                                color: "#3B82F6",
-                                label: "Available"
-                            }, void 0, false, {
-                                fileName: "[project]/src/app/components/MapCard.jsx",
-                                lineNumber: 84,
-                                columnNumber: 11
-                            }, this),
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(LegendItem, {
-                                color: "#9CA3AF",
-                                label: "Inactive"
-                            }, void 0, false, {
-                                fileName: "[project]/src/app/components/MapCard.jsx",
-                                lineNumber: 85,
-                                columnNumber: 11
-                            }, this),
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(LegendItem, {
-                                color: "#6366F1",
-                                label: "Your Location"
-                            }, void 0, false, {
-                                fileName: "[project]/src/app/components/MapCard.jsx",
-                                lineNumber: 86,
-                                columnNumber: 11
+                                lineNumber: 97,
+                                columnNumber: 3
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/components/MapCard.jsx",
-                        lineNumber: 81,
-                        columnNumber: 9
+                        lineNumber: 88,
+                        columnNumber: 1
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/components/MapCard.jsx",
-                lineNumber: 76,
+                lineNumber: 83,
                 columnNumber: 7
             }, this)
         ]
@@ -290,43 +271,8 @@ function MapCard({ onSelectLocation }) {
     }, this);
 }
 _c = MapCard;
-function LegendItem({ color, label }) {
-    return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Stack$2f$Stack$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Stack$3e$__["Stack"], {
-        direction: "row",
-        spacing: 1,
-        alignItems: "center",
-        children: [
-            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Box$3e$__["Box"], {
-                sx: {
-                    width: 10,
-                    height: 10,
-                    borderRadius: '50%',
-                    bgcolor: color
-                }
-            }, void 0, false, {
-                fileName: "[project]/src/app/components/MapCard.jsx",
-                lineNumber: 96,
-                columnNumber: 7
-            }, this),
-            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Typography$2f$Typography$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Typography$3e$__["Typography"], {
-                variant: "caption",
-                children: label
-            }, void 0, false, {
-                fileName: "[project]/src/app/components/MapCard.jsx",
-                lineNumber: 104,
-                columnNumber: 7
-            }, this)
-        ]
-    }, void 0, true, {
-        fileName: "[project]/src/app/components/MapCard.jsx",
-        lineNumber: 95,
-        columnNumber: 5
-    }, this);
-}
-_c1 = LegendItem;
-var _c, _c1;
+var _c;
 __turbopack_context__.k.register(_c, "MapCard");
-__turbopack_context__.k.register(_c1, "LegendItem");
 if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
     __turbopack_context__.k.registerExports(__turbopack_context__.m, globalThis.$RefreshHelpers$);
 }
@@ -370,6 +316,7 @@ function Home() {
     _s();
     const [mounted, setMounted] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"](false);
     const [selectedLocation, setSelectedLocation] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"](null);
+    const [selectedTrail, setSelectedTrail] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"]('Technology Trail');
     __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
         "Home.useEffect": ()=>{
             setMounted(true);
@@ -393,7 +340,7 @@ function Home() {
                         children: "Campus Quest"
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.js",
-                        lineNumber: 41,
+                        lineNumber: 45,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Button$2f$Button$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Button$3e$__["Button"], {
@@ -402,13 +349,13 @@ function Home() {
                         children: "Scan QR Code"
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.js",
-                        lineNumber: 45,
+                        lineNumber: 49,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/page.js",
-                lineNumber: 33,
+                lineNumber: 37,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Box$3e$__["Box"], {
@@ -423,7 +370,7 @@ function Home() {
                         children: "Interactive Campus Map"
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.js",
-                        lineNumber: 51,
+                        lineNumber: 56,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Typography$2f$Typography$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Typography$3e$__["Typography"], {
@@ -434,159 +381,103 @@ function Home() {
                         children: "Explore TU Dublin Blanchardstown using themed trails"
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.js",
-                        lineNumber: 54,
+                        lineNumber: 59,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/page.js",
-                lineNumber: 50,
+                lineNumber: 55,
                 columnNumber: 7
             }, this),
-            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Grid$2f$Grid$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Grid$3e$__["Grid"], {
-                container: true,
-                spacing: 3,
-                children: [
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Grid$2f$Grid$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Grid$3e$__["Grid"], {
-                        item: true,
-                        xs: 12,
-                        md: 4,
-                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Card$2f$Card$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Card$3e$__["Card"], {
-                            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$CardContent$2f$CardContent$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__CardContent$3e$__["CardContent"], {
-                                children: [
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Typography$2f$Typography$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Typography$3e$__["Typography"], {
-                                        fontWeight: "bold",
-                                        children: "Live GPS Tracking"
-                                    }, void 0, false, {
-                                        fileName: "[project]/src/app/page.js",
-                                        lineNumber: 63,
-                                        columnNumber: 15
-                                    }, this),
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Typography$2f$Typography$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Typography$3e$__["Typography"], {
-                                        variant: "body2",
-                                        color: "text.secondary",
-                                        sx: {
-                                            mt: 1
-                                        },
-                                        children: "Click start to begin GPS tracking."
-                                    }, void 0, false, {
-                                        fileName: "[project]/src/app/page.js",
-                                        lineNumber: 64,
-                                        columnNumber: 15
-                                    }, this),
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Button$2f$Button$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Button$3e$__["Button"], {
-                                        variant: "outlined",
-                                        sx: {
-                                            mt: 2
-                                        },
-                                        disabled: true,
-                                        children: "Start"
-                                    }, void 0, false, {
-                                        fileName: "[project]/src/app/page.js",
-                                        lineNumber: 71,
-                                        columnNumber: 15
-                                    }, this)
-                                ]
-                            }, void 0, true, {
-                                fileName: "[project]/src/app/page.js",
-                                lineNumber: 62,
-                                columnNumber: 13
-                            }, this)
+            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Card$2f$Card$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Card$3e$__["Card"], {
+                sx: {
+                    mb: 4
+                },
+                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$CardContent$2f$CardContent$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__CardContent$3e$__["CardContent"], {
+                    children: [
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Typography$2f$Typography$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Typography$3e$__["Typography"], {
+                            fontWeight: "bold",
+                            gutterBottom: true,
+                            children: "Trail Selection"
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.js",
-                            lineNumber: 61,
+                            lineNumber: 67,
                             columnNumber: 11
-                        }, this)
-                    }, void 0, false, {
-                        fileName: "[project]/src/app/page.js",
-                        lineNumber: 60,
-                        columnNumber: 9
-                    }, this),
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Grid$2f$Grid$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Grid$3e$__["Grid"], {
-                        item: true,
-                        xs: 12,
-                        md: 8,
-                        children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Card$2f$Card$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Card$3e$__["Card"], {
-                            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$CardContent$2f$CardContent$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__CardContent$3e$__["CardContent"], {
-                                children: [
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Typography$2f$Typography$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Typography$3e$__["Typography"], {
-                                        fontWeight: "bold",
-                                        children: "Trail Selection"
-                                    }, void 0, false, {
-                                        fileName: "[project]/src/app/page.js",
-                                        lineNumber: 81,
-                                        columnNumber: 15
-                                    }, this),
-                                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Grid$2f$Grid$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Grid$3e$__["Grid"], {
-                                        container: true,
-                                        spacing: 2,
+                        }, this),
+                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Grid$2f$Grid$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Grid$3e$__["Grid"], {
+                            container: true,
+                            spacing: 2,
+                            children: [
+                                {
+                                    name: 'Technology Trail',
+                                    color: '#3B82F6'
+                                },
+                                {
+                                    name: 'History Trail',
+                                    color: '#EF4444'
+                                },
+                                {
+                                    name: 'Sports Trail',
+                                    color: '#F97316'
+                                },
+                                {
+                                    name: 'Library & Literature Trail',
+                                    color: '#8B5CF6'
+                                }
+                            ].map((trail)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Grid$2f$Grid$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Grid$3e$__["Grid"], {
+                                    item: true,
+                                    xs: 12,
+                                    sm: 6,
+                                    md: 3,
+                                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Button$2f$Button$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Button$3e$__["Button"], {
+                                        fullWidth: true,
+                                        variant: selectedTrail === trail.name ? 'contained' : 'outlined',
                                         sx: {
-                                            mt: 1
+                                            height: 48,
+                                            bgcolor: selectedTrail === trail.name ? trail.color : 'transparent',
+                                            borderColor: trail.color,
+                                            color: selectedTrail === trail.name ? 'white' : trail.color,
+                                            fontWeight: 500,
+                                            '&:hover': {
+                                                bgcolor: trail.color,
+                                                color: 'white'
+                                            }
                                         },
-                                        children: [
-                                            'Technology Trail',
-                                            'History Trail',
-                                            'Sports Trail',
-                                            'Library & Literature Trail'
-                                        ].map((trail)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Grid$2f$Grid$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Grid$3e$__["Grid"], {
-                                                item: true,
-                                                xs: 12,
-                                                sm: 6,
-                                                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Card$2f$Card$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Card$3e$__["Card"], {
-                                                    variant: "outlined",
-                                                    sx: {
-                                                        p: 2
-                                                    },
-                                                    children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Typography$2f$Typography$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Typography$3e$__["Typography"], {
-                                                        fontWeight: 500,
-                                                        children: trail
-                                                    }, void 0, false, {
-                                                        fileName: "[project]/src/app/page.js",
-                                                        lineNumber: 92,
-                                                        columnNumber: 23
-                                                    }, this)
-                                                }, void 0, false, {
-                                                    fileName: "[project]/src/app/page.js",
-                                                    lineNumber: 91,
-                                                    columnNumber: 21
-                                                }, this)
-                                            }, trail, false, {
-                                                fileName: "[project]/src/app/page.js",
-                                                lineNumber: 90,
-                                                columnNumber: 19
-                                            }, this))
+                                        onClick: ()=>setSelectedTrail(trail.name),
+                                        children: trail.name
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/page.js",
-                                        lineNumber: 83,
-                                        columnNumber: 15
+                                        lineNumber: 79,
+                                        columnNumber: 17
                                     }, this)
-                                ]
-                            }, void 0, true, {
-                                fileName: "[project]/src/app/page.js",
-                                lineNumber: 80,
-                                columnNumber: 13
-                            }, this)
+                                }, trail.name, false, {
+                                    fileName: "[project]/src/app/page.js",
+                                    lineNumber: 78,
+                                    columnNumber: 15
+                                }, this))
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.js",
-                            lineNumber: 79,
+                            lineNumber: 71,
                             columnNumber: 11
                         }, this)
-                    }, void 0, false, {
-                        fileName: "[project]/src/app/page.js",
-                        lineNumber: 78,
-                        columnNumber: 9
-                    }, this)
-                ]
-            }, void 0, true, {
+                    ]
+                }, void 0, true, {
+                    fileName: "[project]/src/app/page.js",
+                    lineNumber: 66,
+                    columnNumber: 9
+                }, this)
+            }, void 0, false, {
                 fileName: "[project]/src/app/page.js",
-                lineNumber: 59,
+                lineNumber: 65,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$components$2f$MapCard$2e$jsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
+                selectedTrail: selectedTrail,
                 onSelectLocation: setSelectedLocation
             }, void 0, false, {
                 fileName: "[project]/src/app/page.js",
-                lineNumber: 102,
+                lineNumber: 114,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(InfoPanel, {
@@ -594,17 +485,17 @@ function Home() {
                 onClose: ()=>setSelectedLocation(null)
             }, void 0, false, {
                 fileName: "[project]/src/app/page.js",
-                lineNumber: 103,
+                lineNumber: 120,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/page.js",
-        lineNumber: 32,
+        lineNumber: 35,
         columnNumber: 5
     }, this);
 }
-_s(Home, "PrEYDmixWV9KI7lQBkLVUclWpZk=");
+_s(Home, "JTerUnwTJOurD6E+5YiZ0316APY=");
 _c1 = Home;
 var _c, _c1;
 __turbopack_context__.k.register(_c, "InfoPanel");
