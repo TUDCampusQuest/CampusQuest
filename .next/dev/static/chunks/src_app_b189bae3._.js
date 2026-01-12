@@ -7,21 +7,94 @@ __turbopack_context__.s([
     ()=>__TURBOPACK__default__export__
 ]);
 const locations = [
+    // ============================
+    // DEFAULT CAMPUS CHECKPOINTS
+    // (Shown when no trail selected)
+    // ============================
     {
-        id: 'LIB01',
-        name: 'Test library Location',
-        lat: 53.40473,
-        lng: -6.37839,
-        description: 'Primary study and research space.',
-        accessibility: 'Step-free access, lifts available.'
+        id: 'FBL',
+        name: 'F Block',
+        type: 'default',
+        lat: 53.40480238768301,
+        lng: -6.3784076864373285,
+        description: 'Lecture halls, classrooms, library, security, toilets.',
+        accessibility: 'Elevator available.'
     },
     {
-        id: 'CAF01',
+        id: 'AGBL',
+        name: 'AG Block',
+        type: 'default',
+        lat: 53.404594589197124,
+        lng: -6.379052136996935,
+        description: 'Lecture halls, classrooms, staff offices.',
+        accessibility: 'Elevator available.'
+    },
+    {
+        id: 'CBL',
         name: 'C Block',
-        lat: 53.40542,
-        lng: -6.37875,
-        description: 'Main food and social area.',
-        accessibility: 'Wide entrances, accessible seating.'
+        type: 'default',
+        lat: 53.40542061347614,
+        lng: -6.378464745165641,
+        description: 'Student union, cafeteria, sports hall.',
+        accessibility: 'Elevator available.'
+    },
+    {
+        id: 'SBL',
+        name: 'Sports Complex (Gym)',
+        type: 'default',
+        lat: 53.40590023329914,
+        lng: -6.38130601458319,
+        description: 'Gymnasium and changing rooms.',
+        accessibility: 'Elevator available.'
+    },
+    {
+        id: 'LINC',
+        name: 'The LINC',
+        type: 'default',
+        lat: 53.40635885455073,
+        lng: -6.37980931996236,
+        description: 'Cafe and seating area.',
+        accessibility: 'Wheelchair accessible.'
+    },
+    // ============================
+    // SPORTS TRAIL
+    // (Only shown when Sports Trail selected)
+    // ============================
+    {
+        id: 'sports-s1',
+        name: 'C Block – Starting Line',
+        type: 'trail',
+        trail: 'Sports Trail',
+        order: 1,
+        lat: 53.40558115741799,
+        lng: -6.3783082575413355
+    },
+    {
+        id: 'sports-s2',
+        name: 'Gym',
+        type: 'trail',
+        trail: 'Sports Trail',
+        order: 2,
+        lat: 53.405811275760044,
+        lng: -6.381368245932702
+    },
+    {
+        id: 'sports-s3',
+        name: 'Sports Field',
+        type: 'trail',
+        trail: 'Sports Trail',
+        order: 3,
+        lat: 53.40637444210749,
+        lng: -6.382525651681246
+    },
+    {
+        id: 'sports-s4',
+        name: 'Campus Café',
+        type: 'trail',
+        trail: 'Sports Trail',
+        order: 4,
+        lat: 53.40640498223236,
+        lng: -6.3798825101578585
     }
 ];
 const __TURBOPACK__default__export__ = locations;
@@ -40,48 +113,112 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Box$3e$__ = __turbopack_context__.i("[project]/node_modules/@mui/material/esm/Box/Box.js [app-client] (ecmascript) <export default as Box>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$data$2f$locations$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/data/locations.js [app-client] (ecmascript)");
+(()=>{
+    const e = new Error("Cannot find module '../data/trailPaths'");
+    e.code = 'MODULE_NOT_FOUND';
+    throw e;
+})();
 ;
 var _s = __turbopack_context__.k.signature();
 'use client';
 ;
 ;
 ;
-function MapView({ onSelectLocation }) {
+;
+function MapView({ selectedTrail }) {
     _s();
     const mapRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
+    const mapInstanceRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
+    const markersRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])([]);
+    const polylineRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useRef"])(null);
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"])({
         "MapView.useEffect": ()=>{
             if (!window.google || !window.google.maps) return;
-            const map = new window.google.maps.Map(mapRef.current, {
-                center: {
-                    lat: 53.405292,
-                    lng: -6.378240
-                },
-                zoom: 18,
-                mapTypeId: 'hybrid',
-                mapTypeControl: false,
-                fullscreenControl: false
-            });
-            __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$data$2f$locations$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].forEach({
-                "MapView.useEffect": (location)=>{
+            // Create map once
+            if (!mapInstanceRef.current) {
+                mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
+                    center: {
+                        lat: 53.405292,
+                        lng: -6.378240
+                    },
+                    zoom: 18,
+                    mapTypeId: 'hybrid',
+                    mapTypeControl: false,
+                    fullscreenControl: false
+                });
+            }
+            const map = mapInstanceRef.current;
+            // Clear markers
+            markersRef.current.forEach({
+                "MapView.useEffect": (m)=>m.setMap(null)
+            }["MapView.useEffect"]);
+            markersRef.current = [];
+            // Clear polyline
+            if (polylineRef.current) {
+                polylineRef.current.setMap(null);
+                polylineRef.current = null;
+            }
+            // ============================
+            // DEFAULT MODE (no trail)
+            // ============================
+            if (!selectedTrail) {
+                __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$data$2f$locations$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].filter({
+                    "MapView.useEffect": (l)=>l.type === 'default'
+                }["MapView.useEffect"]).forEach({
+                    "MapView.useEffect": (location)=>{
+                        const marker = new window.google.maps.Marker({
+                            position: {
+                                lat: location.lat,
+                                lng: location.lng
+                            },
+                            map,
+                            title: location.name
+                        });
+                        markersRef.current.push(marker);
+                    }
+                }["MapView.useEffect"]);
+                return;
+            }
+            // ============================
+            // TRAIL MODE
+            // ============================
+            const trailStops = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$data$2f$locations$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].filter({
+                "MapView.useEffect.trailStops": (l)=>l.type === 'trail' && l.trail === selectedTrail
+            }["MapView.useEffect.trailStops"]).sort({
+                "MapView.useEffect.trailStops": (a, b)=>a.order - b.order
+            }["MapView.useEffect.trailStops"]);
+            trailStops.forEach({
+                "MapView.useEffect": (stop)=>{
                     const marker = new window.google.maps.Marker({
                         position: {
-                            lat: location.lat,
-                            lng: location.lng
+                            lat: stop.lat,
+                            lng: stop.lng
                         },
                         map,
-                        title: location.name
+                        label: {
+                            text: `S${stop.order}`,
+                            color: 'white',
+                            fontWeight: 'bold'
+                        },
+                        title: stop.name
                     });
-                    marker.addListener('click', {
-                        "MapView.useEffect": ()=>{
-                            onSelectLocation(location);
-                        }
-                    }["MapView.useEffect"]);
+                    markersRef.current.push(marker);
                 }
             }["MapView.useEffect"]);
+            const path = trailPaths[selectedTrail];
+            if (!path || path.length < 2) return;
+            polylineRef.current = new window.google.maps.Polyline({
+                path,
+                geodesic: true,
+                strokeColor: '#6D28D9',
+                strokeOpacity: 0.95,
+                strokeWeight: 5
+            });
+            polylineRef.current.setMap(map);
+            map.panTo(path[0]);
         }
     }["MapView.useEffect"], [
-        onSelectLocation
+        selectedTrail
     ]);
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Box$3e$__["Box"], {
         ref: mapRef,
@@ -91,11 +228,11 @@ function MapView({ onSelectLocation }) {
         }
     }, void 0, false, {
         fileName: "[project]/src/app/components/MapView.jsx",
-        lineNumber: 35,
+        lineNumber: 102,
         columnNumber: 5
     }, this);
 }
-_s(MapView, "9mn7MMe4fPaZ50ApsOpRWF2HbFg=");
+_s(MapView, "3iVif7QIVVGWsYVKG7K8iSETtpg=");
 _c = MapView;
 var _c;
 __turbopack_context__.k.register(_c, "MapView");
@@ -128,6 +265,9 @@ const trails = [
     'Sports Trail',
     'Library & Literature Trail'
 ];
+const handleTrailClick = (trailName)=>{
+    setSelectedTrail((prev)=>prev === trailName ? null : trailName);
+};
 function MapCard({ selectedTrail, onSelectLocation }) {
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Card$2f$Card$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Card$3e$__["Card"], {
         sx: {
@@ -151,7 +291,7 @@ function MapCard({ selectedTrail, onSelectLocation }) {
                         children: "TU Dublin Blanchardstown Campus"
                     }, void 0, false, {
                         fileName: "[project]/src/app/components/MapCard.jsx",
-                        lineNumber: 39,
+                        lineNumber: 45,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Stack$2f$Stack$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Stack$3e$__["Stack"], {
@@ -171,18 +311,18 @@ function MapCard({ selectedTrail, onSelectLocation }) {
                                 }
                             }, trail, false, {
                                 fileName: "[project]/src/app/components/MapCard.jsx",
-                                lineNumber: 50,
+                                lineNumber: 56,
                                 columnNumber: 13
                             }, this))
                     }, void 0, false, {
                         fileName: "[project]/src/app/components/MapCard.jsx",
-                        lineNumber: 43,
+                        lineNumber: 49,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/components/MapCard.jsx",
-                lineNumber: 31,
+                lineNumber: 37,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Box$3e$__["Box"], {
@@ -198,17 +338,17 @@ function MapCard({ selectedTrail, onSelectLocation }) {
                     onSelectLocation: onSelectLocation
                 }, void 0, false, {
                     fileName: "[project]/src/app/components/MapCard.jsx",
-                    lineNumber: 75,
+                    lineNumber: 81,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/components/MapCard.jsx",
-                lineNumber: 69,
+                lineNumber: 75,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Divider$2f$Divider$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Divider$3e$__["Divider"], {}, void 0, false, {
                 fileName: "[project]/src/app/components/MapCard.jsx",
-                lineNumber: 82,
+                lineNumber: 88,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Box$3e$__["Box"], {
@@ -224,7 +364,7 @@ function MapCard({ selectedTrail, onSelectLocation }) {
                         children: "Map Legend"
                     }, void 0, false, {
                         fileName: "[project]/src/app/components/MapCard.jsx",
-                        lineNumber: 84,
+                        lineNumber: 90,
                         columnNumber: 1
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Stack$2f$Stack$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Stack$3e$__["Stack"], {
@@ -241,7 +381,7 @@ function MapCard({ selectedTrail, onSelectLocation }) {
                                 }
                             }, void 0, false, {
                                 fileName: "[project]/src/app/components/MapCard.jsx",
-                                lineNumber: 89,
+                                lineNumber: 95,
                                 columnNumber: 3
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Typography$2f$Typography$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Typography$3e$__["Typography"], {
@@ -249,25 +389,25 @@ function MapCard({ selectedTrail, onSelectLocation }) {
                                 children: "Stops"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/components/MapCard.jsx",
-                                lineNumber: 97,
+                                lineNumber: 103,
                                 columnNumber: 3
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/components/MapCard.jsx",
-                        lineNumber: 88,
+                        lineNumber: 94,
                         columnNumber: 1
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/components/MapCard.jsx",
-                lineNumber: 83,
+                lineNumber: 89,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/components/MapCard.jsx",
-        lineNumber: 22,
+        lineNumber: 28,
         columnNumber: 5
     }, this);
 }

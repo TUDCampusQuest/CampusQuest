@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import {
   Card,
   Box,
@@ -17,7 +18,16 @@ const trails = [
   'Library & Literature Trail',
 ];
 
-export default function MapCard({ selectedTrail, onSelectLocation }) {
+export default function MapCard() {
+  const [selectedTrail, setSelectedTrail] = useState(null);
+
+  // Toggle logic
+  const handleTrailClick = (trailName) => {
+    setSelectedTrail((prev) =>
+      prev === trailName ? null : trailName
+    );
+  };
+
   return (
     <Card
       sx={{
@@ -50,6 +60,8 @@ export default function MapCard({ selectedTrail, onSelectLocation }) {
             <Chip
               key={trail}
               label={trail}
+              clickable
+              onClick={() => handleTrailClick(trail)}
               size="small"
               sx={{
                 bgcolor:
@@ -65,38 +77,40 @@ export default function MapCard({ selectedTrail, onSelectLocation }) {
         </Stack>
       </Box>
 
-      {/* MAP LOGIC */}
+      {/* MAP */}
       <Box
         sx={{
           height: { xs: 350, md: 500 },
           width: '100%',
         }}
       >
-        <MapView
-          selectedTrail={selectedTrail}
-          onSelectLocation={onSelectLocation}
-        />
+        <MapView selectedTrail={selectedTrail} />
       </Box>
 
       {/* LEGEND */}
       <Divider />
       <Box sx={{ px: 3, py: 2 }}>
-<Typography variant="subtitle2" fontWeight="bold" gutterBottom>
-  Map Legend
-</Typography>
+        <Typography
+          variant="subtitle2"
+          fontWeight="bold"
+          gutterBottom
+        >
+          Map Legend
+        </Typography>
 
-<Stack direction="row" spacing={1} alignItems="center">
-  <Box
-    sx={{
-      width: 10,
-      height: 10,
-      borderRadius: '50%',
-      bgcolor: '#EF4444',
-    }}
-  />
-  <Typography variant="caption">Stops</Typography>
-</Stack>
-
+        <Stack direction="row" spacing={1} alignItems="center">
+          <Box
+            sx={{
+              width: 10,
+              height: 10,
+              borderRadius: '50%',
+              bgcolor: '#EF4444',
+            }}
+          />
+          <Typography variant="caption">
+            Trail Stops
+          </Typography>
+        </Stack>
       </Box>
     </Card>
   );
