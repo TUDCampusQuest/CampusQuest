@@ -9,15 +9,23 @@ import {
     Box,
     Button,
 } from '@mui/material';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import MapCard from './components/MapCard';
 
 export default function Home() {
+    const router = useRouter();
     const [mounted, setMounted] = useState(false);
     const [selectedTrail, setSelectedTrail] = useState(null);
 
     useEffect(() => {
         setMounted(true);
     }, []);
+
+    const handleHomeClick = () => {
+        setSelectedTrail(null); // ✅ reset trail
+        router.push('/');       // ✅ go to app/page.js
+    };
 
     if (!mounted) return null;
 
@@ -35,19 +43,39 @@ export default function Home() {
                 <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
                     <Typography fontWeight="bold">Campus Quest</Typography>
 
-                    <Button
-                        variant="contained"
-                        size="small"
-                        sx={{ textTransform: 'none' }}
-                    >
-                        Scan QR Code
-                    </Button>
+                    <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+                        <Button
+                            onClick={handleHomeClick}
+                            color="inherit"
+                            sx={{ textTransform: 'none', fontWeight: 600 }}
+                        >
+                            Home
+                        </Button>
+
+                        <Button
+                            component={Link}
+                            href="/trails"
+                            color="inherit"
+                            sx={{ textTransform: 'none', fontWeight: 600 }}
+                        >
+                            Trails
+                        </Button>
+
+                        <Button
+                            component={Link}
+                            href="/scan"
+                            variant="contained"
+                            size="small"
+                            sx={{ textTransform: 'none', fontWeight: 700 }}
+                        >
+                            Scan
+                        </Button>
+                    </Box>
                 </Toolbar>
             </AppBar>
 
             {/* PAGE CONTENT */}
             <Container maxWidth="lg" sx={{ py: 4 }}>
-                {/* PAGE TITLE */}
                 <Typography
                     variant="h4"
                     fontWeight="bold"
@@ -67,7 +95,6 @@ export default function Home() {
                     Explore TU Dublin Blanchardstown using themed trails
                 </Typography>
 
-                {/* MAP CARD */}
                 <Box sx={{ mt: 3 }}>
                     <MapCard
                         selectedTrail={selectedTrail}
