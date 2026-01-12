@@ -109,13 +109,15 @@ const locations = [
     lng: -6.3783082575413355,
   },
   {
-    id: 'sports-s2',
-    name: 'Gym',
+    id: 'SBL',
+    name: 'S Block - Gym',
     type: 'trail',
     trail: 'Sports Trail',
     order: 2,
     lat: 53.405811275760044,
     lng: -6.381368245932702,
+    description: 'Classrooms, gymnasium, changing rooms, toilets.',
+    accessibility: 'Elevator available. ',
   },
   {
     id: 'sports-s3',
@@ -125,15 +127,18 @@ const locations = [
     order: 3,
     lat: 53.40637444210749,
     lng: -6.382525651681246,
+    description: 'Football pitches.',
   },
   {
     id: 'sports-s4',
-    name: 'Campus Café',
+    name: 'The LINC',
     type: 'trail',
     trail: 'Sports Trail',
     order: 4,
     lat: 53.40640498223236,
     lng: -6.3798825101578585,
+    description: 'Cafe (food and drinks), seating area, staff offices.',
+    accessibility: 'Elevator available.',
   },
 ];
 

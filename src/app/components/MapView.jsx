@@ -10,10 +10,12 @@ export default function MapView({ selectedTrail }) {
   const mapInstanceRef = useRef(null);
   const markersRef = useRef([]);
   const polylineRef = useRef(null);
+  const infoWindowRef = useRef(null);
 
   useEffect(() => {
     if (!window.google || !window.google.maps) return;
 
+    // Create map once
     if (!mapInstanceRef.current) {
       mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
         center: { lat: 53.405292, lng: -6.378240 },
@@ -22,6 +24,8 @@ export default function MapView({ selectedTrail }) {
         mapTypeControl: false,
         fullscreenControl: false,
       });
+
+      infoWindowRef.current = new window.google.maps.InfoWindow();
     }
 
     const map = mapInstanceRef.current;
@@ -48,8 +52,21 @@ export default function MapView({ selectedTrail }) {
             map,
             title: loc.name,
           });
+
+          marker.addListener('click', () => {
+            infoWindowRef.current.setContent(`
+              <div style="max-width:220px">
+                <strong>${loc.name}</strong><br/>
+                ${loc.description ?? ''}<br/>
+                <em>${loc.accessibility ?? ''}</em>
+              </div>
+            `);
+            infoWindowRef.current.open(map, marker);
+          });
+
           markersRef.current.push(marker);
         });
+
       return;
     }
 
@@ -75,6 +92,18 @@ export default function MapView({ selectedTrail }) {
         },
         title: stop.name,
       });
+
+      marker.addListener('click', () => {
+        infoWindowRef.current.setContent(`
+          <div style="max-width:220px">
+            <strong>${stop.name}</strong><br/>
+            ${stop.description ?? ''}<br/>
+            <em>${stop.accessibility ?? ''}</em>
+          </div>
+        `);
+        infoWindowRef.current.open(map, marker);
+      });
+
       markersRef.current.push(marker);
     });
 
@@ -84,7 +113,7 @@ export default function MapView({ selectedTrail }) {
     polylineRef.current = new window.google.maps.Polyline({
       path,
       geodesic: true,
-      strokeColor: '#da0e5c',
+      strokeColor: '#b61352',
       strokeOpacity: 0.95,
       strokeWeight: 5,
     });

@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import {
   Card,
   Box,
@@ -18,25 +17,19 @@ const trails = [
   'Library & Literature Trail',
 ];
 
-export default function MapCard() {
-  const [selectedTrail, setSelectedTrail] = useState(null);
-
-  // Toggle logic
-  const handleTrailClick = (trailName) => {
+export default function MapCard({
+  selectedTrail,
+  setSelectedTrail,
+  onSelectLocation,
+}) {
+  const toggleTrail = (trail) => {
     setSelectedTrail((prev) =>
-      prev === trailName ? null : trailName
+      prev === trail ? null : trail
     );
   };
 
   return (
-    <Card
-      sx={{
-        mt: 4,
-        borderRadius: 3,
-        overflow: 'hidden',
-        boxShadow: 4,
-      }}
-    >
+    <Card sx={{ borderRadius: 3, overflow: 'hidden', boxShadow: 4 }}>
       {/* HEADER */}
       <Box
         sx={{
@@ -50,18 +43,14 @@ export default function MapCard() {
           TU Dublin Blanchardstown Campus
         </Typography>
 
-        <Stack
-          direction="row"
-          spacing={1}
-          sx={{ mt: 1 }}
-          flexWrap="wrap"
-        >
+        {/* TRAIL BUTTONS */}
+        <Stack direction="row" spacing={1} sx={{ mt: 1 }} flexWrap="wrap">
           {trails.map((trail) => (
             <Chip
               key={trail}
               label={trail}
               clickable
-              onClick={() => handleTrailClick(trail)}
+              onClick={() => toggleTrail(trail)}
               size="small"
               sx={{
                 bgcolor:
@@ -78,23 +67,17 @@ export default function MapCard() {
       </Box>
 
       {/* MAP */}
-      <Box
-        sx={{
-          height: { xs: 350, md: 500 },
-          width: '100%',
-        }}
-      >
-        <MapView selectedTrail={selectedTrail} />
+      <Box sx={{ height: { xs: 350, md: 500 } }}>
+        <MapView
+          selectedTrail={selectedTrail}
+          onSelectLocation={onSelectLocation}
+        />
       </Box>
 
       {/* LEGEND */}
       <Divider />
       <Box sx={{ px: 3, py: 2 }}>
-        <Typography
-          variant="subtitle2"
-          fontWeight="bold"
-          gutterBottom
-        >
+        <Typography variant="subtitle2" fontWeight="bold" gutterBottom>
           Map Legend
         </Typography>
 
@@ -107,9 +90,7 @@ export default function MapCard() {
               bgcolor: '#EF4444',
             }}
           />
-          <Typography variant="caption">
-            Trail Stops
-          </Typography>
+          <Typography variant="caption">Trail Stops</Typography>
         </Stack>
       </Box>
     </Card>
