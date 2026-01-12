@@ -161,6 +161,42 @@ const locations = [
         lng: -6.3798825101578585,
         description: 'Cafe (food and drinks), seating area, staff offices.',
         accessibility: 'Elevator available.'
+    },
+    // ============================
+    // TECH TRAIL STOPS
+    // ============================
+    {
+        id: 'tech-t1',
+        name: 'AG Block – Tech Start',
+        type: 'trail',
+        trail: 'Technology Trail',
+        order: 1,
+        lat: 53.404609889004455,
+        lng: -6.379100157185581,
+        description: 'Starting point for the Technology Trail (AG Building).',
+        accessibility: 'Wheelchair accessible entrance.'
+    },
+    {
+        id: 'tech-t2',
+        name: 'E Block – Tech Stop',
+        type: 'trail',
+        trail: 'Technology Trail',
+        order: 2,
+        lat: 53.40529084274418,
+        lng: -6.377768391376469,
+        description: 'Midpoint of the Technology Trail (E Building).',
+        accessibility: 'Elevator available.'
+    },
+    {
+        id: 'tech-t3',
+        name: 'D Block – Tech Finish',
+        type: 'trail',
+        trail: 'Technology Trail',
+        order: 3,
+        lat: 53.40569081959447,
+        lng: -6.377475952861498,
+        description: 'Final destination of the Technology Trail (D Building).',
+        accessibility: 'Elevator available.'
     }
 ];
 const __TURBOPACK__default__export__ = locations;
@@ -173,6 +209,9 @@ __turbopack_context__.s([
     ()=>__TURBOPACK__default__export__
 ]);
 const trailPaths = {
+    // ============================
+    // SPORTS TRAIL
+    // ============================
     'Sports Trail': [
         // S1 → C Block path
         {
@@ -218,6 +257,38 @@ const trailPaths = {
             lat: 53.40640498223236,
             lng: -6.3798825101578585
         }
+    ],
+    // ============================
+    // TECH TRAIL
+    // ============================
+    'Technology Trail': [
+        // T1 → AG Building (Start)
+        {
+            lat: 53.404609889004455,
+            lng: -6.379100157185581
+        },
+        // AG → E Building
+        {
+            lat: 53.40490,
+            lng: -6.37870
+        },
+        {
+            lat: 53.40515,
+            lng: -6.37820
+        },
+        {
+            lat: 53.40529084274418,
+            lng: -6.377768391376469
+        },
+        // E → D Building (Finish)
+        {
+            lat: 53.40545,
+            lng: -6.37760
+        },
+        {
+            lat: 53.40569081959447,
+            lng: -6.377475952861498
+        }
     ]
 };
 const __TURBOPACK__default__export__ = trailPaths;
@@ -246,6 +317,8 @@ function MapView({ selectedTrail }) {
     const markersRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])([]);
     const polylineRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])(null);
     const infoWindowRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])(null);
+    const SPORTS_COLOR = '#b61352'; // Royal Red
+    const TECH_COLOR = '#4169E1'; // Royal Blue
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         if (!window.google || !window.google.maps) return;
         // Create map once
@@ -302,6 +375,7 @@ function MapView({ selectedTrail }) {
         // TRAIL MODE
         // ============================
         const trailStops = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$data$2f$locations$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].filter((l)=>l.type === 'trail' && l.trail === selectedTrail).sort((a, b)=>a.order - b.order);
+        const isTechTrail = selectedTrail === 'Technology Trail';
         trailStops.forEach((stop)=>{
             const marker = new window.google.maps.Marker({
                 position: {
@@ -310,7 +384,7 @@ function MapView({ selectedTrail }) {
                 },
                 map,
                 label: {
-                    text: `S${stop.order}`,
+                    text: `${isTechTrail ? 'T' : 'S'}${stop.order}`,
                     color: 'white',
                     fontWeight: 'bold'
                 },
@@ -328,12 +402,13 @@ function MapView({ selectedTrail }) {
             });
             markersRef.current.push(marker);
         });
+        // Draw trail polyline
         const path = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$data$2f$trailPaths$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"][selectedTrail];
-        if (!path) return;
+        if (!path || path.length === 0) return;
         polylineRef.current = new window.google.maps.Polyline({
             path,
             geodesic: true,
-            strokeColor: '#b61352',
+            strokeColor: isTechTrail ? TECH_COLOR : SPORTS_COLOR,
             strokeOpacity: 0.95,
             strokeWeight: 5
         });
@@ -350,7 +425,7 @@ function MapView({ selectedTrail }) {
         }
     }, void 0, false, {
         fileName: "[project]/src/app/components/MapView.jsx",
-        lineNumber: 127,
+        lineNumber: 133,
         columnNumber: 5
     }, this);
 }
@@ -560,11 +635,15 @@ function Home() {
         setMounted(true);
     }, []);
     const handleHomeClick = ()=>{
-        setSelectedTrail(null); // ✅ reset trail
-        router.push('/'); // ✅ go to app/page.js
+        setSelectedTrail(null);
+        router.push('/');
     };
     if (!mounted) return null;
-    return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["Fragment"], {
+    return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Box$3e$__["Box"], {
+        sx: {
+            minHeight: '100vh',
+            bgcolor: 'white'
+        },
         children: [
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$AppBar$2f$AppBar$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__AppBar$3e$__["AppBar"], {
                 position: "sticky",
@@ -665,7 +744,7 @@ function Home() {
                         textAlign: "center",
                         gutterBottom: true,
                         sx: {
-                            color: 'white'
+                            color: '#111827'
                         },
                         children: "Interactive Campus Map"
                     }, void 0, false, {
@@ -677,7 +756,7 @@ function Home() {
                         variant: "subtitle1",
                         textAlign: "center",
                         sx: {
-                            color: 'rgba(255,255,255,0.8)'
+                            color: 'rgba(17,24,39,0.75)'
                         },
                         gutterBottom: true,
                         children: "Explore TU Dublin Blanchardstown using themed trails"
@@ -710,7 +789,11 @@ function Home() {
                 columnNumber: 13
             }, this)
         ]
-    }, void 0, true);
+    }, void 0, true, {
+        fileName: "[project]/src/app/page.js",
+        lineNumber: 33,
+        columnNumber: 9
+    }, this);
 }
 }),
 ];

@@ -140,6 +140,44 @@ const locations = [
     description: 'Cafe (food and drinks), seating area, staff offices.',
     accessibility: 'Elevator available.',
   },
+    // ============================
+  // TECH TRAIL STOPS
+  // ============================
+
+  {
+    id: 'tech-t1',
+    name: 'AG Block – Tech Start',
+    type: 'trail',
+    trail: 'Technology Trail',
+    order: 1,
+    lat: 53.404609889004455,
+    lng: -6.379100157185581,
+    description: 'Starting point for the Technology Trail (AG Building).',
+    accessibility: 'Wheelchair accessible entrance.',
+  },
+  {
+    id: 'tech-t2',
+    name: 'E Block – Tech Stop',
+    type: 'trail',
+    trail: 'Technology Trail',
+    order: 2,
+    lat: 53.40529084274418,
+    lng: -6.377768391376469,
+    description: 'Midpoint of the Technology Trail (E Building).',
+    accessibility: 'Elevator available.',
+  },
+  {
+    id: 'tech-t3',
+    name: 'D Block – Tech Finish',
+    type: 'trail',
+    trail: 'Technology Trail',
+    order: 3,
+    lat: 53.40569081959447,
+    lng: -6.377475952861498,
+    description: 'Final destination of the Technology Trail (D Building).',
+    accessibility: 'Elevator available.',
+  },
+
 ];
 
 export default locations;

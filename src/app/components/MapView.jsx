@@ -12,6 +12,9 @@ export default function MapView({ selectedTrail }) {
   const polylineRef = useRef(null);
   const infoWindowRef = useRef(null);
 
+  const SPORTS_COLOR = '#b61352'; // Royal Red
+  const TECH_COLOR = '#4169E1';   // Royal Blue
+
   useEffect(() => {
     if (!window.google || !window.google.maps) return;
 
@@ -81,12 +84,14 @@ export default function MapView({ selectedTrail }) {
       )
       .sort((a, b) => a.order - b.order);
 
+    const isTechTrail = selectedTrail === 'Technology Trail';
+
     trailStops.forEach((stop) => {
       const marker = new window.google.maps.Marker({
         position: { lat: stop.lat, lng: stop.lng },
         map,
         label: {
-          text: `S${stop.order}`,
+          text: `${isTechTrail ? 'T' : 'S'}${stop.order}`,
           color: 'white',
           fontWeight: 'bold',
         },
@@ -107,13 +112,14 @@ export default function MapView({ selectedTrail }) {
       markersRef.current.push(marker);
     });
 
+    // Draw trail polyline
     const path = trailPaths[selectedTrail];
-    if (!path) return;
+    if (!path || path.length === 0) return;
 
     polylineRef.current = new window.google.maps.Polyline({
       path,
       geodesic: true,
-      strokeColor: '#b61352',
+      strokeColor: isTechTrail ? TECH_COLOR : SPORTS_COLOR,
       strokeOpacity: 0.95,
       strokeWeight: 5,
     });

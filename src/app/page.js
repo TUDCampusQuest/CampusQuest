@@ -23,14 +23,14 @@ export default function Home() {
     }, []);
 
     const handleHomeClick = () => {
-        setSelectedTrail(null); // ✅ reset trail
-        router.push('/');       // ✅ go to app/page.js
+        setSelectedTrail(null);
+        router.push('/');
     };
 
     if (!mounted) return null;
 
     return (
-        <>
+        <Box sx={{ minHeight: '100vh', bgcolor: 'white' }}>
             {/* NAVBAR / HEADER */}
             <AppBar
                 position="sticky"
@@ -81,7 +81,7 @@ export default function Home() {
                     fontWeight="bold"
                     textAlign="center"
                     gutterBottom
-                    sx={{ color: 'white' }}
+                    sx={{ color: '#111827' }}
                 >
                     Interactive Campus Map
                 </Typography>
@@ -89,7 +89,7 @@ export default function Home() {
                 <Typography
                     variant="subtitle1"
                     textAlign="center"
-                    sx={{ color: 'rgba(255,255,255,0.8)' }}
+                    sx={{ color: 'rgba(17,24,39,0.75)' }}
                     gutterBottom
                 >
                     Explore TU Dublin Blanchardstown using themed trails
@@ -102,6 +102,6 @@ export default function Home() {
                     />
                 </Box>
             </Container>
-        </>
+        </Box>
     );
 }
