@@ -10,7 +10,7 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body>
-        {/* Google Maps Script */}
+        {/* Google maps script*/}
         <Script
           src={`https://maps.googleapis.com/maps/api/js?key=${process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY}`}
           strategy="afterInteractive"

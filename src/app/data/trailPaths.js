@@ -1,40 +1,37 @@
 const trailPaths = {
-  // ============================
-  // SPORTS TRAIL
-  // ============================
+
+  //Sports trail
   'Sports Trail': [
-    // S1 → C Block path
+    //S1 to C Block path
     { lat: 53.40558115741799, lng: -6.3783082575413355 },
     { lat: 53.40572, lng: -6.37895 },
     { lat: 53.40584, lng: -6.37960 },
 
-    // Towards Gym
+    //Towards Gym
     { lat: 53.405811275760044, lng: -6.381368245932702 },
 
-    // Gym - Field
+    //Gym to Field
     { lat: 53.40605, lng: -6.38195 },
     { lat: 53.40620, lng: -6.38225 },
     { lat: 53.40637444210749, lng: -6.382525651681246 },
 
-    // Field → Café
+    //Field to Café
     { lat: 53.40640, lng: -6.38160 },
     { lat: 53.40640, lng: -6.38060 },
     { lat: 53.40640498223236, lng: -6.3798825101578585 },
   ],
 
-  // ============================
-  // TECH TRAIL
-  // ============================
+  //Tech trail
   'Technology Trail': [
-    // T1 → AG Building (Start)
+    //T1 to AG Building
     { lat: 53.404609889004455, lng: -6.379100157185581 },
 
-    // AG → E Building
+    //AG to E Building
     { lat: 53.40490, lng: -6.37870 },
     { lat: 53.40515, lng: -6.37820 },
     { lat: 53.40529084274418, lng: -6.377768391376469 },
 
-    // E → D Building (Finish)
+    //E to D Building
     { lat: 53.40545, lng: -6.37760 },
     { lat: 53.40569081959447, lng: -6.377475952861498 },
   ],

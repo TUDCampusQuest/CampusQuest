@@ -1,14 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-  Container,
-  Typography,
-  AppBar,
-  Toolbar,
-  Box,
-  Button,
-} from '@mui/material';
+import {Container, Typography, AppBar, Toolbar, Box, Button,} from '@mui/material';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import MapCard from './components/MapCard';
@@ -31,17 +24,17 @@ export default function Home() {
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'white' }}>
-      {/* NAVBAR / HEADER */}
+      {/* Navbar */}
       <AppBar
         position="sticky"
         elevation={0}
         sx={{
-          bgcolor: '#000',      // ✅ solid black navbar
+          bgcolor: '#000',
           color: '#fff',
         }}
       >
         <Toolbar sx={{ display: 'flex', justifyContent: 'space-between' }}>
-          <Typography fontWeight="bold">Campus Quest</Typography>
+          <Typography fontWeight="bold">CampusQuest</Typography>
 
           <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
             <Button
@@ -74,7 +67,7 @@ export default function Home() {
         </Toolbar>
       </AppBar>
 
-      {/* PAGE CONTENT */}
+      {/* Content */}
       <Container maxWidth="lg" sx={{ py: 4 }}>
         <Typography
           variant="h4"
