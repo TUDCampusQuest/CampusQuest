@@ -2,24 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import {AppBar, Toolbar, Box, Container, Typography, Button, Card, Stack,} from '@mui/material';
-
-const TRAILS = [
-    {
-        key: 'technology',
-        title: 'Technology Trail',
-        desc: 'Explore cutting-edge technology facilities and innovation spaces across campus',
-        duration: '45-60 minutes',
-        headerBg: 'linear-gradient(180deg, rgba(59,130,246,0.22), rgba(59,130,246,0.08))',
-    },
-    {
-        key: 'sports',
-        title: 'Sports Trail',
-        desc: 'Experience world-class athletic facilities and sports heritage at TU Dublin',
-        duration: '40-55 minutes',
-        headerBg: 'linear-gradient(180deg, rgba(249,115,22,0.22), rgba(249,115,22,0.10))',
-    },
-];
+import {
+    AppBar,
+    Toolbar,
+    Box,
+    Container,
+    Typography,
+    Button,
+    Card,
+    Stack,
+} from '@mui/material';
 
 function TrailCard({ trail }) {
     return (
@@ -33,8 +25,27 @@ function TrailCard({ trail }) {
                 bgcolor: 'white',
             }}
         >
-            {/* Header gradient */}
-            <Box sx={{ height: 150, position: 'relative', background: trail.headerBg }}>
+            {/* Header image (from DB) */}
+            <Box
+                sx={{
+                    height: 150,
+                    position: 'relative',
+                    backgroundImage: `url(${trail.headerImageUrl})`,
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                    backgroundRepeat: 'no-repeat',
+                }}
+            >
+                {/* overlay for readability */}
+                <Box
+                    sx={{
+                        position: 'absolute',
+                        inset: 0,
+                        bgcolor: 'rgba(0,0,0,0.25)',
+                    }}
+                />
+
+                {/* top-left title */}
                 <Typography
                     sx={{
                         position: 'absolute',
@@ -42,10 +53,10 @@ function TrailCard({ trail }) {
                         left: 18,
                         fontSize: 13,
                         fontWeight: 800,
-                        color: 'rgba(17,24,39,0.75)',
+                        color: 'white',
+                        textShadow: '0 4px 14px rgba(0,0,0,0.6)',
                     }}
                 >
-                    {trail.title}
                 </Typography>
             </Box>
 
@@ -65,7 +76,9 @@ function TrailCard({ trail }) {
                         <Typography fontWeight={900} sx={{ fontSize: 18 }}>
                             {trail.duration}
                         </Typography>
-                        <Typography sx={{ fontSize: 12, color: 'rgba(17,24,39,0.55)' }}>Duration</Typography>
+                        <Typography sx={{ fontSize: 12, color: 'rgba(17,24,39,0.55)' }}>
+                            Duration
+                        </Typography>
                     </Box>
                 </Stack>
             </Box>
@@ -75,8 +88,25 @@ function TrailCard({ trail }) {
 
 export default function TrailsPage() {
     const [mounted, setMounted] = useState(false);
+    const [trails, setTrails] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => setMounted(true), []);
+
+    useEffect(() => {
+        (async () => {
+            try {
+                const res = await fetch('/api/trails', { cache: 'no-store' });
+                const data = await res.json();
+                setTrails(data);
+            } catch (e) {
+                console.error(e);
+            } finally {
+                setLoading(false);
+            }
+        })();
+    }, []);
+
     if (!mounted) return null;
 
     return (
@@ -94,50 +124,38 @@ export default function TrailsPage() {
                     <Typography fontWeight="bold">Campus Quest</Typography>
 
                     <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                        <Button
-                            component={Link}
-                            href="/"
-                            color="inherit"
-                            sx={{ textTransform: 'none', fontWeight: 600 }}
-                        >
+                        <Button component={Link} href="/" color="inherit" sx={{ textTransform: 'none', fontWeight: 600 }}>
                             Home
                         </Button>
 
-                        <Button
-                            component={Link}
-                            href="/trails"
-                            color="inherit"
-                            sx={{ textTransform: 'none', fontWeight: 600 }}
-                        >
+                        <Button component={Link} href="/trails" color="inherit" sx={{ textTransform: 'none', fontWeight: 600 }}>
                             Trails
                         </Button>
 
-                        <Button
-                            component={Link}
-                            href="/scan"
-                            variant="contained"
-                            size="small"
-                            sx={{ textTransform: 'none', fontWeight: 700 }}
-                        >
+                        <Button component={Link} href="/scan" variant="contained" size="small" sx={{ textTransform: 'none', fontWeight: 700 }}>
                             Scan
                         </Button>
                     </Box>
                 </Toolbar>
             </AppBar>
 
-            {/* Trials Section */}
+            {/* Trails Section */}
             <Box sx={{ minHeight: '100vh', bgcolor: '#f5f7fb', py: { xs: 4, md: 6 } }}>
                 <Container maxWidth="lg">
-                    <Stack
-                        direction={{ xs: 'column', md: 'row' }}
-                        spacing={4}
-                        justifyContent="center"
-                        alignItems="stretch"
-                    >
-                        {TRAILS.map((trail) => (
-                            <TrailCard key={trail.key} trail={trail} />
-                        ))}
-                    </Stack>
+                    {loading ? (
+                        <Typography sx={{ color: 'rgba(17,24,39,0.7)' }}>Loading trails...</Typography>
+                    ) : (
+                        <Stack
+                            direction={{ xs: 'column', md: 'row' }}
+                            spacing={4}
+                            justifyContent="center"
+                            alignItems="stretch"
+                        >
+                            {trails.map((trail) => (
+                                <TrailCard key={trail._id} trail={trail} />
+                            ))}
+                        </Stack>
+                    )}
                 </Container>
             </Box>
         </>
