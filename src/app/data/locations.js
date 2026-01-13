@@ -1,8 +1,6 @@
 const locations = [
-  // ============================
-  // DEFAULT CAMPUS BUILDINGS
-  // ============================
 
+  //Campus buildings
   {
     id: 'FBL',
     name: 'F Block',
@@ -95,10 +93,7 @@ const locations = [
     accessibility: 'Disabled parking available.',
   },
 
-  // ============================
-  // SPORTS TRAIL STOPS
-  // ============================
-
+  //Sports trail stops
   {
     id: 'sports-s1',
     name: 'C Block – Starting Line',
@@ -140,10 +135,8 @@ const locations = [
     description: 'Cafe (food and drinks), seating area, staff offices.',
     accessibility: 'Elevator available.',
   },
-    // ============================
-  // TECH TRAIL STOPS
-  // ============================
 
+  //Tech trail stops
   {
     id: 'tech-t1',
     name: 'AG Block – Tech Start',

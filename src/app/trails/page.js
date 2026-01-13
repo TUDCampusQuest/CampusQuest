@@ -2,16 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import {
-    AppBar,
-    Toolbar,
-    Box,
-    Container,
-    Typography,
-    Button,
-    Card,
-    Stack,
-} from '@mui/material';
+import {AppBar, Toolbar, Box, Container, Typography, Button, Card, Stack,} from '@mui/material';
 
 const TRAILS = [
     {
@@ -68,7 +59,7 @@ function TrailCard({ trail }) {
                     {trail.desc}
                 </Typography>
 
-                {/* Only Duration */}
+                {/* Duration */}
                 <Stack sx={{ mt: 3 }}>
                     <Box>
                         <Typography fontWeight={900} sx={{ fontSize: 18 }}>
@@ -90,7 +81,7 @@ export default function TrailsPage() {
 
     return (
         <>
-            {/* SAME NAVBAR AS HOME */}
+            {/* Navbar */}
             <AppBar
                 position="sticky"
                 elevation={0}
@@ -134,7 +125,7 @@ export default function TrailsPage() {
                 </Toolbar>
             </AppBar>
 
-            {/* TRAILS SECTION ONLY */}
+            {/* Trials Section */}
             <Box sx={{ minHeight: '100vh', bgcolor: '#f5f7fb', py: { xs: 4, md: 6 } }}>
                 <Container maxWidth="lg">
                     <Stack

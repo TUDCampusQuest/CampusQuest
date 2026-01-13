@@ -12,13 +12,13 @@ export default function MapView({ selectedTrail }) {
   const polylineRef = useRef(null);
   const infoWindowRef = useRef(null);
 
-  const SPORTS_COLOR = '#b61352'; // Royal Red
-  const TECH_COLOR = '#4169E1';   // Royal Blue
+  const SPORTS_COLOR = '#b61352';
+  const TECH_COLOR = '#4169E1';
 
   useEffect(() => {
     if (!window.google || !window.google.maps) return;
 
-    // Create map once
+    //Create map once
     if (!mapInstanceRef.current) {
       mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
         center: { lat: 53.405292, lng: -6.378240 },
@@ -33,19 +33,17 @@ export default function MapView({ selectedTrail }) {
 
     const map = mapInstanceRef.current;
 
-    // Clear markers
+    //Clear markers
     markersRef.current.forEach((m) => m.setMap(null));
     markersRef.current = [];
 
-    // Clear polyline
+    //Clear polyline
     if (polylineRef.current) {
       polylineRef.current.setMap(null);
       polylineRef.current = null;
     }
 
-    // ============================
-    // DEFAULT MODE
-    // ============================
+    //Default mode
     if (!selectedTrail) {
       locations
         .filter((l) => l.type === 'default')
@@ -73,9 +71,7 @@ export default function MapView({ selectedTrail }) {
       return;
     }
 
-    // ============================
-    // TRAIL MODE
-    // ============================
+    //Trail mode
     const trailStops = locations
       .filter(
         (l) =>
@@ -112,7 +108,7 @@ export default function MapView({ selectedTrail }) {
       markersRef.current.push(marker);
     });
 
-    // Draw trail polyline
+    //Draw trail polyline
     const path = trailPaths[selectedTrail];
     if (!path || path.length === 0) return;
 

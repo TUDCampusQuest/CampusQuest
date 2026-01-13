@@ -25,9 +25,7 @@ __turbopack_context__.s([
     ()=>__TURBOPACK__default__export__
 ]);
 const locations = [
-    // ============================
-    // DEFAULT CAMPUS BUILDINGS
-    // ============================
+    //Campus buildings
     {
         id: 'FBL',
         name: 'F Block',
@@ -118,9 +116,7 @@ const locations = [
         description: 'Parking area.',
         accessibility: 'Disabled parking available.'
     },
-    // ============================
-    // SPORTS TRAIL STOPS
-    // ============================
+    //Sports trail stops
     {
         id: 'sports-s1',
         name: 'C Block – Starting Line',
@@ -162,9 +158,7 @@ const locations = [
         description: 'Cafe (food and drinks), seating area, staff offices.',
         accessibility: 'Elevator available.'
     },
-    // ============================
-    // TECH TRAIL STOPS
-    // ============================
+    //Tech trail stops
     {
         id: 'tech-t1',
         name: 'AG Block – Tech Start',
@@ -209,11 +203,9 @@ __turbopack_context__.s([
     ()=>__TURBOPACK__default__export__
 ]);
 const trailPaths = {
-    // ============================
-    // SPORTS TRAIL
-    // ============================
+    //Sports trail
     'Sports Trail': [
-        // S1 → C Block path
+        //S1 to C Block path
         {
             lat: 53.40558115741799,
             lng: -6.3783082575413355
@@ -226,12 +218,12 @@ const trailPaths = {
             lat: 53.40584,
             lng: -6.37960
         },
-        // Towards Gym
+        //Towards Gym
         {
             lat: 53.405811275760044,
             lng: -6.381368245932702
         },
-        // Gym → Field
+        //Gym to Field
         {
             lat: 53.40605,
             lng: -6.38195
@@ -244,7 +236,7 @@ const trailPaths = {
             lat: 53.40637444210749,
             lng: -6.382525651681246
         },
-        // Field → Café
+        //Field to Café
         {
             lat: 53.40640,
             lng: -6.38160
@@ -258,16 +250,14 @@ const trailPaths = {
             lng: -6.3798825101578585
         }
     ],
-    // ============================
-    // TECH TRAIL
-    // ============================
+    //Tech trail
     'Technology Trail': [
-        // T1 → AG Building (Start)
+        //T1 to AG Building
         {
             lat: 53.404609889004455,
             lng: -6.379100157185581
         },
-        // AG → E Building
+        //AG to E Building
         {
             lat: 53.40490,
             lng: -6.37870
@@ -280,7 +270,7 @@ const trailPaths = {
             lat: 53.40529084274418,
             lng: -6.377768391376469
         },
-        // E → D Building (Finish)
+        //E to D Building
         {
             lat: 53.40545,
             lng: -6.37760
@@ -317,11 +307,11 @@ function MapView({ selectedTrail }) {
     const markersRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])([]);
     const polylineRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])(null);
     const infoWindowRef = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useRef"])(null);
-    const SPORTS_COLOR = '#b61352'; // Royal Red
-    const TECH_COLOR = '#4169E1'; // Royal Blue
+    const SPORTS_COLOR = '#b61352';
+    const TECH_COLOR = '#4169E1';
     (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["useEffect"])(()=>{
         if (!window.google || !window.google.maps) return;
-        // Create map once
+        //Create map once
         if (!mapInstanceRef.current) {
             mapInstanceRef.current = new window.google.maps.Map(mapRef.current, {
                 center: {
@@ -336,17 +326,15 @@ function MapView({ selectedTrail }) {
             infoWindowRef.current = new window.google.maps.InfoWindow();
         }
         const map = mapInstanceRef.current;
-        // Clear markers
+        //Clear markers
         markersRef.current.forEach((m)=>m.setMap(null));
         markersRef.current = [];
-        // Clear polyline
+        //Clear polyline
         if (polylineRef.current) {
             polylineRef.current.setMap(null);
             polylineRef.current = null;
         }
-        // ============================
-        // DEFAULT MODE
-        // ============================
+        //Default mode
         if (!selectedTrail) {
             __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$data$2f$locations$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].filter((l)=>l.type === 'default').forEach((loc)=>{
                 const marker = new window.google.maps.Marker({
@@ -371,9 +359,7 @@ function MapView({ selectedTrail }) {
             });
             return;
         }
-        // ============================
-        // TRAIL MODE
-        // ============================
+        //Trail mode
         const trailStops = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$data$2f$locations$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].filter((l)=>l.type === 'trail' && l.trail === selectedTrail).sort((a, b)=>a.order - b.order);
         const isTechTrail = selectedTrail === 'Technology Trail';
         trailStops.forEach((stop)=>{
@@ -402,7 +388,7 @@ function MapView({ selectedTrail }) {
             });
             markersRef.current.push(marker);
         });
-        // Draw trail polyline
+        //Draw trail polyline
         const path = __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$data$2f$trailPaths$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"][selectedTrail];
         if (!path || path.length === 0) return;
         polylineRef.current = new window.google.maps.Polyline({
@@ -425,7 +411,7 @@ function MapView({ selectedTrail }) {
         }
     }, void 0, false, {
         fileName: "[project]/src/app/components/MapView.jsx",
-        lineNumber: 133,
+        lineNumber: 129,
         columnNumber: 5
     }, this);
 }
@@ -658,10 +644,10 @@ function Home() {
                     children: [
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Typography$2f$Typography$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Typography$3e$__["Typography"], {
                             fontWeight: "bold",
-                            children: "Campus Quest"
+                            children: "CampusQuest"
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.js",
-                            lineNumber: 44,
+                            lineNumber: 37,
                             columnNumber: 11
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Box$3e$__["Box"], {
@@ -681,7 +667,7 @@ function Home() {
                                     children: "Home"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.js",
-                                    lineNumber: 47,
+                                    lineNumber: 40,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Button$2f$Button$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Button$3e$__["Button"], {
@@ -695,7 +681,7 @@ function Home() {
                                     children: "Trails"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.js",
-                                    lineNumber: 55,
+                                    lineNumber: 48,
                                     columnNumber: 13
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Button$2f$Button$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Button$3e$__["Button"], {
@@ -710,24 +696,24 @@ function Home() {
                                     children: "Scan"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/page.js",
-                                    lineNumber: 64,
+                                    lineNumber: 57,
                                     columnNumber: 13
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/page.js",
-                            lineNumber: 46,
+                            lineNumber: 39,
                             columnNumber: 11
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/app/page.js",
-                    lineNumber: 43,
+                    lineNumber: 36,
                     columnNumber: 9
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/page.js",
-                lineNumber: 35,
+                lineNumber: 28,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Container$2f$Container$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Container$3e$__["Container"], {
@@ -747,7 +733,7 @@ function Home() {
                         children: "Interactive Campus Map"
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.js",
-                        lineNumber: 79,
+                        lineNumber: 72,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Typography$2f$Typography$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Typography$3e$__["Typography"], {
@@ -760,7 +746,7 @@ function Home() {
                         children: "Explore TU Dublin Blanchardstown using themed trails"
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.js",
-                        lineNumber: 89,
+                        lineNumber: 82,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Box$3e$__["Box"], {
@@ -772,24 +758,24 @@ function Home() {
                             setSelectedTrail: setSelectedTrail
                         }, void 0, false, {
                             fileName: "[project]/src/app/page.js",
-                            lineNumber: 99,
+                            lineNumber: 92,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/page.js",
-                        lineNumber: 98,
+                        lineNumber: 91,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/page.js",
-                lineNumber: 78,
+                lineNumber: 71,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/page.js",
-        lineNumber: 33,
+        lineNumber: 26,
         columnNumber: 5
     }, this);
 }
