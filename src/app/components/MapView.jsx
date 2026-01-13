@@ -12,8 +12,8 @@ export default function MapView({ selectedTrail }) {
   const polylineRef = useRef(null);
   const infoWindowRef = useRef(null);
 
-  const SPORTS_COLOR = '#b61352'; // Royal Red
-  const TECH_COLOR = '#4169E1';   // Royal Blue
+  const SPORTS_COLOR = '#b61352'; 
+  const TECH_COLOR = '#4169E1';   
 
   useEffect(() => {
     if (!window.google || !window.google.maps) return;
