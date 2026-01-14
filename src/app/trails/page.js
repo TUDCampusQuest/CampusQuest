@@ -2,16 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import {
-    AppBar,
-    Toolbar,
-    Box,
-    Container,
-    Typography,
-    Button,
-    Card,
-    Stack,
-} from '@mui/material';
+import {AppBar, Toolbar, Box, Container, Typography, Button, Card, Stack,} from '@mui/material';
 
 function TrailCard({ trail }) {
     return (
@@ -25,7 +16,7 @@ function TrailCard({ trail }) {
                 bgcolor: 'white',
             }}
         >
-            {/* Header image (from DB) */}
+            {/* Header image */}
             <Box
                 sx={{
                     height: 150,
@@ -36,28 +27,6 @@ function TrailCard({ trail }) {
                     backgroundRepeat: 'no-repeat',
                 }}
             >
-                {/* overlay for readability */}
-                <Box
-                    sx={{
-                        position: 'absolute',
-                        inset: 0,
-                        bgcolor: 'rgba(0,0,0,0.25)',
-                    }}
-                />
-
-                {/* top-left title */}
-                <Typography
-                    sx={{
-                        position: 'absolute',
-                        top: 18,
-                        left: 18,
-                        fontSize: 13,
-                        fontWeight: 800,
-                        color: 'white',
-                        textShadow: '0 4px 14px rgba(0,0,0,0.6)',
-                    }}
-                >
-                </Typography>
             </Box>
 
             {/* Content */}

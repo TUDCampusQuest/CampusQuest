@@ -41,38 +41,10 @@ function TrailCard({ trail }) {
                     backgroundSize: 'cover',
                     backgroundPosition: 'center',
                     backgroundRepeat: 'no-repeat'
-                },
-                children: [
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Box$3e$__["Box"], {
-                        sx: {
-                            position: 'absolute',
-                            inset: 0,
-                            bgcolor: 'rgba(0,0,0,0.25)'
-                        }
-                    }, void 0, false, {
-                        fileName: "[project]/src/app/trails/page.js",
-                        lineNumber: 40,
-                        columnNumber: 17
-                    }, this),
-                    /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Typography$2f$Typography$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Typography$3e$__["Typography"], {
-                        sx: {
-                            position: 'absolute',
-                            top: 18,
-                            left: 18,
-                            fontSize: 13,
-                            fontWeight: 800,
-                            color: 'white',
-                            textShadow: '0 4px 14px rgba(0,0,0,0.6)'
-                        }
-                    }, void 0, false, {
-                        fileName: "[project]/src/app/trails/page.js",
-                        lineNumber: 49,
-                        columnNumber: 17
-                    }, this)
-                ]
-            }, void 0, true, {
+                }
+            }, void 0, false, {
                 fileName: "[project]/src/app/trails/page.js",
-                lineNumber: 29,
+                lineNumber: 20,
                 columnNumber: 13
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Box$3e$__["Box"], {
@@ -86,7 +58,7 @@ function TrailCard({ trail }) {
                         children: trail.title
                     }, void 0, false, {
                         fileName: "[project]/src/app/trails/page.js",
-                        lineNumber: 65,
+                        lineNumber: 34,
                         columnNumber: 17
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Typography$2f$Typography$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Typography$3e$__["Typography"], {
@@ -98,7 +70,7 @@ function TrailCard({ trail }) {
                         children: trail.desc
                     }, void 0, false, {
                         fileName: "[project]/src/app/trails/page.js",
-                        lineNumber: 69,
+                        lineNumber: 38,
                         columnNumber: 17
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Stack$2f$Stack$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Stack$3e$__["Stack"], {
@@ -115,7 +87,7 @@ function TrailCard({ trail }) {
                                     children: trail.duration
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/trails/page.js",
-                                    lineNumber: 76,
+                                    lineNumber: 45,
                                     columnNumber: 25
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Typography$2f$Typography$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Typography$3e$__["Typography"], {
@@ -126,30 +98,30 @@ function TrailCard({ trail }) {
                                     children: "Duration"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/trails/page.js",
-                                    lineNumber: 79,
+                                    lineNumber: 48,
                                     columnNumber: 25
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/trails/page.js",
-                            lineNumber: 75,
+                            lineNumber: 44,
                             columnNumber: 21
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/trails/page.js",
-                        lineNumber: 74,
+                        lineNumber: 43,
                         columnNumber: 17
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/trails/page.js",
-                lineNumber: 64,
+                lineNumber: 33,
                 columnNumber: 13
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/trails/page.js",
-        lineNumber: 18,
+        lineNumber: 9,
         columnNumber: 9
     }, this);
 }
@@ -194,7 +166,7 @@ function TrailsPage() {
                             children: "Campus Quest"
                         }, void 0, false, {
                             fileName: "[project]/src/app/trails/page.js",
-                            lineNumber: 124,
+                            lineNumber: 93,
                             columnNumber: 21
                         }, this),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Box$3e$__["Box"], {
@@ -215,7 +187,7 @@ function TrailsPage() {
                                     children: "Home"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/trails/page.js",
-                                    lineNumber: 127,
+                                    lineNumber: 96,
                                     columnNumber: 25
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Button$2f$Button$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Button$3e$__["Button"], {
@@ -229,7 +201,7 @@ function TrailsPage() {
                                     children: "Trails"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/trails/page.js",
-                                    lineNumber: 131,
+                                    lineNumber: 100,
                                     columnNumber: 25
                                 }, this),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Button$2f$Button$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Button$3e$__["Button"], {
@@ -244,24 +216,24 @@ function TrailsPage() {
                                     children: "Scan"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/trails/page.js",
-                                    lineNumber: 135,
+                                    lineNumber: 104,
                                     columnNumber: 25
                                 }, this)
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/trails/page.js",
-                            lineNumber: 126,
+                            lineNumber: 95,
                             columnNumber: 21
                         }, this)
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/app/trails/page.js",
-                    lineNumber: 123,
+                    lineNumber: 92,
                     columnNumber: 17
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/trails/page.js",
-                lineNumber: 115,
+                lineNumber: 84,
                 columnNumber: 13
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Box$3e$__["Box"], {
@@ -282,7 +254,7 @@ function TrailsPage() {
                         children: "Loading trails..."
                     }, void 0, false, {
                         fileName: "[project]/src/app/trails/page.js",
-                        lineNumber: 146,
+                        lineNumber: 115,
                         columnNumber: 25
                     }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Stack$2f$Stack$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Stack$3e$__["Stack"], {
                         direction: {
@@ -296,22 +268,22 @@ function TrailsPage() {
                                 trail: trail
                             }, trail._id, false, {
                                 fileName: "[project]/src/app/trails/page.js",
-                                lineNumber: 155,
+                                lineNumber: 124,
                                 columnNumber: 33
                             }, this))
                     }, void 0, false, {
                         fileName: "[project]/src/app/trails/page.js",
-                        lineNumber: 148,
+                        lineNumber: 117,
                         columnNumber: 25
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/app/trails/page.js",
-                    lineNumber: 144,
+                    lineNumber: 113,
                     columnNumber: 17
                 }, this)
             }, void 0, false, {
                 fileName: "[project]/src/app/trails/page.js",
-                lineNumber: 143,
+                lineNumber: 112,
                 columnNumber: 13
             }, this)
         ]

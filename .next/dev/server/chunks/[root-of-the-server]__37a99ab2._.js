@@ -47,14 +47,13 @@ var __TURBOPACK__imported__module__$5b$externals$5d2f$mongodb__$5b$external$5d$_
 const uri = process.env.MONGODB_URI;
 if (!uri) throw new Error('Missing MONGODB_URI in .env.local');
 let client;
-let clientPromise;
-// Cache the connection in development to avoid creating many clients during hot reload
-if (!/*TURBOPACK member replacement*/ __turbopack_context__.g._mongoClientPromise) {
+let mongoConnection;
+if (!/*TURBOPACK member replacement*/ __turbopack_context__.g.mongoConnection) {
     client = new __TURBOPACK__imported__module__$5b$externals$5d2f$mongodb__$5b$external$5d$__$28$mongodb$2c$__cjs$2c$__$5b$project$5d2f$node_modules$2f$mongodb$29$__["MongoClient"](uri);
-    /*TURBOPACK member replacement*/ __turbopack_context__.g._mongoClientPromise = client.connect();
+    /*TURBOPACK member replacement*/ __turbopack_context__.g.mongoConnection = client.connect();
 }
-clientPromise = /*TURBOPACK member replacement*/ __turbopack_context__.g._mongoClientPromise;
-const __TURBOPACK__default__export__ = clientPromise;
+mongoConnection = /*TURBOPACK member replacement*/ __turbopack_context__.g.mongoConnection;
+const __TURBOPACK__default__export__ = mongoConnection;
 }),
 "[project]/src/app/api/trails/route.js [app-route] (ecmascript)", ((__turbopack_context__) => {
 "use strict";

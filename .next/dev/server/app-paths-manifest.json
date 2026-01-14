@@ -1,5 +1,4 @@
 {
-  "/api/health/route": "app/api/health/route.js",
   "/api/trails/route": "app/api/trails/route.js",
   "/page": "app/page.js",
   "/trails/page": "app/trails/page.js"
