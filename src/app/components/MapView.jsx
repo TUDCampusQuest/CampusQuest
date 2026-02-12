@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, Suspense } from 'react';
+import { useState, useEffect, Suspense, useMemo } from 'react';
 import { GoogleMap, Marker, DirectionsRenderer, useJsApiLoader } from '@react-google-maps/api';
 import { useSearchParams } from 'next/navigation';
 
@@ -11,7 +11,7 @@ function MapContent() {
     const [directions, setDirections] = useState(null);
     const [locations, setLocations] = useState([]);
 
-    const { isLoaded } = useJsApiLoader({
+    const { isLoaded, loadError } = useJsApiLoader({
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
     });
 
@@ -29,8 +29,9 @@ function MapContent() {
         const lat = searchParams.get('lat');
         const lng = searchParams.get('lng');
 
-        if (isLoaded && lat && lng && window.google) {
+        if (isLoaded && lat && lng && typeof window !== 'undefined' && window.google) {
             const directionsService = new google.maps.DirectionsService();
+
             directionsService.route(
                 {
                     origin: campusCenter,
@@ -38,33 +39,56 @@ function MapContent() {
                     travelMode: google.maps.TravelMode.WALKING,
                 },
                 (result, status) => {
-                    if (status === 'OK') setDirections(result);
+                    if (status === 'OK') {
+                        setDirections(result);
+                    } else {
+                        console.error(`Directions request failed: ${status}`);
+                    }
                 }
             );
         }
     }, [isLoaded, searchParams]);
 
-    if (!isLoaded) return <div style={{ height: '100vh', background: '#e5e7eb' }} />;
+    const mapOptions = useMemo(() => ({
+        disableDefaultUI: true,
+        mapTypeId: 'hybrid',
+        tilt: 45,
+        gestureHandling: 'greedy'
+    }), []);
+
+    if (loadError) return <div>Error loading maps</div>;
+    if (!isLoaded) return <div style={{ height: '100vh', background: '#e5e7eb', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>Loading Maps...</div>;
 
     return (
         <GoogleMap
             mapContainerStyle={containerStyle}
             center={campusCenter}
             zoom={18}
-            options={{ disableDefaultUI: true, mapTypeId: 'hybrid', tilt: 45 }}
+            options={mapOptions}
         >
             {locations.map((loc) => (
                 <Marker
                     key={loc.id}
-                    position={{ lat: loc.lat, lng: loc.lng }}
-                    label={{ text: loc.id, color: "white", fontSize: "10px", fontWeight: "bold" }}
+                    position={{ lat: parseFloat(loc.lat), lng: parseFloat(loc.lng) }}
+                    label={{
+                        text: loc.id,
+                        color: "white",
+                        fontSize: "10px",
+                        fontWeight: "bold"
+                    }}
                 />
             ))}
 
             {directions && (
                 <DirectionsRenderer
                     directions={directions}
-                    options={{ polylineOptions: { strokeColor: '#1BA39C', strokeWeight: 6 } }}
+                    options={{
+                        polylineOptions: {
+                            strokeColor: '#1BA39C',
+                            strokeWeight: 6
+                        },
+                        preserveViewport: false
+                    }}
                 />
             )}
         </GoogleMap>

@@ -25,8 +25,11 @@ export default function LocationDetails() {
 
         async function fetchLocation() {
             try {
+                // Fetching your locations.json via your API route
                 const res = await fetch('/api/locations');
                 const data = await res.json();
+
+                // Matching the building ID from the URL (e.g., /location/FBL)
                 const found = data.find(loc => loc.id.toUpperCase() === id?.toUpperCase());
                 setLocation(found);
             } catch (err) {
@@ -55,17 +58,33 @@ export default function LocationDetails() {
         </Container>
     );
 
+    // Fallback logic:
+    // 1. Tries the 'image' field from your S3 JSON
+    // 2. Tries a local fallback if S3 is empty
+    const displayImage = location.image || '/logo.png';
+
     return (
         <Box sx={{ bgcolor: '#F8FAFC', minHeight: '100vh', pb: 12 }}>
             <Box sx={{
-                width: '100%', height: '30vh',
-                backgroundImage: `url(${location.image || 'https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=1000'})`,
-                backgroundSize: 'cover', backgroundPosition: 'center', position: 'relative'
+                width: '100%',
+                height: '30vh',
+                backgroundImage: `url(${displayImage})`,
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                position: 'relative',
+                boxShadow: 'inset 0 -50px 50px -20px rgba(0,0,0,0.3)'
             }}>
                 <Box sx={{ position: 'absolute', inset: 0, bgcolor: 'rgba(0,0,0,0.1)' }} />
                 <IconButton
                     onClick={() => router.back()}
-                    sx={{ position: 'absolute', top: 20, left: 20, bgcolor: 'white', '&:hover': { bgcolor: '#f1f5f9' } }}
+                    sx={{
+                        position: 'absolute',
+                        top: 20,
+                        left: 20,
+                        bgcolor: 'white',
+                        boxShadow: 2,
+                        '&:hover': { bgcolor: '#f1f5f9' }
+                    }}
                 >
                     <ArrowBackIcon />
                 </IconButton>
@@ -93,12 +112,14 @@ export default function LocationDetails() {
                             <Box sx={{ flex: 1, p: 2, bgcolor: '#f8fafc', borderRadius: '16px', textAlign: 'center' }}>
                                 <MeetingRoomIcon sx={{ color: '#64748b', mb: 0.5 }} />
                                 <Typography variant="caption" display="block" color="textSecondary">FLOOR</Typography>
-                                <Typography sx={{ fontWeight: 800 }}>{location.floor === 0 ? 'Ground' : `Level ${location.floor}`}</Typography>
+                                <Typography sx={{ fontWeight: 800 }}>
+                                    {location.floor === 0 || location.floor === "Ground" ? 'Ground' : `Level ${location.floor}`}
+                                </Typography>
                             </Box>
                             <Box sx={{ flex: 1, p: 2, bgcolor: '#f8fafc', borderRadius: '16px', textAlign: 'center' }}>
                                 <AccessibleIcon sx={{ color: '#64748b', mb: 0.5 }} />
                                 <Typography variant="caption" display="block" color="textSecondary">ACCESS</Typography>
-                                <Typography sx={{ fontWeight: 800 }}>{location.accessibility}</Typography>
+                                <Typography sx={{ fontWeight: 800 }}>{location.accessibility || 'Standard'}</Typography>
                             </Box>
                         </Stack>
 
@@ -112,7 +133,13 @@ export default function LocationDetails() {
                             variant="contained"
                             startIcon={<NavigationIcon />}
                             onClick={() => router.push(`/?lat=${location.lat}&lng=${location.lng}`)}
-                            sx={{ bgcolor: '#1BA39C', py: 2, borderRadius: '16px', fontWeight: 800, '&:hover': { bgcolor: '#15807a' } }}
+                            sx={{
+                                bgcolor: '#1BA39C',
+                                py: 2,
+                                borderRadius: '16px',
+                                fontWeight: 800,
+                                '&:hover': { bgcolor: '#15807a' }
+                            }}
                         >
                             Start Navigation
                         </Button>
