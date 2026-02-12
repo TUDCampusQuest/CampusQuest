@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { 
-  Box, Typography, Button, IconButton, Chip, 
-  Stack, Divider, Container, Paper 
+import {
+  Box, Typography, Button, IconButton, Chip,
+  Stack, Divider, Container, Paper
 } from '@mui/material';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import AccessibleIcon from '@mui/icons-material/Accessible';

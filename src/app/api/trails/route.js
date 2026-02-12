@@ -1,15 +1,20 @@
-import mongoConnection from '../../../lib/mongodb';
+import s3Client from '../../../lib/s3';
+import { GetObjectCommand } from "@aws-sdk/client-s3";
 
 export async function GET() {
-    const client = await mongoConnection;
-    const dbName = process.env.MONGODB_DB || 'app';
+    try {
+        const command = new GetObjectCommand({
+            Bucket: process.env.S3_BUCKET_NAME,
+            Key: 'data/trails.json', // Path to your data file in S3
+        });
 
-    const trails = await client
-        .db(dbName)
-        .collection('trails')
-        .find({})
-        .sort({ key: 1 })
-        .toArray();
+        const response = await s3Client.send(command);
+        const data = await response.Body.transformToString();
+        const trails = JSON.parse(data);
 
-    return Response.json(trails);
+        return Response.json(trails);
+    } catch (error) {
+        console.error("S3 Fetch Error:", error);
+        return Response.json({ error: "Failed to fetch data from S3" }, { status: 500 });
+    }
 }
