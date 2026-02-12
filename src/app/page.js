@@ -6,7 +6,6 @@ import {
     Typography, Stack, Paper, InputAdornment
 } from "@mui/material";
 
-// Icons
 import SearchIcon from "@mui/icons-material/Search";
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
@@ -21,7 +20,6 @@ import CloseIcon from '@mui/icons-material/Close';
 import { useRouter } from "next/navigation";
 import MapView from "./components/MapView";
 
-// Helper Component defined outside to prevent re-renders
 function SideButton({ children, onClick }) {
     return (
         <Paper
@@ -43,17 +41,14 @@ export default function Home() {
     const [searchOpen, setSearchOpen] = useState(false);
     const [query, setQuery] = useState("");
     const [isMounted, setIsMounted] = useState(false);
-    const [locations, setLocations] = useState([]); // State for S3 data
+    const [locations, setLocations] = useState([]);
 
-    // 1. Hydration Guard & Data Fetching
     useEffect(() => {
         setIsMounted(true);
 
-        // Fetch locations from S3 via your new API route
         fetch('/api/locations')
             .then(res => res.json())
             .then(data => {
-                // Handle both direct arrays and object-wrapped arrays
                 const fetchedLocations = Array.isArray(data) ? data : (data?.locations || []);
                 setLocations(fetchedLocations);
             })
@@ -70,7 +65,6 @@ export default function Home() {
     return (
         <Box sx={{ height: "100vh", width: "100vw", position: "relative", overflow: "hidden", bgcolor: "#f0f0f0" }}>
 
-            {/* TOP NAVIGATION BAR */}
             <Box sx={{
                 position: "absolute", top: 0, left: 0, right: 0, zIndex: 1100,
                 height: 60, bgcolor: "white", display: "flex", alignItems: "center",
@@ -90,11 +84,8 @@ export default function Home() {
                     <IconButton size="small" sx={{ color: "#64748b" }}><MapOutlinedIcon /></IconButton>
                 </Stack>
             </Box>
-
-            {/* THE MAP COMPONENT */}
             <MapView />
 
-            {/* SIDE ACTION BAR (Right Side) */}
             <Stack spacing={1.5} sx={{ position: "absolute", right: 16, top: 100, zIndex: 1000 }}>
                 <SideButton><LayersIcon /></SideButton>
                 <SideButton><TerrainIcon /></SideButton>
@@ -105,7 +96,6 @@ export default function Home() {
                 <SideButton><MyLocationIcon /></SideButton>
             </Stack>
 
-            {/* BOTTOM SEARCH & QR BAR */}
             <Box sx={{
                 position: "absolute", bottom: 30, left: "50%",
                 transform: "translateX(-50%)", width: "94%", maxWidth: "500px",
@@ -131,7 +121,6 @@ export default function Home() {
                 </IconButton>
             </Box>
 
-            {/* SEARCH SLIDE-UP DRAWER */}
             <Drawer
                 anchor="bottom"
                 open={searchOpen}
@@ -175,7 +164,7 @@ export default function Home() {
                                 key={loc.id}
                                 onClick={() => {
                                     if (document.activeElement instanceof HTMLElement) {
-                                        document.activeElement.blur(); // Closes mobile keyboard
+                                        document.activeElement.blur();
                                     }
                                     setSearchOpen(false);
                                     router.push(`/location/${loc.id}`);

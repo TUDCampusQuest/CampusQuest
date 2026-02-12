@@ -4,7 +4,6 @@ import { Box, Typography, Button, Stack, Paper, IconButton } from "@mui/material
 import { useRouter } from "next/navigation";
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
-// Icons for the list
 import QrCodeScannerIcon from '@mui/icons-material/QrCodeScanner';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import NearMeIcon from '@mui/icons-material/NearMe';
@@ -42,16 +41,14 @@ export default function InfoPage() {
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#f8fafc", p: 3, pb: 10 }}>
-      {/* Back Button */}
       <IconButton onClick={() => router.back()} sx={{ mb: 2 }}>
         <ArrowBackIcon />
       </IconButton>
 
-      {/* Hero Section */}
       <Stack alignItems="center" spacing={1} sx={{ mb: 4 }}>
         <Box 
           component="img" 
-          src="/logo.png" // Ensure your logo is in public/logo.png
+          src="/logo.png"
           sx={{ width: 80, height: 80, borderRadius: 4, mb: 1 }} 
           alt="Logo"
         />

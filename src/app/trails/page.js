@@ -16,7 +16,6 @@ function TrailCard({ trail }) {
                 bgcolor: 'white',
             }}
         >
-            {/* Header image */}
             <Box
                 sx={{
                     height: 150,
@@ -29,7 +28,6 @@ function TrailCard({ trail }) {
             >
             </Box>
 
-            {/* Content */}
             <Box sx={{ p: 3 }}>
                 <Typography variant="h5" fontWeight={900}>
                     {trail.title}
@@ -39,7 +37,6 @@ function TrailCard({ trail }) {
                     {trail.desc}
                 </Typography>
 
-                {/* Duration */}
                 <Stack sx={{ mt: 3 }}>
                     <Box>
                         <Typography fontWeight={900} sx={{ fontSize: 18 }}>
@@ -80,7 +77,6 @@ export default function TrailsPage() {
 
     return (
         <>
-            {/* Navbar */}
             <AppBar
                 position="sticky"
                 elevation={0}
@@ -108,7 +104,6 @@ export default function TrailsPage() {
                 </Toolbar>
             </AppBar>
 
-            {/* Trails Section */}
             <Box sx={{ minHeight: '100vh', bgcolor: '#f5f7fb', py: { xs: 4, md: 6 } }}>
                 <Container maxWidth="lg">
                     {loading ? (

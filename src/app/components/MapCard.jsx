@@ -21,7 +21,6 @@ export default function MapCard({
 
   return (
     <Card sx={{ borderRadius: 3, overflow: 'hidden', boxShadow: 4 }}>
-      {/* Header */}
       <Box
         sx={{
           px: 3,
@@ -34,7 +33,6 @@ export default function MapCard({
           TU Dublin Blanchardstown Campus
         </Typography>
 
-        {/* Trial buttons */}
         <Stack direction="row" spacing={1} sx={{ mt: 1 }} flexWrap="wrap">
           {trails.map((trail) => (
             <Chip
@@ -57,7 +55,6 @@ export default function MapCard({
         </Stack>
       </Box>
 
-      {/* Map */}
       <Box sx={{ height: { xs: 350, md: 500 } }}>
         <MapView
           selectedTrail={selectedTrail}
@@ -65,7 +62,6 @@ export default function MapCard({
         />
       </Box>
 
-      {/* Legend */}
       <Divider />
       <Box sx={{ px: 3, py: 2 }}>
         <Typography variant="subtitle2" fontWeight="bold" gutterBottom>

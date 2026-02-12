@@ -11,13 +11,11 @@ export default function ScanPage() {
   const [isMounted, setIsMounted] = useState(false);
   const scannerRef = useRef(null);
 
-  // 1. Only handle mounting first
   useEffect(() => {
     setIsMounted(true);
     return () => setIsMounted(false);
   }, []);
 
-  // 2. Only handle scanner initialization AFTER mounting is confirmed
   useEffect(() => {
     if (isMounted && !scannerRef.current) {
       const scanner = new Html5QrcodeScanner("reader", { 
@@ -37,7 +35,6 @@ export default function ScanPage() {
       scannerRef.current = scanner;
     }
 
-    // Cleanup
     return () => {
       if (scannerRef.current) {
         scannerRef.current.clear().catch(e => console.warn("Scanner clear error", e));
@@ -50,7 +47,6 @@ export default function ScanPage() {
     router.push('/location/FBL');
   };
 
-  // If not mounted, show a matching background color to prevent "flicker"
   if (!isMounted) {
     return <Box sx={{ height: '100vh', bgcolor: '#1a1f2b' }} />;
   }
@@ -64,7 +60,6 @@ export default function ScanPage() {
       flexDirection: 'column',
       overflow: 'hidden'
     }}>
-      {/* HEADER */}
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center' }}>
         <IconButton onClick={() => router.back()} sx={{ color: 'white' }}>
           <ArrowBackIcon />
@@ -75,10 +70,8 @@ export default function ScanPage() {
         <Box sx={{ width: 40 }} />
       </Box>
 
-      {/* SCANNER VIEWPORT */}
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', mt: -4 }}>
         <Box sx={{ position: 'relative', width: 280, height: 280, mb: 4 }}>
-          {/* Green Corner Brackets */}
           <Box sx={{ position: 'absolute', top: 0, left: 0, width: 40, height: 40, borderLeft: '4px solid #34d399', borderTop: '4px solid #34d399', borderTopLeftRadius: 20, zIndex: 2 }} />
           <Box sx={{ position: 'absolute', top: 0, right: 0, width: 40, height: 40, borderRight: '4px solid #34d399', borderTop: '4px solid #34d399', borderTopRightRadius: 20, zIndex: 2 }} />
           <Box sx={{ position: 'absolute', bottom: 0, left: 0, width: 40, height: 40, borderLeft: '4px solid #34d399', borderBottom: '4px solid #34d399', borderBottomLeftRadius: 20, zIndex: 2 }} />
@@ -91,7 +84,6 @@ export default function ScanPage() {
         <Typography variant="body2" sx={{ color: '#94a3b8' }}>Align QR code within the frame</Typography>
       </Box>
 
-      {/* BUTTONS */}
       <Box sx={{ p: 3, pb: 8 }}>
         <Stack spacing={2}>
           <Button 
@@ -106,7 +98,7 @@ export default function ScanPage() {
               '&:hover': { bgcolor: '#16867f' }
             }}
           >
-            Simulate QR Scan (Demo)
+            Simulate QR Scan
           </Button>
           <Button 
             fullWidth 

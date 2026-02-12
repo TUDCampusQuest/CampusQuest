@@ -18,10 +18,10 @@ export default function LocationDetails() {
 
     const [location, setLocation] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [mounted, setMounted] = useState(false); // Add this state
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
-        setMounted(true); // Set to true once the browser is ready
+        setMounted(true);
 
         async function fetchLocation() {
             try {
@@ -38,7 +38,6 @@ export default function LocationDetails() {
         if (id) fetchLocation();
     }, [id]);
 
-    // Prevent rendering anything until the component is mounted
     if (!mounted) return null;
 
     if (loading) return (
@@ -47,7 +46,6 @@ export default function LocationDetails() {
         </Box>
     );
 
-    // 3. Handle cases where the ID in the URL doesn't exist in your JSON
     if (!location) return (
         <Container sx={{ mt: 10, textAlign: 'center' }}>
             <Typography variant="h5" sx={{ fontWeight: 700, mb: 2 }}>Building Not Found</Typography>
@@ -59,7 +57,6 @@ export default function LocationDetails() {
 
     return (
         <Box sx={{ bgcolor: '#F8FAFC', minHeight: '100vh', pb: 12 }}>
-            {/* Header Image */}
             <Box sx={{
                 width: '100%', height: '30vh',
                 backgroundImage: `url(${location.image || 'https://images.unsplash.com/photo-1562774053-701939374585?q=80&w=1000'})`,
@@ -92,7 +89,6 @@ export default function LocationDetails() {
 
                         <Divider />
 
-                        {/* Quick Info Grid */}
                         <Stack direction="row" spacing={2}>
                             <Box sx={{ flex: 1, p: 2, bgcolor: '#f8fafc', borderRadius: '16px', textAlign: 'center' }}>
                                 <MeetingRoomIcon sx={{ color: '#64748b', mb: 0.5 }} />
@@ -106,13 +102,11 @@ export default function LocationDetails() {
                             </Box>
                         </Stack>
 
-                        {/* Guidance Alert */}
                         <Box sx={{ bgcolor: '#ecfeff', p: 2, borderRadius: '16px', borderLeft: '4px solid #06b6d4' }}>
                             <Typography variant="subtitle2" sx={{ fontWeight: 800, color: '#0891b2' }}>Indoor Guidance</Typography>
                             <Typography variant="body2" sx={{ color: '#164e63' }}>{location.indoorInstructions}</Typography>
                         </Box>
 
-                        {/* Navigation Action */}
                         <Button
                             fullWidth
                             variant="contained"

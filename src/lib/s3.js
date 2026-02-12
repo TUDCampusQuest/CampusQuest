@@ -8,7 +8,6 @@ const s3Client = new S3Client({
     },
 });
 
-// Helper for fetching JSON
 export async function getS3Data(key) {
     const command = new GetObjectCommand({
         Bucket: process.env.S3_BUCKET_NAME,
@@ -25,5 +24,4 @@ export async function getS3Data(key) {
     }
 }
 
-// CRITICAL FIX: Add this line so your API routes can import 's3Client'
 export default s3Client;

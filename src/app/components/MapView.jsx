@@ -9,13 +9,12 @@ const campusCenter = { lat: 53.405292, lng: -6.378240 };
 function MapContent() {
     const searchParams = useSearchParams();
     const [directions, setDirections] = useState(null);
-    const [locations, setLocations] = useState([]); // State for S3 data
+    const [locations, setLocations] = useState([]);
 
     const { isLoaded } = useJsApiLoader({
         googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY,
     });
 
-    // Fetch locations from S3 via API
     useEffect(() => {
         fetch('/api/locations')
             .then(res => res.json())
@@ -72,7 +71,6 @@ function MapContent() {
     );
 }
 
-// CRITICAL FIX: The export default must be present!
 export default function MapView() {
     return (
         <Suspense fallback={<div style={{ height: '100vh', background: '#f0f0f0' }} />}>
