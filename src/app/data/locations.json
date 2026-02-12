@@ -1,12 +1,82 @@
 [
   {
     "id": "FBL",
-    "name": "F Block",
-    "description": "Lecture halls, classrooms, library...",
-    "floor": 0,
-    "accessibility": "Lift",
-    "indoorInstructions": "Library is straight ahead...",
-    "lat": 53.406,
-    "lng": -6.379
+    "name": "Faculty of Business & Languages",
+    "lat": 53.405292,
+    "lng": -6.37824,
+    "description": "Main hub for Business, Humanities, and Language departments. Contains lecture halls and staff offices.",
+    "floors": ["Ground", "First", "Second"]
+  },
+  {
+    "id": "BLOCK-C",
+    "name": "Block C - Computing & Engineering",
+    "lat": 53.4058,
+    "lng": -6.3791,
+    "description": "The primary building for Informatics and Engineering labs, high-tech classrooms, and workshops.",
+    "floors": ["Ground", "First"]
+  },
+  {
+    "id": "BLOCK-D",
+    "name": "Block D - Horticulture & Science",
+    "lat": 53.4062,
+    "lng": -6.3778,
+    "description": "Specialized building for Science labs and Horticultural studies, including greenhouse access.",
+    "floors": ["Ground"]
+  },
+  {
+    "id": "BLOCK-E",
+    "name": "Block E - Learning & Innovation",
+    "lat": 53.4055,
+    "lng": -6.3805,
+    "description": "Research and innovation center. Focuses on industry collaboration and incubator space.",
+    "floors": ["Ground", "First"]
+  },
+  {
+    "id": "LIBRARY",
+    "name": "Campus Library & Information Office",
+    "lat": 53.4049,
+    "lng": -6.3775,
+    "description": "Central study area, book collections, computer labs, and student support services.",
+    "floors": ["Ground", "First"]
+  },
+  {
+    "id": "SPORTS",
+    "name": "Sports Centre",
+    "lat": 53.4042,
+    "lng": -6.3768,
+    "description": "Student gym, multi-purpose sports hall, and changing facilities.",
+    "floors": ["Ground"]
+  },
+  {
+    "id": "CANTEEN",
+    "name": "Student Canteen & Common Area",
+    "lat": 53.4051,
+    "lng": -6.3788,
+    "description": "Main dining area, coffee shop, and student social spaces.",
+    "floors": ["Ground"]
+  },
+  {
+    "id": "CONNECT",
+    "name": "Connect Building",
+    "lat": 53.4046,
+    "lng": -6.3798,
+    "description": "Central administration, student services desk, and admissions.",
+    "floors": ["Ground", "First"]
+  },
+  {
+    "id": "SU",
+    "name": "Student Union",
+    "lat": 53.4044,
+    "lng": -6.379,
+    "description": "Offices for the Student Union representatives and welfare support.",
+    "floors": ["Ground"]
+  },
+  {
+    "id": "PARKING-N",
+    "name": "North Car Park",
+    "lat": 53.4065,
+    "lng": -6.3785,
+    "description": "Main visitor and staff parking located at the northern edge of campus.",
+    "floors": ["N/A"]
   }
 ]
