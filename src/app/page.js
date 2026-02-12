@@ -67,23 +67,44 @@ export default function Home() {
 
             <Box sx={{
                 position: "absolute", top: 0, left: 0, right: 0, zIndex: 1100,
-                height: 60, bgcolor: "white", display: "flex", alignItems: "center",
+                height: 70,
+                bgcolor: "white", display: "flex", alignItems: "center",
                 px: 2, boxShadow: "0 2px 10px rgba(0,0,0,0.05)"
             }}>
-                <Typography variant="h6" sx={{ fontWeight: 800, color: "#1e293b", flex: 1 }}>
-                    Campus Quest
-                </Typography>
+                <Box sx={{ flex: 1, display: 'flex', alignItems: 'center' }}>
+                    <Box
+                        component="img"
+                        src="https://campusquesttud.s3.eu-west-1.amazonaws.com/photos/CampusQuestLogo.png"
+                        onClick={() => router.push('/')}
+                        onError={(e) => { e.target.src = "/logo.png"; }}
+                        sx={{
+                            width: 80,
+                            height: 80,
+                            borderRadius: "10px",
+                            objectFit: "contain",
+                            cursor: 'pointer',
+                            transition: 'transform 0.2s',
+                            '&:hover': { transform: 'scale(1.05)' },
+                            filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.1))'
+                        }}
+                        alt="Campus Quest Logo"
+                    />
+                </Box>
+
                 <Stack direction="row" spacing={1}>
                     <IconButton
-                        size="small"
-                        sx={{ color: "#64748b" }}
+                        size="medium"
+                        sx={{ color: "#64748b", bgcolor: "#f8fafc" }}
                         onClick={() => router.push("/info")}
                     >
                         <InfoOutlinedIcon />
                     </IconButton>
-                    <IconButton size="small" sx={{ color: "#64748b" }}><MapOutlinedIcon /></IconButton>
+                    <IconButton size="medium" sx={{ color: "#64748b", bgcolor: "#f8fafc" }}>
+                        <MapOutlinedIcon />
+                    </IconButton>
                 </Stack>
             </Box>
+
             <MapView />
 
             <Stack spacing={1.5} sx={{ position: "absolute", right: 16, top: 100, zIndex: 1000 }}>
