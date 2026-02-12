@@ -4,13 +4,12 @@ const uri = process.env.MONGODB_URI;
 if (!uri) throw new Error('Missing MONGODB_URI in .env.local');
 
 let client;
-let clientPromise;
+let mongoConnection;
 
-// Cache the connection in development to avoid creating many clients during hot reload
-if (!global._mongoClientPromise) {
+if (!global.mongoConnection) {
     client = new MongoClient(uri);
-    global._mongoClientPromise = client.connect();
+    global.mongoConnection = client.connect();
 }
-clientPromise = global._mongoClientPromise;
+mongoConnection = global.mongoConnection;
 
-export default clientPromise;
+export default mongoConnection;

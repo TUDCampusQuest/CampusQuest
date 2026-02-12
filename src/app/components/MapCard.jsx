@@ -1,13 +1,6 @@
 'use client';
 
-import {
-  Card,
-  Box,
-  Typography,
-  Chip,
-  Stack,
-  Divider,
-} from '@mui/material';
+import {Card, Box, Typography, Chip, Stack, Divider,} from '@mui/material';
 import MapView from './MapView';
 
 const trails = [

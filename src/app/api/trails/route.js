@@ -1,7 +1,7 @@
-import clientPromise from '../../../lib/mongodb';
+import mongoConnection from '../../../lib/mongodb';
 
 export async function GET() {
-    const client = await clientPromise;
+    const client = await mongoConnection;
     const dbName = process.env.MONGODB_DB || 'app';
 
     const trails = await client
