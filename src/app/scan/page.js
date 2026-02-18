@@ -11,13 +11,11 @@ export default function ScanPage() {
   const [isMounted, setIsMounted] = useState(false);
   const scannerRef = useRef(null);
 
-  // 1. Only handle mounting first
   useEffect(() => {
     setIsMounted(true);
     return () => setIsMounted(false);
   }, []);
 
-  // 2. Only handle scanner initialization AFTER mounting is confirmed
   useEffect(() => {
     if (isMounted && !scannerRef.current) {
       const scanner = new Html5QrcodeScanner("reader", { 
@@ -37,7 +35,6 @@ export default function ScanPage() {
       scannerRef.current = scanner;
     }
 
-    // Cleanup
     return () => {
       if (scannerRef.current) {
         scannerRef.current.clear().catch(e => console.warn("Scanner clear error", e));
@@ -50,7 +47,6 @@ export default function ScanPage() {
     router.push('/location/FBL');
   };
 
-  // If not mounted, show a matching background color to prevent "flicker"
   if (!isMounted) {
     return <Box sx={{ height: '100vh', bgcolor: '#1a1f2b' }} />;
   }
@@ -64,7 +60,6 @@ export default function ScanPage() {
       flexDirection: 'column',
       overflow: 'hidden'
     }}>
-      {/* HEADER */}
       <Box sx={{ p: 2, display: 'flex', alignItems: 'center' }}>
         <IconButton onClick={() => router.back()} sx={{ color: 'white' }}>
           <ArrowBackIcon />
@@ -75,7 +70,6 @@ export default function ScanPage() {
         <Box sx={{ width: 40 }} />
       </Box>
 
-      {/* SCANNER VIEWPORT */}
       <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', mt: -4 }}>
         <Box sx={{ position: 'relative', width: 280, height: 280, mb: 4 }}>
           {/* Green Corner Brackets */}
