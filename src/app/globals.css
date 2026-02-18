@@ -81,7 +81,6 @@ a {
   html {
     color-scheme: dark;
   }
-<<<<<<< HEAD
 }
 /* Critical fix for Mapbox visibility */
 html, body, #__next {
@@ -102,6 +101,4 @@ html, body, #__next {
 .mapboxgl-canvas {
   width: 100% !important;
   height: 100% !important;
-=======
->>>>>>> cea9bbdf4e0eaf2ac994fdc38dc0dd30b256b790
 }
