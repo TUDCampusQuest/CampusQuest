@@ -17,6 +17,7 @@
     "mapbox-gl": "^3.18.1",
     "mongodb": "^6.5.0",
     "next": "14.2.3",
+    "next.js": "^1.0.3",
     "react": "^18",
     "react-dom": "^18",
     "react-map-gl": "^7.1.9"

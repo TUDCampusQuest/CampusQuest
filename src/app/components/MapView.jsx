@@ -1,5 +1,5 @@
 'use client';
-import { Map, Marker, Popup, NavigationControl } from 'react-map-gl/mapbox';
+import Map, { Marker, Popup, NavigationControl } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useState, useMemo } from 'react';
 import { locations } from '../data/locations';
