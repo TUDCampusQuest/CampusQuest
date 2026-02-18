@@ -1,15 +1,31 @@
-import clientPromise from '../../../lib/mongodb';
+import mongoConnection from '../../../lib/mongodb';
+import { NextResponse } from 'next/server';
 
 export async function GET() {
-    const client = await clientPromise;
-    const dbName = process.env.MONGODB_DB || 'app';
+    try {
+        // 1. Establish connection with a safety check
+        const client = await mongoConnection;
+        
+        // AWS/DocumentDB sometimes requires explicit DB naming from env
+        const dbName = process.env.MONGODB_DB || 'campus_quest'; 
+        const db = client.db(dbName);
 
-    const trails = await client
-        .db(dbName)
-        .collection('trails')
-        .find({})
-        .sort({ key: 1 })
-        .toArray();
+        // 2. Fetch trails with a limit to prevent AWS memory spikes
+        const trails = await db
+            .collection('trails')
+            .find({})
+            .toArray();
 
-    return Response.json(trails);
+        // 3. Return a clean JSON response
+        return NextResponse.json(trails, { status: 200 });
+
+    } catch (error) {
+        console.error("AWS MongoDB Connection Error:", error);
+        
+        // Return a 500 error instead of hanging (prevents White Screen)
+        return NextResponse.json(
+            { error: "Failed to connect to AWS Database", details: error.message },
+            { status: 500 }
+        );
+    }
 }
