@@ -2,12 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
+<<<<<<< HEAD
 import { 
   AppBar, Toolbar, Box, Container, Typography, Button, 
   Card, Stack, Skeleton, Chip 
 } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+=======
+import {AppBar, Toolbar, Box, Container, Typography, Button, Card, Stack,} from '@mui/material';
+>>>>>>> cea9bbdf4e0eaf2ac994fdc38dc0dd30b256b790
 
 function TrailCard({ trail }) {
     return (
@@ -23,7 +27,10 @@ function TrailCard({ trail }) {
                 '&:hover': { transform: 'translateY(-5px)' }
             }}
         >
+<<<<<<< HEAD
             {/* Header image with Gradient Overlay */}
+=======
+>>>>>>> cea9bbdf4e0eaf2ac994fdc38dc0dd30b256b790
             <Box
                 sx={{
                     height: 180,
@@ -33,6 +40,7 @@ function TrailCard({ trail }) {
                     backgroundPosition: 'center',
                 }}
             >
+<<<<<<< HEAD
                 <Box sx={{ 
                     position: 'absolute', inset: 0, 
                     background: 'linear-gradient(to bottom, transparent, rgba(0,0,0,0.6))' 
@@ -45,9 +53,10 @@ function TrailCard({ trail }) {
                         bgcolor: '#1BA39C', color: 'white', fontWeight: 700 
                     }} 
                 />
+=======
+>>>>>>> cea9bbdf4e0eaf2ac994fdc38dc0dd30b256b790
             </Box>
 
-            {/* Content */}
             <Box sx={{ p: 3 }}>
                 <Typography variant="h6" fontWeight={800} sx={{ color: '#1e293b' }}>
                     {trail.title}
@@ -57,12 +66,24 @@ function TrailCard({ trail }) {
                     {trail.desc}
                 </Typography>
 
+<<<<<<< HEAD
                 <Stack direction="row" alignItems="center" spacing={1} sx={{ mt: 2, mb: 3 }}>
                     <AccessTimeIcon sx={{ fontSize: 16, color: '#94a3b8' }} />
                     <Typography fontWeight={700} sx={{ fontSize: 14, color: '#475569' }}>
                         {trail.duration}
                     </Typography>
                     <Typography sx={{ fontSize: 14, color: '#94a3b8' }}>• Walking</Typography>
+=======
+                <Stack sx={{ mt: 3 }}>
+                    <Box>
+                        <Typography fontWeight={900} sx={{ fontSize: 18 }}>
+                            {trail.duration}
+                        </Typography>
+                        <Typography sx={{ fontSize: 12, color: 'rgba(17,24,39,0.55)' }}>
+                            Duration
+                        </Typography>
+                    </Box>
+>>>>>>> cea9bbdf4e0eaf2ac994fdc38dc0dd30b256b790
                 </Stack>
 
                 <Button 
@@ -112,8 +133,12 @@ export default function TrailsPage() {
     if (!mounted) return null;
 
     return (
+<<<<<<< HEAD
         <Box sx={{ minHeight: '100vh', bgcolor: '#f8fafc' }}>
             {/* Navbar matching Home Theme */}
+=======
+        <>
+>>>>>>> cea9bbdf4e0eaf2ac994fdc38dc0dd30b256b790
             <AppBar
                 position="sticky"
                 elevation={0}
@@ -146,6 +171,7 @@ export default function TrailsPage() {
                 </Toolbar>
             </AppBar>
 
+<<<<<<< HEAD
             {/* Page Header */}
             <Container maxWidth="lg" sx={{ pt: 6, pb: 2 }}>
                 <Typography variant="h4" fontWeight={900} sx={{ color: '#1e293b', mb: 1 }}>
@@ -173,5 +199,26 @@ export default function TrailsPage() {
                 )}
             </Container>
         </Box>
+=======
+            <Box sx={{ minHeight: '100vh', bgcolor: '#f5f7fb', py: { xs: 4, md: 6 } }}>
+                <Container maxWidth="lg">
+                    {loading ? (
+                        <Typography sx={{ color: 'rgba(17,24,39,0.7)' }}>Loading trails...</Typography>
+                    ) : (
+                        <Stack
+                            direction={{ xs: 'column', md: 'row' }}
+                            spacing={4}
+                            justifyContent="center"
+                            alignItems="stretch"
+                        >
+                            {trails.map((trail) => (
+                                <TrailCard key={trail._id} trail={trail} />
+                            ))}
+                        </Stack>
+                    )}
+                </Container>
+            </Box>
+        </>
+>>>>>>> cea9bbdf4e0eaf2ac994fdc38dc0dd30b256b790
     );
 }

@@ -1,0 +1,92 @@
+[
+  {
+    "id": "CAFE",
+    "name": "LINC Building",
+    "image": "https://campusquesttud.s3.eu-west-1.amazonaws.com/photos/tud.jpeg",
+    "lat": 53.406355,
+    "lng": -6.379799,
+    "description": "Cafe shop, admin offices.",
+    "floors": ["Ground", "First"]
+  },
+  {
+    "id": "AG-BLOCK",
+    "name": "New Building",
+    "image": "https://campusquesttud.s3.eu-west-1.amazonaws.com/photos/tud.jpeg",
+    "lat": 53.404622,
+    "lng": -6.379109,
+    "description": "Classrooms, lecture halls, seating areas, meeting rooms.",
+    "floors": ["Ground", "First"]
+  },
+  {
+    "id": "A-BLOCK",
+    "name": "Computer Labs",
+    "image": "https://campusquesttud.s3.eu-west-1.amazonaws.com/photos/tud.jpeg",
+    "lat": 53.406213,
+    "lng": -6.376366,
+    "description": "Classrooms, lecture halls, seating areas.",
+    "floors": ["Ground", "First"]
+  },
+  {
+    "id": "C-BLOCK",
+    "name": "Main Building",
+    "image": "https://campusquesttud.s3.eu-west-1.amazonaws.com/photos/tud.jpeg",
+    "lat": 53.405434,
+    "lng": -6.378489,
+    "description": "Canteen, SU, sports hall, corner shop.",
+    "floors": ["Ground", "First"]
+  },
+  {
+    "id": "D-BLOCK",
+    "name": "Engineering and Childcare",
+    "image": "https://campusquesttud.s3.eu-west-1.amazonaws.com/photos/tud.jpeg",
+    "lat": 53.405724,
+    "lng": -6.377446,
+    "description": "Lecture halls, engineering rooms, childcare rooms.",
+    "floors": ["Ground"]
+  },
+  {
+    "id": "E-BLOCK",
+    "name": "Networking Building",
+    "image": "https://campusquesttud.s3.eu-west-1.amazonaws.com/photos/tud.jpeg",
+    "lat": 53.405241,
+    "lng": -6.377734,
+    "description": "Classrooms, lecture halls, networking rooms.",
+    "floors": ["Ground", "First"]
+  },
+  {
+    "id": "F-BLOCK",
+    "name": "Campus Library & Information Office",
+    "image": "https://campusquesttud.s3.eu-west-1.amazonaws.com/photos/tud.jpeg",
+    "lat": 53.404746,
+    "lng": -6.378422,
+    "description": "Library, classrooms, lecture halls, security.",
+    "floors": ["Ground", "First"]
+  },
+  {
+    "id": "S-BLOCK",
+    "name": "Sports Building",
+    "image": "https://campusquesttud.s3.eu-west-1.amazonaws.com/photos/tud.jpeg",
+    "lat": 53.405884,
+    "lng": -6.381347,
+    "description": "Gym and training facilities, classrooms.",
+    "floors": ["Ground"]
+  },
+  {
+    "id": "CONNECT",
+    "name": "Connect Building",
+    "image": "https://campusquesttud.s3.eu-west-1.amazonaws.com/photos/tud.jpeg",
+    "lat": 53.404810,
+    "lng": -6.379305,
+    "description": "Student services desk.",
+    "floors": ["Ground", "First"]
+  },
+  {
+    "id": "PARKING",
+    "name": "Car Park",
+    "image": "https://campusquesttud.s3.eu-west-1.amazonaws.com/photos/tud.jpeg",
+    "lat": 53.404767,
+    "lng": -6.380530,
+    "description": "Main visitor and staff campus parking.",
+    "floors": ["N/A"]
+  }
+]

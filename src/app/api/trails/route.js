@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import mongoConnection from '../../../lib/mongodb';
 import { NextResponse } from 'next/server';
 
@@ -15,6 +16,16 @@ export async function GET() {
             .collection('trails')
             .find({})
             .toArray();
+=======
+import { getS3Data } from "@/lib/s3";
+
+export async function GET() {
+    const trails = await getS3Data('data/trails.json');
+
+    if (!trails) {
+        return Response.json({ error: "Trails not found in S3" }, { status: 404 });
+    }
+>>>>>>> cea9bbdf4e0eaf2ac994fdc38dc0dd30b256b790
 
         // 3. Return a clean JSON response
         return NextResponse.json(trails, { status: 200 });
