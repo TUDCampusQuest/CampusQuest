@@ -1,115 +1,105 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { Html5QrcodeScanner } from "html5-qrcode";
-import { Box, Typography, Button, IconButton, Stack } from "@mui/material";
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { Html5Qrcode, Html5QrcodeScanner } from "html5-qrcode";
+import { Box, Typography, IconButton, Button, Paper, Stack } from "@mui/material";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import FileUploadIcon from '@mui/icons-material/FileUpload';
 import { useRouter } from "next/navigation";
 
 export default function ScanPage() {
-  const router = useRouter();
-  const [isMounted, setIsMounted] = useState(false);
-  const scannerRef = useRef(null);
+    const router = useRouter();
+    const fileInputRef = useRef(null);
+    const [scanner, setScanner] = useState(null);
 
-  useEffect(() => {
-    setIsMounted(true);
-    return () => setIsMounted(false);
-  }, []);
+    useEffect(() => {
+        const newScanner = new Html5QrcodeScanner("reader", {
+            qrbox: { width: 250, height: 250 },
+            fps: 10,
+        });
 
-  useEffect(() => {
-    if (isMounted && !scannerRef.current) {
-      const scanner = new Html5QrcodeScanner("reader", { 
-        fps: 20, 
-        qrbox: { width: 250, height: 250 },
-        aspectRatio: 1.0 
-      });
+        newScanner.render(onScanSuccess, onScanFailure);
+        setScanner(newScanner);
 
-      scanner.render(
-        (decodedText) => {
-          scanner.clear();
-          router.push(`/location/${decodedText.toUpperCase()}`);
-        },
-        (error) => { /* scanning... */ }
-      );
+        return () => {
+            newScanner.clear().catch((error) => console.error("Failed to clear", error));
+        };
+    }, []);
 
-      scannerRef.current = scanner;
+    function onScanSuccess(decodedText) {
+        // Navigate to the building page
+        router.push(`/location/${decodedText.toUpperCase()}`);
     }
 
-    return () => {
-      if (scannerRef.current) {
-        scannerRef.current.clear().catch(e => console.warn("Scanner clear error", e));
-        scannerRef.current = null;
-      }
+    function onScanFailure(error) {
+        // Ignore constant scanning errors
+    }
+
+    // FILE UPLOAD HANDLER
+    const handleFileUpload = async (event) => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        // Use the Html5Qrcode class (not the scanner UI) for file scanning
+        const html5QrCode = new Html5Qrcode("reader");
+
+        try {
+            const decodedText = await html5QrCode.scanFile(file, true);
+            onScanSuccess(decodedText);
+        } catch (err) {
+            alert("Could not find a QR code in this image. Try a clearer photo.");
+            console.error("File scan error:", err);
+        }
     };
-  }, [isMounted, router]);
 
-  const handleSimulate = () => {
-    router.push('/location/FBL');
-  };
+    return (
+        <Box sx={{ height: "100vh", bgcolor: "#000", display: "flex", flexDirection: "column" }}>
+            {/* Header */}
+            <Box sx={{ p: 2, display: "flex", alignItems: "center", zIndex: 10 }}>
+                <IconButton onClick={() => router.push("/")} sx={{ color: "white", bgcolor: "rgba(255,255,255,0.1)" }}>
+                    <ArrowBackIcon />
+                </IconButton>
+                <Typography variant="h6" sx={{ ml: 2, color: "white", fontWeight: 700 }}>
+                    Scan Building
+                </Typography>
+            </Box>
 
-  if (!isMounted) {
-    return <Box sx={{ height: '100vh', bgcolor: '#1a1f2b' }} />;
-  }
+            {/* Camera View */}
+            <Box sx={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", p: 2 }}>
+                <Paper sx={{ width: "100%", maxWidth: 400, borderRadius: 4, overflow: "hidden", bgcolor: "black" }}>
+                    <div id="reader"></div>
+                </Paper>
+            </Box>
 
-  return (
-    <Box sx={{ 
-      height: '100vh', 
-      bgcolor: '#1a1f2b', 
-      color: 'white', 
-      display: 'flex', 
-      flexDirection: 'column',
-      overflow: 'hidden'
-    }}>
-      <Box sx={{ p: 2, display: 'flex', alignItems: 'center' }}>
-        <IconButton onClick={() => router.back()} sx={{ color: 'white' }}>
-          <ArrowBackIcon />
-        </IconButton>
-        <Typography sx={{ flex: 1, textAlign: 'center', fontWeight: 600 }}>
-          Scan QR Code
-        </Typography>
-        <Box sx={{ width: 40 }} />
-      </Box>
+            {/* Upload Controls */}
+            <Stack spacing={2} sx={{ p: 4, alignItems: "center" }}>
+                <Typography variant="body2" sx={{ color: "white", opacity: 0.7 }}>
+                    Can't scan? Upload a photo instead
+                </Typography>
 
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', mt: -4 }}>
-        <Box sx={{ position: 'relative', width: 280, height: 280, mb: 4 }}>
-          {/* Green Corner Brackets */}
-          <Box sx={{ position: 'absolute', top: 0, left: 0, width: 40, height: 40, borderLeft: '4px solid #34d399', borderTop: '4px solid #34d399', borderTopLeftRadius: 20, zIndex: 2 }} />
-          <Box sx={{ position: 'absolute', top: 0, right: 0, width: 40, height: 40, borderRight: '4px solid #34d399', borderTop: '4px solid #34d399', borderTopRightRadius: 20, zIndex: 2 }} />
-          <Box sx={{ position: 'absolute', bottom: 0, left: 0, width: 40, height: 40, borderLeft: '4px solid #34d399', borderBottom: '4px solid #34d399', borderBottomLeftRadius: 20, zIndex: 2 }} />
-          <Box sx={{ position: 'absolute', bottom: 0, right: 0, width: 40, height: 40, borderRight: '4px solid #34d399', borderBottom: '4px solid #34d399', borderBottomRightRadius: 20, zIndex: 2 }} />
-          
-          <Box sx={{ width: '100%', height: '100%', overflow: 'hidden', borderRadius: 4, bgcolor: '#000' }}>
-            <div id="reader" style={{ width: '100%' }}></div>
-          </Box>
+                <input
+                    type="file"
+                    accept="image/*"
+                    ref={fileInputRef}
+                    onChange={handleFileUpload}
+                    style={{ display: "none" }}
+                />
+
+                <Button
+                    variant="outlined"
+                    startIcon={<FileUploadIcon />}
+                    onClick={() => fileInputRef.current.click()}
+                    sx={{
+                        color: "white",
+                        borderColor: "white",
+                        borderRadius: "12px",
+                        px: 4,
+                        "&:hover": { borderColor: "#1BA39C", color: "#1BA39C" }
+                    }}
+                >
+                    Upload QR Image
+                </Button>
+            </Stack>
         </Box>
-        <Typography variant="body2" sx={{ color: '#94a3b8' }}>Align QR code within the frame</Typography>
-      </Box>
-
-      {/* BUTTONS */}
-      <Box sx={{ p: 3, pb: 8 }}>
-        <Stack spacing={2}>
-          <Button 
-            fullWidth 
-            variant="contained"
-            onClick={handleSimulate}
-            sx={{ 
-              bgcolor: '#1BA39C', 
-              py: 2, 
-              borderRadius: '12px', 
-              fontWeight: 700,
-              '&:hover': { bgcolor: '#16867f' }
-            }}
-          >
-            Simulate QR Scan (Demo)
-          </Button>
-          <Button 
-            fullWidth 
-            sx={{ color: '#94a3b8', textTransform: 'none' }}
-          >
-            Enter Code Manually
-          </Button>
-        </Stack>
-      </Box>
-    </Box>
-  );
+    );
 }

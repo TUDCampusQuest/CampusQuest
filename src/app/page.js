@@ -24,8 +24,8 @@ import { locations } from "./data/locations";
 
 // Dynamic Import to prevent SSR issues with Mapbox
 const MapView = dynamic(() => import("./components/MapView"), {
-  ssr: false,
-  loading: () => <Box sx={{ height: "100vh", width: "100vw", bgcolor: "#f1f5f9" }} />
+    ssr: false, // This is crucial to stop hydration errors
+    loading: () => <Box sx={{ height: "100vh", width: "100vw", bgcolor: "#f1f5f9" }} />
 });
 
 // Reusable Side Button Component

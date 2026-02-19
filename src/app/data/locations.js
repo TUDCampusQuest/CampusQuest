@@ -1,14 +1,90 @@
+/**
+ * Campus Quest - TU Dublin Blanchardstown Locations
+ * Converted to Mapbox Format [Longitude, Latitude]
+ * All wording and structure preserved from original JSON.
+ */
+
 export const locations = [
-  {
-    id: "FBL",
-    name: "F Block",
-    description: "Lecture halls, classrooms, library...",
-    floor: 0,
-    accessibility: "Lift",
-    indoorInstructions: "Library is straight ahead...",
-    // Mapbox Order: [Longitude, Latitude]
-    coordinates: [-6.379, 53.406] 
-  }
+    {
+        "id": "CAFE",
+        "name": "LINC Building",
+        "image": "https://campusquesttud.s3.eu-west-1.amazonaws.com/photos/tud.jpeg",
+        "coordinates": [-6.379799, 53.406355],
+        "description": "Cafe shop, admin offices.",
+        "floors": ["Ground", "First"]
+    },
+    {
+        "id": "AG-BLOCK",
+        "name": "New Building",
+        "image": "https://campusquesttud.s3.eu-west-1.amazonaws.com/photos/tud.jpeg",
+        "coordinates": [-6.379109, 53.404622],
+        "description": "Classrooms, lecture halls, seating areas, meeting rooms.",
+        "floors": ["Ground", "First"]
+    },
+    {
+        "id": "A-BLOCK",
+        "name": "Computer Labs",
+        "image": "https://campusquesttud.s3.eu-west-1.amazonaws.com/photos/tud.jpeg",
+        "coordinates": [-6.376366, 53.406213],
+        "description": "Classrooms, lecture halls, seating areas.",
+        "floors": ["Ground", "First"]
+    },
+    {
+        "id": "C-BLOCK",
+        "name": "Main Building",
+        "image": "https://campusquesttud.s3.eu-west-1.amazonaws.com/photos/tud.jpeg",
+        "coordinates": [-6.378489, 53.405434],
+        "description": "Canteen, SU, sports hall, corner shop.",
+        "floors": ["Ground", "First"]
+    },
+    {
+        "id": "D-BLOCK",
+        "name": "Engineering and Childcare",
+        "image": "https://campusquesttud.s3.eu-west-1.amazonaws.com/photos/tud.jpeg",
+        "coordinates": [-6.377446, 53.405724],
+        "description": "Lecture halls, engineering rooms, childcare rooms.",
+        "floors": ["Ground"]
+    },
+    {
+        "id": "E-BLOCK",
+        "name": "Networking Building",
+        "image": "https://campusquesttud.s3.eu-west-1.amazonaws.com/photos/tud.jpeg",
+        "coordinates": [-6.377734, 53.405241],
+        "description": "Classrooms, lecture halls, networking rooms.",
+        "floors": ["Ground", "First"]
+    },
+    {
+        "id": "F-BLOCK",
+        "name": "Campus Library & Information Office",
+        "image": "https://campusquesttud.s3.eu-west-1.amazonaws.com/photos/tud.jpeg",
+        "coordinates": [-6.378422, 53.404746],
+        "description": "Library, classrooms, lecture halls, security.",
+        "floors": ["Ground", "First"]
+    },
+    {
+        "id": "S-BLOCK",
+        "name": "Sports Building",
+        "image": "https://campusquesttud.s3.eu-west-1.amazonaws.com/photos/tud.jpeg",
+        "coordinates": [-6.381347, 53.405884],
+        "description": "Gym and training facilities, classrooms.",
+        "floors": ["Ground"]
+    },
+    {
+        "id": "CONNECT",
+        "name": "Connect Building",
+        "image": "https://campusquesttud.s3.eu-west-1.amazonaws.com/photos/tud.jpeg",
+        "coordinates": [-6.379305, 53.404810],
+        "description": "Student services desk.",
+        "floors": ["Ground", "First"]
+    },
+    {
+        "id": "PARKING",
+        "name": "Car Park",
+        "image": "https://campusquesttud.s3.eu-west-1.amazonaws.com/photos/tud.jpeg",
+        "coordinates": [-6.380530, 53.404767],
+        "description": "Main visitor and staff campus parking.",
+        "floors": ["N/A"]
+    }
 ];
 
 export default locations;
