@@ -68,8 +68,7 @@ function TrailCard({ trail }) {
                     variant="contained" 
                     fullWidth
                     component={Link}
-                    href={`/?trail=${encodeURIComponent(trail.title)}`}
-                    endIcon={<ArrowForwardIcon />}
+                    href={`/?trail=${encodeURIComponent(trail.pathKey)}`}                    endIcon={<ArrowForwardIcon />}
                     sx={{ 
                         borderRadius: 2, 
                         py: 1.2, 

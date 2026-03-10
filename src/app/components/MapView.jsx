@@ -1,66 +1,195 @@
 'use client';
-import Map, { Marker, Popup, NavigationControl } from 'react-map-gl';
+
+import Map, { Marker, Popup, NavigationControl, Source, Layer } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
+
 import { locations } from '../data/locations';
+import trailPaths from '../data/trailPaths';
+import TrailCaptureOverlay from './TrailCaptureOverlay';
 
-export default function MapView({ viewState, onMove, onMapLoad }) {
-  const [selectedLoc, setSelectedLoc] = useState(null);
+export default function MapView({ viewState, onMove }) {
+    const mapRef = useRef(null);
+    const router = useRouter();
+    const pathname = usePathname();
+    const searchParams = useSearchParams();
 
-  const markers = useMemo(() => {
-    return (locations || []).map((loc) => {
-      const lng = loc.coordinates ? loc.coordinates[0] : loc.lng;
-      const lat = loc.coordinates ? loc.coordinates[1] : loc.lat;
-      if (typeof lng !== 'number' || typeof lat !== 'number') return null;
+    const [selectedLoc, setSelectedLoc] = useState(null);
+    const [captureMode, setCaptureMode] = useState(false);
+    const [capturedPoints, setCapturedPoints] = useState([]);
+    const [showCaptureUI, setShowCaptureUI] = useState(false);
 
-      return (
-        <Marker
-          key={loc.id}
-          longitude={lng}
-          latitude={lat}
-          anchor="bottom"
-          onClick={e => {
-            e.originalEvent.stopPropagation();
-            setSelectedLoc(loc);
-          }}
-        >
-          <div style={{ cursor: 'pointer', fontSize: '24px' }}>📍</div>
-        </Marker>
-      );
-    });
-  }, []);
+    // grabbing the trail from the URL so we can share links,
+    // making sure to check if it's actually an array so the map doesn't crash
+    const selectedTrailName = searchParams.get('trail');
+    const selectedTrailCoords = useMemo(() => {
+        const coords = selectedTrailName ? trailPaths[selectedTrailName] : null;
+        return Array.isArray(coords) && coords.length > 0 ? coords : null;
+    }, [selectedTrailName]);
 
-  return (
-    <div style={{ width: '100%', height: '100%', position: 'relative' }}>
-      <Map
-        {...viewState}
-        onMove={onMove}
-        onLoad={(e) => {
-          onMapLoad(e.target);
-          // Standard style handles 3D buildings internally.
-          // We no longer need map.addLayer('3d-buildings') with 'composite' source.
-        }}
-        mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
-        style={{ width: '100%', height: '100%' }}
-        mapStyle="mapbox://styles/mapbox/standard" 
-      >
-        <NavigationControl position="top-right" showCompass={true} />
-        {markers}
+    // handle the trail buttons being clicked
+    const setTrailInUrl = (trailKey) => {
+        const params = new URLSearchParams(searchParams);
 
-        {selectedLoc && (
-          <Popup
-            longitude={selectedLoc.coordinates ? selectedLoc.coordinates[0] : selectedLoc.lng}
-            latitude={selectedLoc.coordinates ? selectedLoc.coordinates[1] : selectedLoc.lat}
-            anchor="top"
-            onClose={() => setSelectedLoc(null)}
-          >
-            <div style={{ color: '#333', padding: '5px', fontFamily: 'sans-serif' }}>
-              <h3 style={{ margin: 0, fontSize: '14px' }}>{selectedLoc.name}</h3>
-              <p style={{ margin: 0, fontSize: '12px' }}>Building {selectedLoc.id}</p>
+        //if we click the trail we're already on, unselect it. otherwise, set it.
+        if (trailKey && trailKey !== selectedTrailName) {
+            params.set('trail', trailKey);
+        } else {
+            params.delete('trail');
+        }
+
+        // push the new url without a full page reload (scroll: false is a lifesaver here)
+        router.push(`${pathname}?${params.toString()}`, { scroll: false });
+    };
+
+    // formatting the selected trail into geojson so mapbox can draw it
+    const trailGeoJSON = useMemo(() => ({
+        type: 'FeatureCollection',
+        features: selectedTrailCoords ? [{
+            type: 'Feature',
+            geometry: { type: 'LineString', coordinates: selectedTrailCoords },
+            properties: {}
+        }] : []
+    }), [selectedTrailCoords]);
+
+    // formatting the points we clicked into a line AND little circle dots
+    // so it actually looks like a trail editor
+    const capturedGeoJSON = useMemo(() => ({
+        type: 'FeatureCollection',
+        features: [
+            {
+                type: 'Feature',
+                geometry: { type: 'LineString', coordinates: capturedPoints },
+                properties: { id: 'captured-line' }
+            },
+            ...capturedPoints.map((point, index) => ({
+                type: 'Feature',
+                geometry: { type: 'Point', coordinates: point },
+                properties: { id: `node-${index}` }
+            }))
+        ]
+    }), [capturedPoints]);
+
+    // fire this when the map is clicked (only if we're actually recording a trail)
+    const onMapClick = (e) => {
+        if (!captureMode) return;
+        const { lng, lat } = e.lngLat;
+        // lock to 7 decimals so we don't get crazy long numbers in the copied JSON
+        setCapturedPoints((prev) => [...prev, [Number(lng.toFixed(7)), Number(lat.toFixed(7))]]);
+    };
+
+    // auto-zoom to fit the whole trail on screen when one is selected
+    useEffect(() => {
+        // bail out early if there's no trail or the map isn't loaded yet
+        if (!selectedTrailCoords || selectedTrailCoords.length === 0 || !mapRef.current) return;
+
+        try {
+            const lngs = selectedTrailCoords.map(p => p[0]);
+            const lats = selectedTrailCoords.map(p => p[1]);
+
+            // double check for NaN so mapbox doesn't throw that weird fitBounds error again
+            if (lngs.some(isNaN) || lats.some(isNaN)) return;
+
+            const bounds = [
+                [Math.min(...lngs), Math.min(...lats)],
+                [Math.max(...lngs), Math.max(...lats)]
+            ];
+
+            mapRef.current.fitBounds(bounds, { padding: 80, duration: 1000 });
+        } catch (err) {
+            console.error("Bounds calculation failed:", err);
+        }
+    }, [selectedTrailCoords]);
+
+    return (
+        <div style={{ width: '100%', height: '100%', position: 'relative', cursor: captureMode ? 'crosshair' : 'inherit' }}>
+
+            {/* left sidebar menu */}
+            <div style={{ position: 'absolute', top: 20, left: 20, zIndex: 10, width: 290, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                <div style={{ background: 'white', padding: 15, borderRadius: 12, boxShadow: '0 4px 20px rgba(0,0,0,0.15)', border: '1px solid #ddd' }}>
+                    <h3 style={{ margin: '0 0 10px 0', fontSize: 16, color: '#111' }}>Trails</h3>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 15 }}>
+
+                        {/* map over whatever trails we have in the data file and make buttons */}
+                        {Object.keys(trailPaths).map((key) => (
+                            <button key={key} onClick={() => setTrailInUrl(key)}
+                                    style={{
+                                        padding: '5px 12px', borderRadius: 20, border: '1px solid #ccc',
+                                        backgroundColor: selectedTrailName === key ? '#1BA39C' : '#fff',
+                                        color: selectedTrailName === key ? '#fff' : '#333',
+                                        cursor: 'pointer', fontWeight: 600, fontSize: 12
+                                    }}>
+                                {key}
+                            </button>
+                        ))}
+
+                        {/* explicit clear button just in case people don't realize they can click the active trail to toggle it off */}
+                        {selectedTrailName && (
+                            <button
+                                onClick={() => setTrailInUrl(null)}
+                                style={{ cursor: 'pointer', border: 'none', background: 'none', fontSize: 12, color: '#d93025', fontWeight: 600, padding: '5px 8px' }}
+                            >
+                                Clear
+                            </button>
+                        )}
+
+                    </div>
+
+                    {/* toggle the trail recording UI panel */}
+                    <button onClick={() => setShowCaptureUI(!showCaptureUI)} style={{ width: '100%', padding: '10px', borderRadius: 8, cursor: 'pointer', background: '#111', color: '#fff', border: 'none', fontWeight: 700 }}>
+                        {showCaptureUI ? 'Close Editor' : 'Open Trail Designer'}
+                    </button>
+                </div>
+
+                {showCaptureUI && (
+                    <TrailCaptureOverlay
+                        captureMode={captureMode}
+                        setCaptureMode={setCaptureMode}
+                        capturedPoints={capturedPoints}
+                        setCapturedPoints={setCapturedPoints}
+                        onClose={() => setShowCaptureUI(false)}
+                    />
+                )}
             </div>
-          </Popup>
-        )}
-      </Map>
-    </div>
-  );
+
+            <Map
+                ref={mapRef}
+                {...viewState}
+                onMove={onMove}
+                onClick={onMapClick}
+                mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
+                mapStyle="mapbox://styles/mapbox/standard"
+                style={{ width: '100%', height: '100%' }}
+            >
+                <NavigationControl position="top-right" />
+
+                {/* the actual trail line */}
+                <Source id="selected-trail-source" type="geojson" data={trailGeoJSON}>
+                    <Layer id="trail-line" type="line" slot="middle" paint={{ 'line-color': '#1BA39C', 'line-width': 6, 'line-cap': 'round' }} />
+                </Source>
+
+                {/* preview line for when we are actively clicking points to make a new trail */}
+                <Source id="capture-source" type="geojson" data={capturedGeoJSON}>
+                    <Layer id="capture-line" type="line" paint={{ 'line-color': '#FF7A00', 'line-width': 3, 'line-dasharray': [2, 1] }} />
+                    <Layer id="capture-pts" type="circle" paint={{ 'circle-radius': 5, 'circle-color': '#FF7A00', 'circle-stroke-width': 2, 'circle-stroke-color': '#fff' }} />
+                </Source>
+
+                {/* render all the building/location pins */}
+                {locations.map((loc) => (
+                    <Marker key={loc.id} longitude={loc.coordinates?.[0] ?? loc.lng} latitude={loc.coordinates?.[1] ?? loc.lat} anchor="bottom">
+                        {/* stop propagation here so clicking a pin doesn't accidentally add a point to the trail we're drawing */}
+                        <div style={{ fontSize: 24, cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); setSelectedLoc(loc); }}>📍</div>
+                    </Marker>
+                ))}
+
+                {/* popup when you click a pin */}
+                {selectedLoc && (
+                    <Popup longitude={selectedLoc.coordinates?.[0] ?? selectedLoc.lng} latitude={selectedLoc.coordinates?.[1] ?? selectedLoc.lat} onClose={() => setSelectedLoc(null)} anchor="top" offset={10}>
+                        <div style={{ color: '#111' }}><strong>{selectedLoc.name}</strong></div>
+                    </Popup>
+                )}
+            </Map>
+        </div>
+    );
 }
