@@ -1,4 +1,4 @@
-import { S3Client, GetObjectCommand } from "@aws-sdk/client-s3";
+import { S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 
 const s3Client = new S3Client({
     region: process.env.AWS_REGION,
@@ -21,6 +21,23 @@ export async function getS3Data(key) {
     } catch (err) {
         console.error("S3 Fetch Error:", err);
         return null;
+    }
+}
+
+export async function putS3Data(key, data) {
+    const command = new PutObjectCommand({
+        Bucket: process.env.S3_BUCKET_NAME,
+        Key: key,
+        Body: JSON.stringify(data, null, 2),
+        ContentType: "application/json",
+    });
+
+    try {
+        await s3Client.send(command);
+        return true;
+    } catch (err) {
+        console.error("S3 Upload Error:", err);
+        return false;
     }
 }
 
