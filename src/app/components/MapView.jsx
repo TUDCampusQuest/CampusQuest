@@ -8,6 +8,8 @@ import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { locations } from '../data/locations';
 import trailPaths from '../data/trailPaths';
 import TrailCaptureOverlay from './TrailCaptureOverlay';
+import RouteHUD from './RouteHUD';
+import { useGPS } from '../hooks/useGPS';
 import { getRouteCoords, getChainedRoute, snapToNearestBuilding } from '../data/buildingRoutes';
 
 // ─── Route states ────────────────────────────────────────────────────────────
@@ -49,6 +51,9 @@ function MapViewInner({ viewState, onMove, onMapLoad, navTarget, isNavigating, o
     const [capturedPoints, setCapturedPoints] = useState([]);
     const [showCaptureUI, setShowCaptureUI]   = useState(false);
     const [userLocation, setUserLocation]     = useState(null);
+    const gpsLocation = useGPS();
+    useEffect(() => { if (gpsLocation) setUserLocation(gpsLocation); }, [gpsLocation]);
+
     const [styleLoaded, setStyleLoaded]       = useState(false);
 
     // ── Navigation / route state ─────────────────────────────────────────────
@@ -73,17 +78,6 @@ function MapViewInner({ viewState, onMove, onMapLoad, navTarget, isNavigating, o
         else params.delete('trail');
         router.push(`${pathname}?${params.toString()}`, { scroll: false });
     };
-
-    // ── Live GPS watcher ─────────────────────────────────────────────────────
-    useEffect(() => {
-        if (!navigator.geolocation) return;
-        const id = navigator.geolocation.watchPosition(
-            pos => setUserLocation({ lng: pos.coords.longitude, lat: pos.coords.latitude }),
-            err => console.warn('Geolocation error:', err.message),
-            { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
-        );
-        return () => navigator.geolocation.clearWatch(id);
-    }, []);
 
     // ── When Navigate is pressed: set building B, snap A from GPS, go to PICK_A ─
     useEffect(() => {
@@ -224,15 +218,6 @@ function MapViewInner({ viewState, onMove, onMapLoad, navTarget, isNavigating, o
         } catch (err) { console.error('Bounds calculation failed:', err); }
     }, [selectedTrailCoords]);
 
-    // ── HUD instruction text ──────────────────────────────────────────────────
-    const hudText = {
-        PICK_A: '📍 Tap your START building on the map',
-        ACTIVE: routeStats
-            ? `🚶 ${routeStats.minutes} min · ${routeStats.metres} m${isChained ? ' (via connecting path)' : ''}`
-            : 'Route ready',
-        ERROR: routeError ?? 'No route available',
-    }[routeStep] ?? '';
-
     const cursor = captureMode ? 'crosshair' : 'inherit';
 
     return (
@@ -272,50 +257,22 @@ function MapViewInner({ viewState, onMove, onMapLoad, navTarget, isNavigating, o
             </div>
 
             {/* ── Route HUD pill ── */}
-            {isNavigating && routeStep !== 'IDLE' && (
-                <div style={{
-                    position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)',
-                    zIndex: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-                    pointerEvents: 'none', width: '90%', maxWidth: 440,
-                }}>
-                    {/* Main pill */}
-                    <div style={{
-                        background: routeStep === 'ERROR' ? '#fef2f2' : '#0f172a',
-                        color: routeStep === 'ERROR' ? '#dc2626' : '#f1f5f9',
-                        borderRadius: 99, padding: '10px 22px', fontSize: 13, fontWeight: 700,
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
-                        textAlign: 'center', pointerEvents: 'auto',
-                    }}>
-                        {hudText}
-                    </div>
-
-                    {/* Building A/B labels when route is active */}
-                    {routeStep === 'ACTIVE' && buildingA && buildingB && (
-                        <div style={{
-                            display: 'flex', alignItems: 'center', gap: 8,
-                            background: 'rgba(255,255,255,0.97)', borderRadius: 12,
-                            padding: '8px 16px', boxShadow: '0 2px 10px rgba(0,0,0,0.12)',
-                            fontSize: 12, fontWeight: 700, color: '#0f172a',
-                            pointerEvents: 'auto',
-                        }}>
-                            <span style={{ background: '#22c55e', color: '#fff', borderRadius: '50%', width: 20, height: 20, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 900, flexShrink: 0 }}>A</span>
-                            <span style={{ maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{buildingA.name}</span>
-                            <span style={{ color: '#94a3b8' }}>→</span>
-                            <span style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', width: 20, height: 20, display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 900, flexShrink: 0 }}>B</span>
-                            <span style={{ maxWidth: 100, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{buildingB.name}</span>
-                        </div>
-                    )}
-
-                    {/* Reset / change buttons */}
-                    {(routeStep === 'ACTIVE' || routeStep === 'ERROR') && (
-                        <div style={{ display: 'flex', gap: 8, pointerEvents: 'auto' }}>
-                            <button
-                                onClick={() => { setBuildingA(null); setRouteCoords(null); setRouteStats(null); setRouteError(null); setRouteStep('PICK_A'); }}
-                                style={{ padding: '7px 16px', borderRadius: 99, border: 'none', background: '#fff', color: '#0f172a', fontWeight: 700, fontSize: 12, cursor: 'pointer', boxShadow: '0 2px 8px rgba(0,0,0,0.15)' }}
-                            >↺ Change Start</button>
-                        </div>
-                    )}
-                </div>
+            {isNavigating && (
+                <RouteHUD
+                    routeStep={routeStep}
+                    buildingA={buildingA}
+                    buildingB={buildingB}
+                    routeStats={routeStats}
+                    routeError={routeError}
+                    isChained={isChained}
+                    onChangeStart={() => {
+                        setBuildingA(null);
+                        setRouteCoords(null);
+                        setRouteStats(null);
+                        setRouteError(null);
+                        setRouteStep('PICK_A');
+                    }}
+                />
             )}
 
             <Map
