@@ -4,27 +4,55 @@ import { getS3Data, putS3Data } from "@/lib/s3";
 
 // -----------------------------------------------------------------------------
 // GET /api/trails
-// Fetches the full trails array from S3 and returns it.
-// Returns an empty array if the file does not exist yet rather than a 404,
-// so the UI renders cleanly on first run before any trails have been saved.
+// Bridge between S3 and the home page.
+//
+// 1. Fetches trailsPoints.json from the S3 bucket
+// 2. Parses and returns the JSON array
+// 3. Falls back to [] if the file is missing or empty so the UI never crashes
+// 4. Sets no-cache headers so the browser always gets the latest trail list
+//    after a new trail is saved
 // -----------------------------------------------------------------------------
 export async function GET() {
-    const data = await getS3Data("trailsPoints.json");
+    try {
+        const data = await getS3Data("trailsPoints.json");
 
-    // S3 file missing or unreadable — return empty array so the UI does not crash
-    if (!data) {
+        // Fallback: file missing, empty, or S3 unreachable
+        if (!data) {
+            return new Response(JSON.stringify([]), {
+                status: 200,
+                headers: {
+                    "Content-Type": "application/json",
+                    // Prevent the browser and CDN from caching a stale trail list
+                    "Cache-Control": "no-store, no-cache, must-revalidate",
+                    "Pragma": "no-cache",
+                },
+            });
+        }
+
+        // Normalise: S3 file should be an array — if not, return empty fallback
+        const trails = Array.isArray(data) ? data : [];
+
+        return new Response(JSON.stringify(trails), {
+            status: 200,
+            headers: {
+                "Content-Type": "application/json",
+                "Cache-Control": "no-store, no-cache, must-revalidate",
+                "Pragma": "no-cache",
+            },
+        });
+
+    } catch (err) {
+        console.error("GET /api/trails error:", err);
+        // Return empty array rather than a 500 so the UI degrades gracefully
         return new Response(JSON.stringify([]), {
             status: 200,
-            headers: { "Content-Type": "application/json" },
+            headers: {
+                "Content-Type": "application/json",
+                "Cache-Control": "no-store, no-cache, must-revalidate",
+                "Pragma": "no-cache",
+            },
         });
     }
-
-    const trails = Array.isArray(data) ? data : [];
-
-    return new Response(JSON.stringify(trails), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-    });
 }
 
 // -----------------------------------------------------------------------------
@@ -38,12 +66,6 @@ export async function GET() {
 //   description: string        — optional summary
 //   points:      [lng, lat][]  — ordered coordinate pairs (min 2)
 // }
-//
-// Steps:
-//   1. Parse + validate the request body
-//   2. Fetch the current array from S3 (default [] if not found)
-//   3. Check for duplicate id
-//   4. Append the new trail and write the updated array back to S3
 // -----------------------------------------------------------------------------
 export async function POST(request) {
     // 1. Parse request body
@@ -92,8 +114,7 @@ export async function POST(request) {
         );
     }
 
-    // 3. Fetch existing trails from S3
-    // Defaults to [] when the file does not exist yet (first trail ever saved).
+    // 3. Fetch existing trails from S3 — default to [] if file doesn't exist yet
     let existing;
     try {
         const raw = await getS3Data("trailsPoints.json");
@@ -123,8 +144,8 @@ export async function POST(request) {
         id: normalizedId,
         name: name.trim(),
         description: description.trim(),
-        points,                               // [lng, lat][] — Mapbox-ready format
-        createdAt: new Date().toISOString(),  // ISO timestamp for sorting/display
+        points,
+        createdAt: new Date().toISOString(),
     };
 
     // 6. Append and write the updated array back to S3
