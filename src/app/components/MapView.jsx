@@ -9,10 +9,6 @@ import { locations } from '../data/locations';
 import trailPaths from '../data/trailPaths';
 import TrailCaptureOverlay from './TrailCaptureOverlay';
 
-// ✅ TASK 1 FIX: useSearchParams() requires a Suspense boundary in the App Router.
-// Without it, Next.js throws "NextRouter was not mounted" during SSR/hydration.
-// Solution: split the map logic into an inner component and wrap the export in <Suspense>.
-
 function MapViewInner({ viewState, onMove }) {
     const mapRef = useRef(null);
     const router = useRouter();
@@ -24,6 +20,8 @@ function MapViewInner({ viewState, onMove }) {
     const [capturedPoints, setCapturedPoints] = useState([]);
     const [showCaptureUI, setShowCaptureUI] = useState(false);
     const [userLocation, setUserLocation] = useState(null);
+    // FIX: Track whether the Mapbox style has fully loaded before rendering layers
+    const [styleLoaded, setStyleLoaded] = useState(false);
 
     const selectedTrailName = searchParams.get('trail');
     const selectedTrailCoords = useMemo(() => {
@@ -203,17 +201,32 @@ function MapViewInner({ viewState, onMove }) {
                 mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
                 mapStyle="mapbox://styles/mapbox/standard"
                 style={{ width: '100%', height: '100%' }}
+                // FIX: Set styleLoaded to true only after the style is fully ready.
+                // This prevents the "Style is not done loading" crash.
+                onLoad={() => setStyleLoaded(true)}
             >
                 <NavigationControl position="top-right" />
 
-                <Source id="selected-trail-source" type="geojson" data={trailGeoJSON}>
-                    <Layer id="trail-line" type="line" slot="middle" paint={{ 'line-color': '#1BA39C', 'line-width': 6, 'line-cap': 'round' }} />
-                </Source>
+                {/* FIX: Only render Sources/Layers once the style has loaded.
+                    Also fixed 'line-cap' → moved from paint to layout where it belongs. */}
+                {styleLoaded && (
+                    <>
+                        <Source id="selected-trail-source" type="geojson" data={trailGeoJSON}>
+                            <Layer
+                                id="trail-line"
+                                type="line"
+                                slot="middle"
+                                layout={{ 'line-cap': 'round', 'line-join': 'round' }}
+                                paint={{ 'line-color': '#1BA39C', 'line-width': 6 }}
+                            />
+                        </Source>
 
-                <Source id="capture-source" type="geojson" data={capturedGeoJSON}>
-                    <Layer id="capture-line" type="line" paint={{ 'line-color': '#FF7A00', 'line-width': 3, 'line-dasharray': [2, 1] }} />
-                    <Layer id="capture-pts" type="circle" paint={{ 'circle-radius': 5, 'circle-color': '#FF7A00', 'circle-stroke-width': 2, 'circle-stroke-color': '#fff' }} />
-                </Source>
+                        <Source id="capture-source" type="geojson" data={capturedGeoJSON}>
+                            <Layer id="capture-line" type="line" paint={{ 'line-color': '#FF7A00', 'line-width': 3, 'line-dasharray': [2, 1] }} />
+                            <Layer id="capture-pts" type="circle" paint={{ 'circle-radius': 5, 'circle-color': '#FF7A00', 'circle-stroke-width': 2, 'circle-stroke-color': '#fff' }} />
+                        </Source>
+                    </>
+                )}
 
                 {locations.map((loc) => (
                     <Marker key={loc.id} longitude={loc.coordinates?.[0] ?? loc.lng} latitude={loc.coordinates?.[1] ?? loc.lat} anchor="bottom">
