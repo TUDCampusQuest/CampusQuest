@@ -62,14 +62,6 @@ function MapViewInner({ viewState, onMove }) {
         return () => navigator.geolocation.clearWatch(watchId);
     }, []);
 
-    const handleRecenter = () => {
-        if (!userLocation || !mapRef.current) return;
-        mapRef.current.flyTo({
-            center: [userLocation.lng, userLocation.lat],
-            zoom: 18,
-            duration: 2000,
-        });
-    };
 
     const trailGeoJSON = useMemo(() => ({
         type: 'FeatureCollection',
@@ -167,31 +159,6 @@ function MapViewInner({ viewState, onMove }) {
                 )}
             </div>
 
-            {/* Recenter button */}
-            <button
-                onClick={handleRecenter}
-                disabled={!userLocation}
-                title={userLocation ? 'Centre on my location' : 'Waiting for location…'}
-                style={{
-                    position: 'absolute', bottom: 40, right: 16, zIndex: 10,
-                    width: 48, height: 48, borderRadius: '50%',
-                    border: '2px solid #fff',
-                    background: userLocation ? '#1BA39C' : '#aaa',
-                    color: '#fff',
-                    cursor: userLocation ? 'pointer' : 'not-allowed',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    transition: 'background 0.2s', padding: 0,
-                }}
-            >
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="3" />
-                    <line x1="12" y1="2"  x2="12" y2="6"  />
-                    <line x1="12" y1="18" x2="12" y2="22" />
-                    <line x1="2"  y1="12" x2="6"  y2="12" />
-                    <line x1="18" y1="12" x2="22" y2="12" />
-                </svg>
-            </button>
 
             <Map
                 ref={mapRef}

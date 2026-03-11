@@ -216,3 +216,26 @@
     70%  { transform: scale(1.15); }
     100% { transform: scale(1);   opacity: 1; }
 }
+
+/* ── Permission denied state ─────────────────── */
+
+.deniedOverlay {
+    position: absolute;
+    inset: 0;
+    background: #0c1520;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    padding: 24px;
+    z-index: 10;
+}
+
+.deniedText {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.82rem;
+    text-align: center;
+    line-height: 1.5;
+    margin: 0;
+}
