@@ -2,14 +2,18 @@
 
 import Map, { Marker, Popup, NavigationControl, Source, Layer } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 
 import { locations } from '../data/locations';
 import trailPaths from '../data/trailPaths';
 import TrailCaptureOverlay from './TrailCaptureOverlay';
 
-export default function MapView({ viewState, onMove }) {
+// ✅ TASK 1 FIX: useSearchParams() requires a Suspense boundary in the App Router.
+// Without it, Next.js throws "NextRouter was not mounted" during SSR/hydration.
+// Solution: split the map logic into an inner component and wrap the export in <Suspense>.
+
+function MapViewInner({ viewState, onMove }) {
     const mapRef = useRef(null);
     const router = useRouter();
     const pathname = usePathname();
@@ -19,36 +23,24 @@ export default function MapView({ viewState, onMove }) {
     const [captureMode, setCaptureMode] = useState(false);
     const [capturedPoints, setCapturedPoints] = useState([]);
     const [showCaptureUI, setShowCaptureUI] = useState(false);
-
-    // live location state — null until the browser grants permission
     const [userLocation, setUserLocation] = useState(null);
 
-    // grabbing the trail from the URL so we can share links,
-    // making sure to check if it's actually an array so the map doesn't crash
     const selectedTrailName = searchParams.get('trail');
     const selectedTrailCoords = useMemo(() => {
         const coords = selectedTrailName ? trailPaths[selectedTrailName] : null;
         return Array.isArray(coords) && coords.length > 0 ? coords : null;
     }, [selectedTrailName]);
 
-    // handle the trail buttons being clicked
     const setTrailInUrl = (trailKey) => {
         const params = new URLSearchParams(searchParams);
-
-        // if we click the trail we're already on, unselect it. otherwise, set it.
         if (trailKey && trailKey !== selectedTrailName) {
             params.set('trail', trailKey);
         } else {
             params.delete('trail');
         }
-
-        // push the new url without a full page reload
         router.push(`${pathname}?${params.toString()}`, { scroll: false });
     };
 
-    // start watching the device's position as soon as the component mounts.
-    // watchPosition fires on every position update, unlike getCurrentPosition which fires once.
-    // clearWatch on unmount prevents battery drain and memory leaks.
     useEffect(() => {
         if (!navigator.geolocation) return;
 
@@ -63,17 +55,15 @@ export default function MapView({ viewState, onMove }) {
                 console.warn("Geolocation error:", err.message);
             },
             {
-                enableHighAccuracy: true, // uses GPS chip rather than cell tower
-                maximumAge: 0,            // never use a cached position
-                timeout: 10000,           // give up after 10s if no fix is found
+                enableHighAccuracy: true,
+                maximumAge: 0,
+                timeout: 10000,
             }
         );
 
-        // cleanup: stop watching when component unmounts
         return () => navigator.geolocation.clearWatch(watchId);
     }, []);
 
-    // fly to the user's current position at street-level zoom
     const handleRecenter = () => {
         if (!userLocation || !mapRef.current) return;
         mapRef.current.flyTo({
@@ -83,7 +73,6 @@ export default function MapView({ viewState, onMove }) {
         });
     };
 
-    // formatting the selected trail into geojson so mapbox can draw it
     const trailGeoJSON = useMemo(() => ({
         type: 'FeatureCollection',
         features: selectedTrailCoords ? [{
@@ -93,8 +82,6 @@ export default function MapView({ viewState, onMove }) {
         }] : []
     }), [selectedTrailCoords]);
 
-    // formatting the points we clicked into a line AND little circle dots
-    // so it actually looks like a trail editor
     const capturedGeoJSON = useMemo(() => ({
         type: 'FeatureCollection',
         features: [
@@ -111,15 +98,12 @@ export default function MapView({ viewState, onMove }) {
         ]
     }), [capturedPoints]);
 
-    // fire this when the map is clicked (only if we're actually recording a trail)
     const onMapClick = (e) => {
         if (!captureMode) return;
         const { lng, lat } = e.lngLat;
-        // lock to 7 decimals so we don't get unwieldy numbers in the JSON
         setCapturedPoints((prev) => [...prev, [Number(lng.toFixed(7)), Number(lat.toFixed(7))]]);
     };
 
-    // auto-zoom to fit the whole trail on screen when one is selected
     useEffect(() => {
         if (!selectedTrailCoords || selectedTrailCoords.length === 0 || !mapRef.current) return;
 
@@ -127,7 +111,6 @@ export default function MapView({ viewState, onMove }) {
             const lngs = selectedTrailCoords.map(p => p[0]);
             const lats = selectedTrailCoords.map(p => p[1]);
 
-            // guard against NaN to avoid the fitBounds error
             if (lngs.some(isNaN) || lats.some(isNaN)) return;
 
             const bounds = [
@@ -144,12 +127,11 @@ export default function MapView({ viewState, onMove }) {
     return (
         <div style={{ width: '100%', height: '100%', position: 'relative', cursor: captureMode ? 'crosshair' : 'inherit' }}>
 
-            {/* left sidebar menu */}
+            {/* Trail selector sidebar */}
             <div style={{ position: 'absolute', top: 20, left: 20, zIndex: 10, width: 290, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <div style={{ background: 'white', padding: 15, borderRadius: 12, boxShadow: '0 4px 20px rgba(0,0,0,0.15)', border: '1px solid #ddd' }}>
                     <h3 style={{ margin: '0 0 10px 0', fontSize: 16, color: '#111' }}>Trails</h3>
                     <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 15 }}>
-
                         {Object.keys(trailPaths).map((key) => (
                             <button key={key} onClick={() => setTrailInUrl(key)}
                                     style={{
@@ -161,7 +143,6 @@ export default function MapView({ viewState, onMove }) {
                                 {key}
                             </button>
                         ))}
-
                         {selectedTrailName && (
                             <button
                                 onClick={() => setTrailInUrl(null)}
@@ -170,7 +151,6 @@ export default function MapView({ viewState, onMove }) {
                                 Clear
                             </button>
                         )}
-
                     </div>
 
                     <button onClick={() => setShowCaptureUI(!showCaptureUI)} style={{ width: '100%', padding: '10px', borderRadius: 8, cursor: 'pointer', background: '#111', color: '#fff', border: 'none', fontWeight: 700 }}>
@@ -189,30 +169,21 @@ export default function MapView({ viewState, onMove }) {
                 )}
             </div>
 
-            {/* recenter floating button — bottom right, above the mapbox attribution bar.
-                disabled and dimmed while waiting for a location fix. */}
+            {/* Recenter button */}
             <button
                 onClick={handleRecenter}
                 disabled={!userLocation}
                 title={userLocation ? 'Centre on my location' : 'Waiting for location…'}
                 style={{
-                    position: 'absolute',
-                    bottom: 40,
-                    right: 16,
-                    zIndex: 10,
-                    width: 48,
-                    height: 48,
-                    borderRadius: '50%',
+                    position: 'absolute', bottom: 40, right: 16, zIndex: 10,
+                    width: 48, height: 48, borderRadius: '50%',
                     border: '2px solid #fff',
                     background: userLocation ? '#1BA39C' : '#aaa',
                     color: '#fff',
                     cursor: userLocation ? 'pointer' : 'not-allowed',
                     boxShadow: '0 4px 16px rgba(0,0,0,0.25)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'background 0.2s',
-                    padding: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    transition: 'background 0.2s', padding: 0,
                 }}
             >
                 <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -235,33 +206,27 @@ export default function MapView({ viewState, onMove }) {
             >
                 <NavigationControl position="top-right" />
 
-                {/* the actual trail line */}
                 <Source id="selected-trail-source" type="geojson" data={trailGeoJSON}>
                     <Layer id="trail-line" type="line" slot="middle" paint={{ 'line-color': '#1BA39C', 'line-width': 6, 'line-cap': 'round' }} />
                 </Source>
 
-                {/* preview line for the trail editor */}
                 <Source id="capture-source" type="geojson" data={capturedGeoJSON}>
                     <Layer id="capture-line" type="line" paint={{ 'line-color': '#FF7A00', 'line-width': 3, 'line-dasharray': [2, 1] }} />
                     <Layer id="capture-pts" type="circle" paint={{ 'circle-radius': 5, 'circle-color': '#FF7A00', 'circle-stroke-width': 2, 'circle-stroke-color': '#fff' }} />
                 </Source>
 
-                {/* location pins */}
                 {locations.map((loc) => (
                     <Marker key={loc.id} longitude={loc.coordinates?.[0] ?? loc.lng} latitude={loc.coordinates?.[1] ?? loc.lat} anchor="bottom">
                         <div style={{ fontSize: 24, cursor: 'pointer' }} onClick={(e) => { e.stopPropagation(); setSelectedLoc(loc); }}>📍</div>
                     </Marker>
                 ))}
 
-                {/* live location blue dot — only rendered once a GPS fix is obtained.
-                    stopPropagation prevents accidentally dropping a trail point when tapping the dot. */}
                 {userLocation && (
                     <Marker longitude={userLocation.lng} latitude={userLocation.lat} anchor="center">
                         <div className="user-location-pulse" onClick={(e) => e.stopPropagation()} />
                     </Marker>
                 )}
 
-                {/* popup when you click a pin */}
                 {selectedLoc && (
                     <Popup longitude={selectedLoc.coordinates?.[0] ?? selectedLoc.lng} latitude={selectedLoc.coordinates?.[1] ?? selectedLoc.lat} onClose={() => setSelectedLoc(null)} anchor="top" offset={10}>
                         <div style={{ color: '#111' }}><strong>{selectedLoc.name}</strong></div>
@@ -269,5 +234,14 @@ export default function MapView({ viewState, onMove }) {
                 )}
             </Map>
         </div>
+    );
+}
+
+// Wrap in Suspense — required by Next.js App Router when useSearchParams is used
+export default function MapView(props) {
+    return (
+        <Suspense fallback={<div style={{ width: '100%', height: '100%', background: '#f1f5f9' }} />}>
+            <MapViewInner {...props} />
+        </Suspense>
     );
 }

@@ -1,105 +1,146 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
-import { Html5Qrcode, Html5QrcodeScanner } from "html5-qrcode";
-import { Box, Typography, IconButton, Button, Paper, Stack } from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import FileUploadIcon from '@mui/icons-material/FileUpload';
+import { useEffect, useRef, useState } from "react";
+import { Html5QrcodeScanner } from "html5-qrcode";
 import { useRouter } from "next/navigation";
+import styles from ".././Scan.module.css";
 
 export default function ScanPage() {
     const router = useRouter();
-    const fileInputRef = useRef(null);
-    const [scanner, setScanner] = useState(null);
+    const scannerRef = useRef(null);
+    const [status, setStatus] = useState("idle"); // idle | success
 
     useEffect(() => {
-        const newScanner = new Html5QrcodeScanner("reader", {
-            qrbox: { width: 250, height: 250 },
-            fps: 10,
-        });
+        // Small delay ensures the DOM node is painted before html5-qrcode initialises
+        const timer = setTimeout(() => {
+            const scanner = new Html5QrcodeScanner(
+                "cq-reader",
+                {
+                    fps: 12,
+                    qrbox: { width: 240, height: 240 },
+                    facingMode: "environment",
+                    rememberLastUsedCamera: false,
+                    showTorchButtonIfSupported: false,
+                    showZoomSliderIfSupported: false,
+                },
+                false // verbose off
+            );
 
-        newScanner.render(onScanSuccess, onScanFailure);
-        setScanner(newScanner);
+            scanner.render(
+                (decoded) => {
+                    setStatus("success");
+                    scanner.clear().catch(() => {});
+                    setTimeout(() => {
+                        router.push(`/location/${decoded.toUpperCase()}`);
+                    }, 900);
+                },
+                () => {} // per-frame scan failures are expected — suppress silently
+            );
+
+            scannerRef.current = scanner;
+        }, 120);
 
         return () => {
-            newScanner.clear().catch((error) => console.error("Failed to clear", error));
+            clearTimeout(timer);
+            scannerRef.current?.clear().catch(() => {});
         };
-    }, []);
+    }, [router]);
 
-    function onScanSuccess(decodedText) {
-        // Navigate to the building page
-        router.push(`/location/${decodedText.toUpperCase()}`);
-    }
+    const isSuccess = status === "success";
+    const TEAL = "#1BA39C";
+    const GREEN = "#4ade80";
+    const accentColor = isSuccess ? GREEN : TEAL;
 
-    function onScanFailure(error) {
-        // Ignore constant scanning errors
-    }
-
-    // FILE UPLOAD HANDLER
-    const handleFileUpload = async (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        // Use the Html5Qrcode class (not the scanner UI) for file scanning
-        const html5QrCode = new Html5Qrcode("reader");
-
-        try {
-            const decodedText = await html5QrCode.scanFile(file, true);
-            onScanSuccess(decodedText);
-        } catch (err) {
-            alert("Could not find a QR code in this image. Try a clearer photo.");
-            console.error("File scan error:", err);
-        }
-    };
+    // Corner bracket definitions — border sides and radius set per corner
+    const corners = [
+        { top: 0,    left: 0,    borderTop: true,    borderLeft: true,  borderRadius: "6px 0 0 0"  },
+        { top: 0,    right: 0,   borderTop: true,    borderRight: true, borderRadius: "0 6px 0 0"  },
+        { bottom: 0, left: 0,    borderBottom: true, borderLeft: true,  borderRadius: "0 0 0 6px"  },
+        { bottom: 0, right: 0,   borderBottom: true, borderRight: true, borderRadius: "0 0 6px 0"  },
+    ];
 
     return (
-        <Box sx={{ height: "100vh", bgcolor: "#000", display: "flex", flexDirection: "column" }}>
-            {/* Header */}
-            <Box sx={{ p: 2, display: "flex", alignItems: "center", zIndex: 10 }}>
-                <IconButton onClick={() => router.push("/")} sx={{ color: "white", bgcolor: "rgba(255,255,255,0.1)" }}>
-                    <ArrowBackIcon />
-                </IconButton>
-                <Typography variant="h6" sx={{ ml: 2, color: "white", fontWeight: 700 }}>
-                    Scan Building
-                </Typography>
-            </Box>
+        <div className={styles.page}>
 
-            {/* Camera View */}
-            <Box sx={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", p: 2 }}>
-                <Paper sx={{ width: "100%", maxWidth: 400, borderRadius: 4, overflow: "hidden", bgcolor: "black" }}>
-                    <div id="reader"></div>
-                </Paper>
-            </Box>
+            {/* Ambient teal glow */}
+            <div className={styles.glow} />
 
-            {/* Upload Controls */}
-            <Stack spacing={2} sx={{ p: 4, alignItems: "center" }}>
-                <Typography variant="body2" sx={{ color: "white", opacity: 0.7 }}>
-                    Can't scan? Upload a photo instead
-                </Typography>
-
-                <input
-                    type="file"
-                    accept="image/*"
-                    ref={fileInputRef}
-                    onChange={handleFileUpload}
-                    style={{ display: "none" }}
-                />
-
-                <Button
-                    variant="outlined"
-                    startIcon={<FileUploadIcon />}
-                    onClick={() => fileInputRef.current.click()}
-                    sx={{
-                        color: "white",
-                        borderColor: "white",
-                        borderRadius: "12px",
-                        px: 4,
-                        "&:hover": { borderColor: "#1BA39C", color: "#1BA39C" }
-                    }}
+            {/* ── Header ─────────────────────────────────────── */}
+            <div className={styles.header}>
+                <button
+                    className={styles.backBtn}
+                    onClick={() => router.push("/")}
+                    aria-label="Back to map"
                 >
-                    Upload QR Image
-                </Button>
-            </Stack>
-        </Box>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none"
+                         stroke="currentColor" strokeWidth="2.5"
+                         strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="15 18 9 12 15 6" />
+                    </svg>
+                </button>
+
+                <div>
+                    <div className={styles.headerTitle}>Scan QR Code</div>
+                    <div className={styles.headerSub}>TU Dublin · Campus Quest</div>
+                </div>
+            </div>
+
+            {/* ── Camera card ────────────────────────────────── */}
+            <div className={styles.cardWrap}>
+                <div className={styles.card}>
+
+                    {/* Video feed — html5-qrcode renders into #cq-reader */}
+                    <div className={styles.videoBox}>
+                        <div id="cq-reader" style={{ width: "100%", height: "100%" }} />
+
+                        {/* Viewfinder overlay */}
+                        <div className={styles.overlay}>
+                            <div className={styles.vignette} />
+
+                            <div className={styles.frame}>
+                                {/* Four corner brackets */}
+                                {corners.map((c, i) => (
+                                    <div
+                                        key={i}
+                                        className={styles.corner}
+                                        style={{
+                                            top:          c.top    !== undefined ? c.top    : "auto",
+                                            bottom:       c.bottom !== undefined ? c.bottom : "auto",
+                                            left:         c.left   !== undefined ? c.left   : "auto",
+                                            right:        c.right  !== undefined ? c.right  : "auto",
+                                            borderTop:    c.borderTop    ? `3px solid ${accentColor}` : "none",
+                                            borderBottom: c.borderBottom ? `3px solid ${accentColor}` : "none",
+                                            borderLeft:   c.borderLeft   ? `3px solid ${accentColor}` : "none",
+                                            borderRight:  c.borderRight  ? `3px solid ${accentColor}` : "none",
+                                            borderRadius: c.borderRadius,
+                                            transition:   "border-color 0.3s ease",
+                                        }}
+                                    />
+                                ))}
+
+                                {/* Success checkmark */}
+                                {isSuccess && <div className={styles.tick}>✓</div>}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Status strip */}
+                    <div className={styles.strip}>
+                        <div
+                            className={`${styles.dot} ${isSuccess ? styles.success : styles.active}`}
+                        />
+                        <span className={`${styles.stripText} ${isSuccess ? styles.success : ""}`}>
+              {isSuccess
+                  ? "QR code detected — opening location…"
+                  : "Align a Campus Quest QR code within the frame"}
+            </span>
+                    </div>
+                </div>
+
+                <p className={styles.hint}>
+                    QR codes are posted at every building entrance
+                </p>
+            </div>
+        </div>
     );
 }

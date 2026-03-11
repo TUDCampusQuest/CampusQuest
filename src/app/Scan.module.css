@@ -1,0 +1,218 @@
+/* ============================================= */
+/* SCAN PAGE — Scan.module.css                   */
+/* ============================================= */
+
+.page {
+    min-height: 100dvh;
+    background: #0c1520;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    font-family: 'Inter', Arial, Helvetica, sans-serif;
+}
+
+/* Soft teal ambient glow behind the header */
+.glow {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 140%;
+    height: 300px;
+    background: radial-gradient(ellipse at 50% 0%, rgba(27, 163, 156, 0.16) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+}
+
+/* ── Header ──────────────────────────────────── */
+
+.header {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 20px 20px 10px;
+}
+
+.backBtn {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.07);
+    color: white;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+
+.backBtn:hover {
+    background: rgba(255, 255, 255, 0.13);
+}
+
+.headerTitle {
+    color: white;
+    font-weight: 700;
+    font-size: 1.05rem;
+    line-height: 1.2;
+    letter-spacing: -0.2px;
+}
+
+.headerSub {
+    color: rgba(255, 255, 255, 0.35);
+    font-size: 0.68rem;
+    margin-top: 3px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+/* ── Card wrapper ────────────────────────────── */
+
+.cardWrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 12px 24px 36px;
+    position: relative;
+    z-index: 2;
+}
+
+.card {
+    width: 100%;
+    max-width: 360px;
+    border-radius: 24px;
+    overflow: hidden;
+    background: #111c28;
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    box-shadow:
+            0 32px 64px rgba(0, 0, 0, 0.5),
+            0 0 0 1px rgba(27, 163, 156, 0.08);
+}
+
+/* ── Video / viewfinder area ─────────────────── */
+
+.videoBox {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 1 / 1;
+    background: #000;
+    overflow: hidden;
+}
+
+/* Overlay sits on top of the video feed */
+.overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+}
+
+/* Darkens edges to focus attention on the frame */
+.vignette {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(
+            circle 130px at 50% 50%,
+            transparent 35%,
+            rgba(0, 0, 0, 0.62) 100%
+    );
+}
+
+/* The 200×200 area that contains corners + status */
+.frame {
+    position: relative;
+    width: 200px;
+    height: 200px;
+}
+
+/* Individual corner bracket — position/border set inline in JSX */
+.corner {
+    position: absolute;
+    width: 32px;
+    height: 32px;
+}
+
+/* ── Status strip ────────────────────────────── */
+
+.strip {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    background: #1BA39C;
+}
+
+.dot.active {
+    animation: dotBlink 1.4s ease-in-out infinite;
+}
+
+.dot.success {
+    background: #4ade80;
+}
+
+.stripText {
+    font-size: 0.78rem;
+    font-weight: 500;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.55);
+}
+
+.stripText.success {
+    color: #4ade80;
+}
+
+/* ── Success tick ────────────────────────────── */
+
+.tick {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3.5rem;
+    color: #4ade80;
+    font-weight: 800;
+    animation: successPop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* ── Hint text below card ────────────────────── */
+
+.hint {
+    margin-top: 20px;
+    color: rgba(255, 255, 255, 0.22);
+    font-size: 0.75rem;
+    text-align: center;
+    letter-spacing: 0.3px;
+}
+
+/* ============================================= */
+/* KEYFRAME ANIMATIONS                           */
+/* ============================================= */
+
+@keyframes dotBlink {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.25; }
+}
+
+@keyframes successPop {
+    0%   { transform: scale(0.5); opacity: 0; }
+    70%  { transform: scale(1.15); }
+    100% { transform: scale(1);   opacity: 1; }
+}
