@@ -11,20 +11,19 @@
   }
 }
 
-/* Ensure the document allows full-height children */
 html,
 body {
   max-width: 100vw;
-  height: 100%; /* Added: Critical for absolute positioning */
+  height: 100%;
   margin: 0;
   padding: 0;
-  overflow: hidden; /* Prevents double scrollbars with the map */
+  overflow: hidden;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: 'Inter', Arial, Helvetica, sans-serif; /* Modernized font */
+  font-family: 'Inter', Arial, Helvetica, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -39,10 +38,9 @@ a {
 }
 
 /* ============================================= */
-/* MAPBOX GL FIXES                   */
+/* MAPBOX GL FIXES                               */
 /* ============================================= */
 
-/* 1. Force the map container to fill the screen */
 .map-container {
   position: absolute;
   top: 0;
@@ -53,14 +51,12 @@ a {
   height: 100%;
 }
 
-/* 2. Fix the Mapbox Canvas (The actual engine) */
 .mapboxgl-canvas {
   width: 100% !important;
   height: 100% !important;
   outline: none;
 }
 
-/* 3. Style the Popups to match "Campus Quest" */
 .mapboxgl-popup-content {
   border-radius: 12px !important;
   padding: 12px !important;
@@ -74,31 +70,59 @@ a {
   outline: none !important;
 }
 
-/* 4. Hide the default Mapbox controls if you're using custom ones */
-/* .mapboxgl-ctrl-group { display: none !important; } */
-
 @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;
   }
 }
-/* Critical fix for Mapbox visibility */
+
 html, body, #__next {
   height: 100%;
   margin: 0;
   padding: 0;
 }
 
-.map-container {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  width: 100%;
-  height: 100%;
+/* ============================================= */
+/* LIVE LOCATION BLUE DOT                        */
+/* ============================================= */
+
+/*
+ * The pulse is built from two layers:
+ *   - ::before  → the expanding ripple ring
+ *   - the element itself → the solid teal centre dot
+ */
+.user-location-pulse {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: #1BA39C;
+  border: 3px solid #ffffff;
+  box-shadow: 0 2px 8px rgba(27, 163, 156, 0.6);
 }
 
-/* Fix for the internal Mapbox canvas */
-.mapboxgl-canvas {
-  width: 100% !important;
-  height: 100% !important;
+/* ripple ring */
+.user-location-pulse::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background-color: rgba(27, 163, 156, 0.35);
+  transform: translate(-50%, -50%) scale(1);
+  animation: location-ripple 2s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes location-ripple {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(3.5);
+    opacity: 0;
+  }
 }
