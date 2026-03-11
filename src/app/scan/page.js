@@ -8,57 +8,69 @@ import styles from ".././Scan.module.css";
 export default function ScanPage() {
     const router = useRouter();
     const scannerRef = useRef(null);
-    const [status, setStatus] = useState("idle");     // idle | requesting | scanning | success | denied
+    const hasScannedRef = useRef(false); // guard — prevents firing more than once
+    const [status, setStatus] = useState("idle"); // idle | scanning | success | denied
     const [errorMsg, setErrorMsg] = useState("");
 
     useEffect(() => {
         let html5Qrcode;
 
         const startScanner = async () => {
-            setStatus("requesting");
 
+            // 1. Ask for camera permission explicitly so the browser prompt appears
             try {
-                // Explicitly request camera permission first so the browser
-                // shows the native permission prompt before the scanner starts
-                await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+                await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: "environment" },
+                });
             } catch {
                 setStatus("denied");
-                setErrorMsg("Camera permission was denied. Please allow camera access in your browser settings and refresh.");
+                setErrorMsg("Camera permission denied. Please allow access in your browser settings and refresh.");
                 return;
             }
 
+            // 2. Initialise the scanner against the div
             try {
                 html5Qrcode = new Html5Qrcode("cq-reader");
                 scannerRef.current = html5Qrcode;
-
                 setStatus("scanning");
 
                 await html5Qrcode.start(
-                    // Request the rear-facing camera directly
                     { facingMode: "environment" },
-                    {
-                        fps: 12,
-                        qrbox: { width: 240, height: 240 },
-                    },
-                    (decoded) => {
-                        // Success — stop scanning and navigate
+                    { fps: 10, qrbox: { width: 240, height: 240 } },
+
+                    // Success callback
+                    async (decoded) => {
+                        // Guard: ignore any duplicate fires after the first successful scan
+                        if (hasScannedRef.current) return;
+                        hasScannedRef.current = true;
+
                         setStatus("success");
-                        html5Qrcode.stop().catch(() => {});
-                        setTimeout(() => {
-                            router.push(`/location/${decoded.toUpperCase()}`);
-                        }, 900);
+
+                        // Stop the camera stream first, then navigate.
+                        // Awaiting stop() ensures the stream is released before we leave
+                        // the page, which prevents the scanner hanging on iOS/Android.
+                        try {
+                            await html5Qrcode.stop();
+                        } catch {
+                            // stop() can throw if the stream already ended — safe to ignore
+                        }
+
+                        router.push(`/location/${decoded.trim().toUpperCase()}`);
                     },
-                    () => {} // per-frame failures are expected — suppress silently
+
+                    // Per-frame failure — expected, suppress silently
+                    () => {}
                 );
             } catch (err) {
                 console.error("Scanner start error:", err);
                 setStatus("denied");
-                setErrorMsg("Could not start the camera. Please check permissions and try again.");
+                setErrorMsg("Could not access the camera. Check permissions and try again.");
             }
         };
 
         startScanner();
 
+        // Cleanup: stop the stream when the user navigates away
         return () => {
             if (scannerRef.current) {
                 scannerRef.current.stop().catch(() => {});
@@ -67,7 +79,7 @@ export default function ScanPage() {
     }, [router]);
 
     const isSuccess = status === "success";
-    const isDenied = status === "denied";
+    const isDenied  = status === "denied";
     const accentColor = isSuccess ? "#4ade80" : "#1BA39C";
 
     const corners = [
@@ -105,10 +117,10 @@ export default function ScanPage() {
                 <div className={styles.card}>
                     <div className={styles.videoBox}>
 
-                        {/* html5-qrcode renders the video feed into this div */}
+                        {/* html5-qrcode mounts the video stream into this div */}
                         <div id="cq-reader" style={{ width: "100%", height: "100%" }} />
 
-                        {/* Permission denied overlay */}
+                        {/* Permission denied state */}
                         {isDenied && (
                             <div className={styles.deniedOverlay}>
                                 <span style={{ fontSize: "2rem" }}>🚫</span>
@@ -116,7 +128,7 @@ export default function ScanPage() {
                             </div>
                         )}
 
-                        {/* Viewfinder overlay — only shown while scanning or on success */}
+                        {/* Viewfinder overlay */}
                         {!isDenied && (
                             <div className={styles.overlay}>
                                 <div className={styles.vignette} />
@@ -149,11 +161,10 @@ export default function ScanPage() {
                     <div className={styles.strip}>
                         <div className={`${styles.dot} ${isSuccess ? styles.success : styles.active}`} />
                         <span className={`${styles.stripText} ${isSuccess ? styles.success : ""}`}>
-              {status === "requesting" && "Requesting camera permission…"}
-                            {status === "scanning"   && "Align a Campus Quest QR code within the frame"}
-                            {status === "success"    && "QR code detected — opening location…"}
-                            {status === "denied"     && "Camera access required to scan QR codes"}
-                            {status === "idle"       && "Starting camera…"}
+              {status === "idle"     && "Starting camera…"}
+                            {status === "scanning" && "Align a Campus Quest QR code within the frame"}
+                            {status === "success"  && "QR code detected — opening location…"}
+                            {status === "denied"   && "Camera access required to scan QR codes"}
             </span>
                     </div>
                 </div>
