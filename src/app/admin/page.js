@@ -183,6 +183,8 @@ export default function Home() {
                     navTarget={navTarget}
                     isNavigating={isNavigating}
                     onTrailSaved={fetchTrails}
+                    isAdmin={true}
+
                 />
 
                 {/* ── Sidebar controls — right edge, grouped card ── */}
@@ -277,6 +279,7 @@ export default function Home() {
                 onClose={() => { setSearchOpen(false); setQuery(""); }}
                 query={query} onQueryChange={setQuery}
                 results={filtered} onSelect={handleSelectLocation}
+
             />
 
             <style>{`
