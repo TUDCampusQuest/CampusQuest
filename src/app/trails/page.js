@@ -22,7 +22,7 @@ import NavigationIcon from "@mui/icons-material/Navigation";
 
 import { locations } from "../data/locations";
 
-const MapView = dynamic(() => import("./components/MapView"), {
+const MapView = dynamic(() => import("../components/MapView"), {
     ssr: false,
     loading: () => <Box sx={{ height: "100dvh", width: "100vw", bgcolor: "#f1f5f9" }} />,
 });
