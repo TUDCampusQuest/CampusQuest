@@ -18,7 +18,7 @@ import MyLocationIcon from "@mui/icons-material/MyLocation";
 import { locations } from "./data/locations";
 import NavHUD from "./components/NavHUD";
 import NavBottomCard from "./components/NavBottomCard";
-import SearchDrawer from "./components/SearchDrawer";
+import SearchDrawer from "./components/SearchDrawer.jsx";
 
 const MapView = dynamic(() => import("./components/MapView"), {
     ssr: false,
