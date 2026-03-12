@@ -20,7 +20,7 @@ import MyLocationIcon from "@mui/icons-material/MyLocation";
 import CloseIcon from "@mui/icons-material/Close";
 import NavigationIcon from "@mui/icons-material/Navigation";
 
-import { locations } from "./data/locations";
+import { locations } from "../data/locations";
 
 const MapView = dynamic(() => import("./components/MapView"), {
     ssr: false,
