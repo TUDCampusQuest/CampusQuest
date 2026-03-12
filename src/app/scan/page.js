@@ -3,14 +3,38 @@
 import { useEffect, useRef, useState } from "react";
 import { Html5Qrcode } from "html5-qrcode";
 import { useRouter } from "next/navigation";
-import styles from ".././Scan.module.css";
+import styles from "../Scan.module.css";
 
 export default function ScanPage() {
     const router = useRouter();
     const scannerRef = useRef(null);
-    const hasScannedRef = useRef(false); // guard — prevents firing more than once
-    const [status, setStatus] = useState("idle"); // idle | scanning | success | denied
+    const hasScannedRef = useRef(false);
+    const pendingNavRef = useRef(null); // stores decoded value for navigation
+    const [status, setStatus] = useState("idle");
     const [errorMsg, setErrorMsg] = useState("");
+
+    // Watch pendingNavRef — when a decoded value is set, stop the scanner
+    // and navigate. Keeping navigation outside the html5Qrcode success callback
+    // prevents uncaught async errors since the library doesn't support async callbacks.
+    useEffect(() => {
+        if (status !== "success" || !pendingNavRef.current) return;
+
+        const destination = pendingNavRef.current;
+
+        const stopAndNavigate = async () => {
+            if (scannerRef.current) {
+                try {
+                    await scannerRef.current.stop();
+                } catch {
+                    // already stopped — safe to ignore
+                }
+                scannerRef.current = null;
+            }
+            router.push(`/location/${destination}`);
+        };
+
+        stopAndNavigate();
+    }, [status, router]);
 
     useEffect(() => {
         let html5Qrcode;
@@ -38,24 +62,15 @@ export default function ScanPage() {
                     { facingMode: "environment" },
                     { fps: 10, qrbox: { width: 240, height: 240 } },
 
-                    // Success callback
-                    async (decoded) => {
-                        // Guard: ignore any duplicate fires after the first successful scan
+                    // Success callback — kept fully synchronous so the library
+                    // doesn't receive an unhandled async rejection
+                    (decoded) => {
                         if (hasScannedRef.current) return;
                         hasScannedRef.current = true;
-
+                        // Store the destination and flip status — the useEffect above
+                        // handles stop() and router.push() safely outside this callback
+                        pendingNavRef.current = decoded.trim().toUpperCase();
                         setStatus("success");
-
-                        // Stop the camera stream first, then navigate.
-                        // Awaiting stop() ensures the stream is released before we leave
-                        // the page, which prevents the scanner hanging on iOS/Android.
-                        try {
-                            await html5Qrcode.stop();
-                        } catch {
-                            // stop() can throw if the stream already ended — safe to ignore
-                        }
-
-                        router.push(`/location/${decoded.trim().toUpperCase()}`);
                     },
 
                     // Per-frame failure — expected, suppress silently
@@ -74,6 +89,7 @@ export default function ScanPage() {
         return () => {
             if (scannerRef.current) {
                 scannerRef.current.stop().catch(() => {});
+                scannerRef.current = null;
             }
         };
     }, [router]);
