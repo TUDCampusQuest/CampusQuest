@@ -9,13 +9,11 @@ export default function ScanPage() {
     const router = useRouter();
     const scannerRef = useRef(null);
     const hasScannedRef = useRef(false);
-    const pendingNavRef = useRef(null); // stores decoded value for navigation
+    const pendingNavRef = useRef(null);
     const [status, setStatus] = useState("idle");
     const [errorMsg, setErrorMsg] = useState("");
 
-    // Watch pendingNavRef — when a decoded value is set, stop the scanner
-    // and navigate. Keeping navigation outside the html5Qrcode success callback
-    // prevents uncaught async errors since the library doesn't support async callbacks.
+    // Navigate to /?location=ID so the map opens with the location sheet
     useEffect(() => {
         if (status !== "success" || !pendingNavRef.current) return;
 
@@ -23,14 +21,11 @@ export default function ScanPage() {
 
         const stopAndNavigate = async () => {
             if (scannerRef.current) {
-                try {
-                    await scannerRef.current.stop();
-                } catch {
-                    // already stopped — safe to ignore
-                }
+                try { await scannerRef.current.stop(); } catch { /* already stopped */ }
                 scannerRef.current = null;
             }
-            router.push(`/location/${destination}`);
+            // Open the slide-up sheet on the map instead of a full page redirect
+            router.push(`/?location=${destination}`);
         };
 
         stopAndNavigate();
@@ -40,19 +35,14 @@ export default function ScanPage() {
         let html5Qrcode;
 
         const startScanner = async () => {
-
-            // 1. Ask for camera permission explicitly so the browser prompt appears
             try {
-                await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: "environment" },
-                });
+                await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
             } catch {
                 setStatus("denied");
                 setErrorMsg("Camera permission denied. Please allow access in your browser settings and refresh.");
                 return;
             }
 
-            // 2. Initialise the scanner against the div
             try {
                 html5Qrcode = new Html5Qrcode("cq-reader");
                 scannerRef.current = html5Qrcode;
@@ -61,19 +51,12 @@ export default function ScanPage() {
                 await html5Qrcode.start(
                     { facingMode: "environment" },
                     { fps: 10, qrbox: { width: 240, height: 240 } },
-
-                    // Success callback — kept fully synchronous so the library
-                    // doesn't receive an unhandled async rejection
                     (decoded) => {
                         if (hasScannedRef.current) return;
                         hasScannedRef.current = true;
-                        // Store the destination and flip status — the useEffect above
-                        // handles stop() and router.push() safely outside this callback
                         pendingNavRef.current = decoded.trim().toUpperCase();
                         setStatus("success");
                     },
-
-                    // Per-frame failure — expected, suppress silently
                     () => {}
                 );
             } catch (err) {
@@ -85,7 +68,6 @@ export default function ScanPage() {
 
         startScanner();
 
-        // Cleanup: stop the stream when the user navigates away
         return () => {
             if (scannerRef.current) {
                 scannerRef.current.stop().catch(() => {});
@@ -109,7 +91,6 @@ export default function ScanPage() {
         <div className={styles.page}>
             <div className={styles.glow} />
 
-            {/* Header */}
             <div className={styles.header}>
                 <button
                     className={styles.backBtn}
@@ -128,15 +109,11 @@ export default function ScanPage() {
                 </div>
             </div>
 
-            {/* Camera card */}
             <div className={styles.cardWrap}>
                 <div className={styles.card}>
                     <div className={styles.videoBox}>
-
-                        {/* html5-qrcode mounts the video stream into this div */}
                         <div id="cq-reader" style={{ width: "100%", height: "100%" }} />
 
-                        {/* Permission denied state */}
                         {isDenied && (
                             <div className={styles.deniedOverlay}>
                                 <span style={{ fontSize: "2rem" }}>🚫</span>
@@ -144,7 +121,6 @@ export default function ScanPage() {
                             </div>
                         )}
 
-                        {/* Viewfinder overlay */}
                         {!isDenied && (
                             <div className={styles.overlay}>
                                 <div className={styles.vignette} />
@@ -173,15 +149,14 @@ export default function ScanPage() {
                         )}
                     </div>
 
-                    {/* Status strip */}
                     <div className={styles.strip}>
                         <div className={`${styles.dot} ${isSuccess ? styles.success : styles.active}`} />
                         <span className={`${styles.stripText} ${isSuccess ? styles.success : ""}`}>
-              {status === "idle"     && "Starting camera…"}
+                            {status === "idle"     && "Starting camera…"}
                             {status === "scanning" && "Align a Campus Quest QR code within the frame"}
                             {status === "success"  && "QR code detected — opening location…"}
                             {status === "denied"   && "Camera access required to scan QR codes"}
-            </span>
+                        </span>
                     </div>
                 </div>
 

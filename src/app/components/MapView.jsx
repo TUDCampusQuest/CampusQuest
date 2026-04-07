@@ -14,13 +14,9 @@ import TrailCaptureOverlay   from './TrailCaptureOverlay';
 
 const TEAL = '#1BA39C';
 
-// ── Map styles ───────────────────────────────────────────────────────────────
-// streets-v12 = lightweight flat 2D — loads fast, no GPU building extrusion
-// standard    = full 3D style — only loaded when user taps the 3D button
 const STYLE_FLAT = 'mapbox://styles/mapbox/streets-v12';
 const STYLE_3D   = 'mapbox://styles/mapbox/standard';
 
-// Campus bounding box — Mapbox will only load tiles inside this area
 const CAMPUS_BOUNDS = [
     [-6.395, 53.398],
     [-6.360, 53.415],
@@ -30,6 +26,101 @@ function trailLabel(key) {
     return key.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
+// ── Staff-only Room Status placeholder panel ─────────────────────────────────
+function RoomStatusPanel() {
+    const [open, setOpen] = useState(false);
+
+    const rooms = [
+        { id: 'A101', name: 'Computer Lab 1',    status: 'available' },
+        { id: 'A102', name: 'Computer Lab 2',    status: 'occupied'  },
+        { id: 'C201', name: 'Lecture Hall',       status: 'available' },
+        { id: 'D101', name: 'Engineering Lab',    status: 'occupied'  },
+        { id: 'F001', name: 'Library Study Room', status: 'available' },
+    ];
+
+    const statusColor = s => s === 'available' ? '#22c55e' : '#ef4444';
+    const statusLabel = s => s === 'available' ? 'Available' : 'Occupied';
+
+    return (
+        <div style={{
+            background: 'rgba(255,255,255,0.96)',
+            backdropFilter: 'blur(12px)',
+            borderRadius: 14,
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
+            overflow: 'hidden',
+        }}>
+            <div
+                onClick={() => setOpen(o => !o)}
+                style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '11px 14px', cursor: 'pointer',
+                    borderBottom: open ? '1px solid #f1f5f9' : 'none',
+                }}
+            >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                    <span style={{
+                        width: 22, height: 22, borderRadius: 6,
+                        background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 11, color: '#fff', flexShrink: 0,
+                    }}>🏫</span>
+                    <span style={{ fontSize: 13, fontWeight: 800, color: '#1e293b' }}>Room Status</span>
+                    <span style={{
+                        fontSize: 10, fontWeight: 700, color: '#f59e0b',
+                        background: '#fffbeb', border: '1px solid #fde68a',
+                        borderRadius: 20, padding: '1px 7px',
+                    }}>Staff</span>
+                </div>
+                <span style={{
+                    fontSize: 11, color: '#94a3b8',
+                    display: 'inline-block', transition: 'transform 0.2s',
+                    transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
+                }}>▾</span>
+            </div>
+
+            {open && (
+                <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 200, overflowY: 'auto' }}>
+                    {rooms.map(r => (
+                        <div key={r.id} style={{
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            padding: '7px 10px', borderRadius: 9,
+                            background: '#f8fafc', border: '1px solid #e2e8f0',
+                        }}>
+                            <div>
+                                <div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>{r.name}</div>
+                                <div style={{ fontSize: 10, color: '#94a3b8' }}>{r.id}</div>
+                            </div>
+                            <div style={{
+                                display: 'flex', alignItems: 'center', gap: 5,
+                                padding: '3px 9px', borderRadius: 20,
+                                background: `${statusColor(r.status)}18`,
+                                border: `1px solid ${statusColor(r.status)}44`,
+                            }}>
+                                <div style={{
+                                    width: 6, height: 6, borderRadius: '50%',
+                                    background: statusColor(r.status), flexShrink: 0,
+                                }} />
+                                <span style={{ fontSize: 10, fontWeight: 700, color: statusColor(r.status) }}>
+                                    {statusLabel(r.status)}
+                                </span>
+                            </div>
+                        </div>
+                    ))}
+                    <div style={{
+                        marginTop: 2, padding: '6px 10px', borderRadius: 8,
+                        background: '#fffbeb', border: '1px dashed #fde68a',
+                        fontSize: 11, color: '#92400e', fontWeight: 600, textAlign: 'center',
+                    }}>
+                        🚧 Live data coming soon
+                    </div>
+                </div>
+            )}
+        </div>
+    );
+}
+
+// ── MapViewInner ──────────────────────────────────────────────────────────────
 function MapViewInner({
                           viewState,
                           onMove,
@@ -38,11 +129,12 @@ function MapViewInner({
                           isNavigating,
                           onTrailSaved,
                           is3D,
-                          isAdmin = false
+                          isAdmin = false,
+                          onLocationSelect,   // parent handles the slide-up sheet
                       }) {
     const mapRef = useRef(null);
 
-    const [selectedLoc, setSelectedLoc]       = useState(null);
+    const [selectedLoc, setSelectedLoc]       = useState(null); // fallback popup only
     const [captureMode, setCaptureMode]       = useState(false);
     const [capturedPoints, setCapturedPoints] = useState([]);
     const [showCaptureUI, setShowCaptureUI]   = useState(false);
@@ -62,9 +154,14 @@ function MapViewInner({
         if (onMapLoad) onMapLoad(e.target);
     }, [onMapLoad]);
 
+    useEffect(() => { setStyleLoaded(false); }, [is3D]);
+
     useEffect(() => {
-        setStyleLoaded(false);
-    }, [is3D]);
+        if (!isAdmin) {
+            setShowCaptureUI(false);
+            setCaptureMode(false);
+        }
+    }, [isAdmin]);
 
     useEffect(() => {
         if (!navTarget || !mapRef.current) return;
@@ -76,7 +173,11 @@ function MapViewInner({
 
     return (
         <div style={{ width: '100%', height: '100%', position: 'relative', cursor: captureMode ? 'crosshair' : 'inherit' }}>
+
+            {/* ── Left panel stack ── */}
             <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, width: 230, display: 'flex', flexDirection: 'column', gap: 8 }}>
+
+                {/* Trails panel */}
                 <div style={{
                     background: 'rgba(255,255,255,0.96)',
                     backdropFilter: 'blur(12px)',
@@ -88,53 +189,32 @@ function MapViewInner({
                     <div
                         onClick={() => setPanelOpen(o => !o)}
                         style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            padding: '11px 14px',
-                            cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                            padding: '11px 14px', cursor: 'pointer',
                             borderBottom: panelOpen ? '1px solid #f1f5f9' : 'none',
                         }}
                     >
                         <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                             <span style={{
-                                width: 22,
-                                height: 22,
-                                borderRadius: 6,
+                                width: 22, height: 22, borderRadius: 6,
                                 background: 'linear-gradient(135deg, #1BA39C, #0e6d68)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: 11,
-                                color: '#fff',
-                                flexShrink: 0,
-                            }}>
-                                🗺
-                            </span>
+                                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                fontSize: 11, color: '#fff', flexShrink: 0,
+                            }}>🗺</span>
                             <span style={{ fontSize: 13, fontWeight: 800, color: '#1e293b' }}>Trails</span>
                             {trailKeys.length > 0 && (
                                 <span style={{
-                                    fontSize: 10,
-                                    fontWeight: 700,
-                                    color: TEAL,
-                                    background: '#f0fdfa',
-                                    border: '1px solid #99f6e4',
-                                    borderRadius: 20,
-                                    padding: '1px 7px'
-                                }}>
-                                    {trailKeys.length}
-                                </span>
+                                    fontSize: 10, fontWeight: 700, color: TEAL,
+                                    background: '#f0fdfa', border: '1px solid #99f6e4',
+                                    borderRadius: 20, padding: '1px 7px',
+                                }}>{trailKeys.length}</span>
                             )}
                         </div>
                         <span style={{
-                            fontSize: 11,
-                            color: '#94a3b8',
-                            display: 'inline-block',
-                            transition: 'transform 0.2s',
-                            transform: panelOpen ? 'rotate(0deg)' : 'rotate(-90deg)'
-                        }}>
-                            ▾
-                        </span>
+                            fontSize: 11, color: '#94a3b8',
+                            display: 'inline-block', transition: 'transform 0.2s',
+                            transform: panelOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
+                        }}>▾</span>
                     </div>
 
                     {panelOpen && (
@@ -150,33 +230,22 @@ function MapViewInner({
                                         key={key}
                                         onClick={() => setTrailInUrl(key)}
                                         style={{
-                                            display: 'flex',
-                                            alignItems: 'center',
-                                            gap: 8,
-                                            width: '100%',
-                                            padding: '8px 10px',
-                                            borderRadius: 9,
+                                            display: 'flex', alignItems: 'center', gap: 8,
+                                            width: '100%', padding: '8px 10px', borderRadius: 9,
                                             border: 'none',
                                             outline: active ? 'none' : '1px solid #e2e8f0',
                                             background: active ? 'linear-gradient(135deg, #1BA39C, #15857f)' : '#f8fafc',
                                             color: active ? '#fff' : '#334155',
-                                            cursor: 'pointer',
-                                            fontWeight: active ? 700 : 500,
-                                            fontSize: 12,
+                                            cursor: 'pointer', fontWeight: active ? 700 : 500, fontSize: 12,
                                             textAlign: 'left',
                                             boxShadow: active ? '0 2px 8px rgba(27,163,156,0.3)' : 'none',
                                             transition: 'all 0.15s',
                                         }}
                                     >
-                                        <span
-                                            style={{
-                                                width: 7,
-                                                height: 7,
-                                                borderRadius: '50%',
-                                                flexShrink: 0,
-                                                background: active ? 'rgba(255,255,255,0.85)' : TEAL
-                                            }}
-                                        />
+                                        <span style={{
+                                            width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
+                                            background: active ? 'rgba(255,255,255,0.85)' : TEAL,
+                                        }} />
                                         {trailLabel(key)}
                                     </button>
                                 );
@@ -185,15 +254,9 @@ function MapViewInner({
                                 <button
                                     onClick={() => setTrailInUrl(null)}
                                     style={{
-                                        marginTop: 2,
-                                        padding: '6px',
-                                        borderRadius: 8,
-                                        border: '1px solid #fecaca',
-                                        background: '#fef2f2',
-                                        color: '#dc2626',
-                                        cursor: 'pointer',
-                                        fontWeight: 700,
-                                        fontSize: 11,
+                                        marginTop: 2, padding: '6px', borderRadius: 8,
+                                        border: '1px solid #fecaca', background: '#fef2f2',
+                                        color: '#dc2626', cursor: 'pointer', fontWeight: 700, fontSize: 11,
                                     }}
                                 >
                                     ✕ Clear selection
@@ -207,21 +270,13 @@ function MapViewInner({
                             <button
                                 onClick={() => setShowCaptureUI(o => !o)}
                                 style={{
-                                    width: '100%',
-                                    padding: '9px',
-                                    borderRadius: 9,
-                                    border: 'none',
-                                    cursor: 'pointer',
-                                    fontWeight: 700,
-                                    fontSize: 12,
+                                    width: '100%', padding: '9px', borderRadius: 9,
+                                    border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 12,
                                     background: showCaptureUI ? '#f1f5f9' : 'linear-gradient(135deg, #0f172a, #1e293b)',
                                     color: showCaptureUI ? '#475569' : '#fff',
                                     boxShadow: showCaptureUI ? 'none' : '0 2px 8px rgba(0,0,0,0.18)',
                                     transition: 'all 0.15s',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    gap: 6,
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
                                 }}
                             >
                                 <span>{showCaptureUI ? '←' : '✏'}</span>
@@ -241,6 +296,8 @@ function MapViewInner({
                         onTrailSaved={onTrailSaved}
                     />
                 )}
+
+                {isAdmin && <RoomStatusPanel />}
             </div>
 
             {isNavigating && (
@@ -280,21 +337,21 @@ function MapViewInner({
                 )}
 
                 {locations.map(loc => {
-                    const isTarget = navTarget?.id === loc.id;
-                    const isStart = buildingA?.id === loc.id;
+                    const isTarget   = navTarget?.id === loc.id;
+                    const isStart    = buildingA?.id  === loc.id;
                     const isPickable = routeStep === 'PICK_A' && loc.id !== navTarget?.id;
 
                     return (
                         <Marker
                             key={loc.id}
                             longitude={loc.coordinates?.[0] ?? loc.lng}
-                            latitude={loc.coordinates?.[1] ?? loc.lat}
+                            latitude={loc.coordinates?.[1]  ?? loc.lat}
                             anchor="bottom"
                         >
                             <div
                                 style={{
                                     fontSize: isTarget || isStart ? 32 : 24,
-                                    cursor: isPickable ? 'pointer' : 'default',
+                                    cursor: 'pointer',
                                     transition: 'font-size 0.2s, filter 0.2s',
                                     filter: isTarget
                                         ? 'drop-shadow(0 0 8px rgba(239,68,68,0.9))'
@@ -306,8 +363,13 @@ function MapViewInner({
                                 }}
                                 onClick={e => {
                                     e.stopPropagation();
-                                    if (routeStep === 'PICK_A' && loc.id !== navTarget?.id) pickBuildingA(loc);
-                                    else setSelectedLoc(loc);
+                                    if (routeStep === 'PICK_A' && loc.id !== navTarget?.id) {
+                                        pickBuildingA(loc);
+                                    } else if (onLocationSelect) {
+                                        onLocationSelect(loc);
+                                    } else {
+                                        setSelectedLoc(loc);
+                                    }
                                 }}
                             >
                                 📍
@@ -318,17 +380,13 @@ function MapViewInner({
 
                 {buildingA && (
                     <Marker longitude={buildingA.coordinates[0]} latitude={buildingA.coordinates[1]} anchor="top">
-                        <div style={{ background: '#22c55e', color: '#fff', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 11, border: '2px solid #fff', boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}>
-                            A
-                        </div>
+                        <div style={{ background: '#22c55e', color: '#fff', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 11, border: '2px solid #fff', boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}>A</div>
                     </Marker>
                 )}
 
                 {buildingB && isNavigating && (
                     <Marker longitude={buildingB.coordinates[0]} latitude={buildingB.coordinates[1]} anchor="top">
-                        <div style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 11, border: '2px solid #fff', boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}>
-                            B
-                        </div>
+                        <div style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 11, border: '2px solid #fff', boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}>B</div>
                     </Marker>
                 )}
 
@@ -338,10 +396,11 @@ function MapViewInner({
                     </Marker>
                 )}
 
-                {selectedLoc && (
+                {/* Fallback popup — only used when onLocationSelect is not provided */}
+                {selectedLoc && !onLocationSelect && (
                     <Popup
                         longitude={selectedLoc.coordinates?.[0] ?? selectedLoc.lng}
-                        latitude={selectedLoc.coordinates?.[1] ?? selectedLoc.lat}
+                        latitude={selectedLoc.coordinates?.[1]  ?? selectedLoc.lat}
                         onClose={() => setSelectedLoc(null)}
                         anchor="top"
                         offset={10}
