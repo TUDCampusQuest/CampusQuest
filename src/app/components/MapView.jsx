@@ -4,15 +4,15 @@ import Map, { Marker, Popup, NavigationControl } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 
-import { locations }         from '../data/locations';
-import { useGPS }            from '../hooks/useGPS';
-import { useNavigation }     from '../hooks/useNavigation';
-import { useTrailSelector }  from '../hooks/useTrailSelector';
-import MapLayers             from './MapLayers';
-import RouteHUD              from './RouteHUD';
-import TrailCaptureOverlay   from './TrailCaptureOverlay';
-
-const TEAL = '#1BA39C';
+import { locations }        from '../data/locations';
+import { useGPS }           from '../hooks/useGPS';
+import { useNavigation }    from '../hooks/useNavigation';
+import { useTrailSelector } from '../hooks/useTrailSelector';
+import MapLayers            from './MapLayers';
+import RouteHUD             from './RouteHUD';
+import TrailCaptureOverlay  from './TrailCaptureOverlay';
+import TrailsPanel          from './TrailsPanel';
+import RoomStatusPanel      from './RoomStatusPanel';
 
 const STYLE_FLAT = 'mapbox://styles/mapbox/streets-v12';
 const STYLE_3D   = 'mapbox://styles/mapbox/standard';
@@ -22,269 +22,66 @@ const CAMPUS_BOUNDS = [
     [-6.360, 53.415],
 ];
 
-function trailLabel(key) {
-    return key.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
-}
-
-// ── Staff-only Room Status placeholder panel ─────────────────────────────────
-function RoomStatusPanel() {
-    const [open, setOpen] = useState(false);
-
-    const rooms = [
-        { id: 'A101', name: 'Computer Lab 1',    status: 'available' },
-        { id: 'A102', name: 'Computer Lab 2',    status: 'occupied'  },
-        { id: 'C201', name: 'Lecture Hall',       status: 'available' },
-        { id: 'D101', name: 'Engineering Lab',    status: 'occupied'  },
-        { id: 'F001', name: 'Library Study Room', status: 'available' },
-    ];
-
-    const statusColor = s => s === 'available' ? '#22c55e' : '#ef4444';
-    const statusLabel = s => s === 'available' ? 'Available' : 'Occupied';
-
-    return (
-        <div style={{
-            background: 'rgba(255,255,255,0.96)',
-            backdropFilter: 'blur(12px)',
-            borderRadius: 14,
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
-            overflow: 'hidden',
-        }}>
-            <div
-                onClick={() => setOpen(o => !o)}
-                style={{
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '11px 14px', cursor: 'pointer',
-                    borderBottom: open ? '1px solid #f1f5f9' : 'none',
-                }}
-            >
-                <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                    <span style={{
-                        width: 22, height: 22, borderRadius: 6,
-                        background: 'linear-gradient(135deg, #f59e0b, #d97706)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 11, color: '#fff', flexShrink: 0,
-                    }}>🏫</span>
-                    <span style={{ fontSize: 13, fontWeight: 800, color: '#1e293b' }}>Room Status</span>
-                    <span style={{
-                        fontSize: 10, fontWeight: 700, color: '#f59e0b',
-                        background: '#fffbeb', border: '1px solid #fde68a',
-                        borderRadius: 20, padding: '1px 7px',
-                    }}>Staff</span>
-                </div>
-                <span style={{
-                    fontSize: 11, color: '#94a3b8',
-                    display: 'inline-block', transition: 'transform 0.2s',
-                    transform: open ? 'rotate(0deg)' : 'rotate(-90deg)',
-                }}>▾</span>
-            </div>
-
-            {open && (
-                <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 200, overflowY: 'auto' }}>
-                    {rooms.map(r => (
-                        <div key={r.id} style={{
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                            padding: '7px 10px', borderRadius: 9,
-                            background: '#f8fafc', border: '1px solid #e2e8f0',
-                        }}>
-                            <div>
-                                <div style={{ fontSize: 12, fontWeight: 700, color: '#0f172a' }}>{r.name}</div>
-                                <div style={{ fontSize: 10, color: '#94a3b8' }}>{r.id}</div>
-                            </div>
-                            <div style={{
-                                display: 'flex', alignItems: 'center', gap: 5,
-                                padding: '3px 9px', borderRadius: 20,
-                                background: `${statusColor(r.status)}18`,
-                                border: `1px solid ${statusColor(r.status)}44`,
-                            }}>
-                                <div style={{
-                                    width: 6, height: 6, borderRadius: '50%',
-                                    background: statusColor(r.status), flexShrink: 0,
-                                }} />
-                                <span style={{ fontSize: 10, fontWeight: 700, color: statusColor(r.status) }}>
-                                    {statusLabel(r.status)}
-                                </span>
-                            </div>
-                        </div>
-                    ))}
-                    <div style={{
-                        marginTop: 2, padding: '6px 10px', borderRadius: 8,
-                        background: '#fffbeb', border: '1px dashed #fde68a',
-                        fontSize: 11, color: '#92400e', fontWeight: 600, textAlign: 'center',
-                    }}>
-                        🚧 Live data coming soon
-                    </div>
-                </div>
-            )}
-        </div>
-    );
-}
-
 // ── MapViewInner ──────────────────────────────────────────────────────────────
 function MapViewInner({
-                          viewState,
-                          onMove,
-                          onMapLoad,
-                          navTarget,
-                          isNavigating,
-                          onTrailSaved,
-                          is3D,
-                          isAdmin = false,
-                          onLocationSelect,   // parent handles the slide-up sheet
-                      }) {
+    viewState, onMove, onMapLoad,
+    navTarget, isNavigating, onTrailSaved,
+    is3D, isAdmin = false, onLocationSelect,
+}) {
     const mapRef = useRef(null);
 
-    const [selectedLoc, setSelectedLoc]       = useState(null); // fallback popup only
-    const [captureMode, setCaptureMode]       = useState(false);
+    const [selectedLoc,   setSelectedLoc]   = useState(null);
+    const [captureMode,   setCaptureMode]   = useState(false);
     const [capturedPoints, setCapturedPoints] = useState([]);
-    const [showCaptureUI, setShowCaptureUI]   = useState(false);
-    const [styleLoaded, setStyleLoaded]       = useState(false);
-    const [panelOpen, setPanelOpen]           = useState(true);
+    const [showCaptureUI, setShowCaptureUI] = useState(false);
+    const [styleLoaded,   setStyleLoaded]   = useState(false);
 
     const userLocation = useGPS();
 
-    const { routeStep, buildingA, buildingB, routeCoords, routeStats, routeError, isChained, resetToPickA, pickBuildingA }
-        = useNavigation({ isNavigating, navTarget, userLocation, mapRef });
+    const {
+        routeStep, buildingA, buildingB,
+        routeCoords, routeStats, routeError,
+        isChained, resetToPickA, pickBuildingA,
+    } = useNavigation({ isNavigating, navTarget, userLocation, mapRef });
 
-    const { selectedTrailName, setTrailInUrl, onMapClick, trailGeoJSON, routeGeoJSON, capturedGeoJSON, trailPaths }
-        = useTrailSelector({ captureMode, setCapturedPoints, mapRef });
+    const {
+        selectedTrailName, setTrailInUrl,
+        onMapClick, trailGeoJSON, routeGeoJSON, capturedGeoJSON, trailPaths,
+    } = useTrailSelector({ captureMode, setCapturedPoints, mapRef });
 
     const handleMapLoad = useCallback((e) => {
         setStyleLoaded(true);
         if (onMapLoad) onMapLoad(e.target);
     }, [onMapLoad]);
 
+    // Reset style-loaded flag whenever the map style switches
     useEffect(() => { setStyleLoaded(false); }, [is3D]);
 
+    // Hide capture UI when staff mode is revoked
     useEffect(() => {
-        if (!isAdmin) {
-            setShowCaptureUI(false);
-            setCaptureMode(false);
-        }
+        if (!isAdmin) { setShowCaptureUI(false); setCaptureMode(false); }
     }, [isAdmin]);
 
+    // Fly to nav target when it changes
     useEffect(() => {
         if (!navTarget || !mapRef.current) return;
         const [lng, lat] = navTarget.coordinates;
         mapRef.current.flyTo({ center: [lng, lat], zoom: 17.5, duration: 1400, pitch: 45 });
     }, [navTarget]);
 
-    const trailKeys = Object.keys(trailPaths);
-
     return (
         <div style={{ width: '100%', height: '100%', position: 'relative', cursor: captureMode ? 'crosshair' : 'inherit' }}>
 
             {/* ── Left panel stack ── */}
             <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, width: 230, display: 'flex', flexDirection: 'column', gap: 8 }}>
-
-                {/* Trails panel */}
-                <div style={{
-                    background: 'rgba(255,255,255,0.96)',
-                    backdropFilter: 'blur(12px)',
-                    borderRadius: 14,
-                    border: '1px solid #e2e8f0',
-                    boxShadow: '0 4px 24px rgba(0,0,0,0.1)',
-                    overflow: 'hidden',
-                }}>
-                    <div
-                        onClick={() => setPanelOpen(o => !o)}
-                        style={{
-                            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                            padding: '11px 14px', cursor: 'pointer',
-                            borderBottom: panelOpen ? '1px solid #f1f5f9' : 'none',
-                        }}
-                    >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                            <span style={{
-                                width: 22, height: 22, borderRadius: 6,
-                                background: 'linear-gradient(135deg, #1BA39C, #0e6d68)',
-                                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                fontSize: 11, color: '#fff', flexShrink: 0,
-                            }}>🗺</span>
-                            <span style={{ fontSize: 13, fontWeight: 800, color: '#1e293b' }}>Trails</span>
-                            {trailKeys.length > 0 && (
-                                <span style={{
-                                    fontSize: 10, fontWeight: 700, color: TEAL,
-                                    background: '#f0fdfa', border: '1px solid #99f6e4',
-                                    borderRadius: 20, padding: '1px 7px',
-                                }}>{trailKeys.length}</span>
-                            )}
-                        </div>
-                        <span style={{
-                            fontSize: 11, color: '#94a3b8',
-                            display: 'inline-block', transition: 'transform 0.2s',
-                            transform: panelOpen ? 'rotate(0deg)' : 'rotate(-90deg)',
-                        }}>▾</span>
-                    </div>
-
-                    {panelOpen && (
-                        <div style={{ padding: '8px 10px', display: 'flex', flexDirection: 'column', gap: 4, maxHeight: 220, overflowY: 'auto' }}>
-                            {trailKeys.length === 0 ? (
-                                <p style={{ margin: 0, fontSize: 12, color: '#94a3b8', textAlign: 'center', padding: '8px 0' }}>
-                                    No trails yet
-                                </p>
-                            ) : trailKeys.map(key => {
-                                const active = selectedTrailName === key;
-                                return (
-                                    <button
-                                        key={key}
-                                        onClick={() => setTrailInUrl(key)}
-                                        style={{
-                                            display: 'flex', alignItems: 'center', gap: 8,
-                                            width: '100%', padding: '8px 10px', borderRadius: 9,
-                                            border: 'none',
-                                            outline: active ? 'none' : '1px solid #e2e8f0',
-                                            background: active ? 'linear-gradient(135deg, #1BA39C, #15857f)' : '#f8fafc',
-                                            color: active ? '#fff' : '#334155',
-                                            cursor: 'pointer', fontWeight: active ? 700 : 500, fontSize: 12,
-                                            textAlign: 'left',
-                                            boxShadow: active ? '0 2px 8px rgba(27,163,156,0.3)' : 'none',
-                                            transition: 'all 0.15s',
-                                        }}
-                                    >
-                                        <span style={{
-                                            width: 7, height: 7, borderRadius: '50%', flexShrink: 0,
-                                            background: active ? 'rgba(255,255,255,0.85)' : TEAL,
-                                        }} />
-                                        {trailLabel(key)}
-                                    </button>
-                                );
-                            })}
-                            {selectedTrailName && (
-                                <button
-                                    onClick={() => setTrailInUrl(null)}
-                                    style={{
-                                        marginTop: 2, padding: '6px', borderRadius: 8,
-                                        border: '1px solid #fecaca', background: '#fef2f2',
-                                        color: '#dc2626', cursor: 'pointer', fontWeight: 700, fontSize: 11,
-                                    }}
-                                >
-                                    ✕ Clear selection
-                                </button>
-                            )}
-                        </div>
-                    )}
-
-                    {isAdmin && (
-                        <div style={{ padding: '0 10px 10px' }}>
-                            <button
-                                onClick={() => setShowCaptureUI(o => !o)}
-                                style={{
-                                    width: '100%', padding: '9px', borderRadius: 9,
-                                    border: 'none', cursor: 'pointer', fontWeight: 700, fontSize: 12,
-                                    background: showCaptureUI ? '#f1f5f9' : 'linear-gradient(135deg, #0f172a, #1e293b)',
-                                    color: showCaptureUI ? '#475569' : '#fff',
-                                    boxShadow: showCaptureUI ? 'none' : '0 2px 8px rgba(0,0,0,0.18)',
-                                    transition: 'all 0.15s',
-                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
-                                }}
-                            >
-                                <span>{showCaptureUI ? '←' : '✏'}</span>
-                                {showCaptureUI ? 'Close Designer' : 'Trail Designer'}
-                            </button>
-                        </div>
-                    )}
-                </div>
+                <TrailsPanel
+                    trailPaths={trailPaths}
+                    selectedTrailName={selectedTrailName}
+                    setTrailInUrl={setTrailInUrl}
+                    isAdmin={isAdmin}
+                    showCaptureUI={showCaptureUI}
+                    onToggleCaptureUI={() => setShowCaptureUI(o => !o)}
+                />
 
                 {isAdmin && showCaptureUI && (
                     <TrailCaptureOverlay
@@ -300,6 +97,7 @@ function MapViewInner({
                 {isAdmin && <RoomStatusPanel />}
             </div>
 
+            {/* ── Route HUD (shown while navigating) ── */}
             {isNavigating && (
                 <RouteHUD
                     routeStep={routeStep}
@@ -312,6 +110,7 @@ function MapViewInner({
                 />
             )}
 
+            {/* ── Mapbox canvas ── */}
             <Map
                 ref={mapRef}
                 {...viewState}
@@ -336,8 +135,9 @@ function MapViewInner({
                     />
                 )}
 
+                {/* Location markers */}
                 {locations.map(loc => {
-                    const isTarget   = navTarget?.id === loc.id;
+                    const isTarget   = navTarget?.id  === loc.id;
                     const isStart    = buildingA?.id  === loc.id;
                     const isPickable = routeStep === 'PICK_A' && loc.id !== navTarget?.id;
 
@@ -353,13 +153,10 @@ function MapViewInner({
                                     fontSize: isTarget || isStart ? 32 : 24,
                                     cursor: 'pointer',
                                     transition: 'font-size 0.2s, filter 0.2s',
-                                    filter: isTarget
-                                        ? 'drop-shadow(0 0 8px rgba(239,68,68,0.9))'
-                                        : isStart
-                                            ? 'drop-shadow(0 0 8px rgba(34,197,94,0.9))'
-                                            : isPickable
-                                                ? 'drop-shadow(0 0 4px rgba(27,163,156,0.6))'
-                                                : 'none',
+                                    filter: isTarget   ? 'drop-shadow(0 0 8px rgba(239,68,68,0.9))'
+                                          : isStart    ? 'drop-shadow(0 0 8px rgba(34,197,94,0.9))'
+                                          : isPickable ? 'drop-shadow(0 0 4px rgba(27,163,156,0.6))'
+                                          : 'none',
                                 }}
                                 onClick={e => {
                                     e.stopPropagation();
@@ -378,25 +175,26 @@ function MapViewInner({
                     );
                 })}
 
+                {/* Route endpoint markers */}
                 {buildingA && (
                     <Marker longitude={buildingA.coordinates[0]} latitude={buildingA.coordinates[1]} anchor="top">
                         <div style={{ background: '#22c55e', color: '#fff', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 11, border: '2px solid #fff', boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}>A</div>
                     </Marker>
                 )}
-
                 {buildingB && isNavigating && (
                     <Marker longitude={buildingB.coordinates[0]} latitude={buildingB.coordinates[1]} anchor="top">
                         <div style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 11, border: '2px solid #fff', boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}>B</div>
                     </Marker>
                 )}
 
+                {/* User GPS dot */}
                 {userLocation && (
                     <Marker longitude={userLocation.lng} latitude={userLocation.lat} anchor="center">
                         <div className="user-location-pulse" onClick={e => e.stopPropagation()} />
                     </Marker>
                 )}
 
-                {/* Fallback popup — only used when onLocationSelect is not provided */}
+                {/* Fallback popup — only when parent doesn't handle location select */}
                 {selectedLoc && !onLocationSelect && (
                     <Popup
                         longitude={selectedLoc.coordinates?.[0] ?? selectedLoc.lng}
@@ -413,6 +211,7 @@ function MapViewInner({
     );
 }
 
+// ── MapView (public export) ───────────────────────────────────────────────────
 export default function MapView(props) {
     return (
         <Suspense fallback={<div style={{ width: '100%', height: '100%', background: '#f1f5f9' }} />}>

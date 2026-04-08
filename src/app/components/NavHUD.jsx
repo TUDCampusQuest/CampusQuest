@@ -2,11 +2,6 @@
 import { Box, Stack, Typography, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
-/**
- * NavHUD
- * Dark gradient banner at the top of the map shown while navigating.
- * Props: navTarget, onExit
- */
 export default function NavHUD({ navTarget, onExit }) {
     if (!navTarget) return null;
     return (
