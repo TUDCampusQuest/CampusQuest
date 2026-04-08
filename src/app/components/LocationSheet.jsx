@@ -6,7 +6,6 @@ import { useRouter }                    from 'next/navigation';
 import { Box }                          from '@mui/material';
 import LocationSheetContent             from './LocationSheetContent';
 
-// ── useIsDesktop ──────────────────────────────────────────────────────────────
 function useIsDesktop() {
     const [desktop, setDesktop] = useState(false);
     useEffect(() => {
@@ -19,19 +18,13 @@ function useIsDesktop() {
     return desktop;
 }
 
-// ── LocationSheet ─────────────────────────────────────────────────────────────
-// Renders a slide-up bottom sheet on mobile, a slide-in side panel on desktop.
-// Props:
-//   location  {object|null} — selected campus location; null hides the sheet
-//   onClose   {fn}
-//   onNavigate {fn}         — called with the location when Navigate is tapped
 export default function LocationSheet({ location, onClose, onNavigate }) {
     const router    = useRouter();
     const isDesktop = useIsDesktop();
     const dragRef   = useRef(null);
     const [shared, setShared] = useState(false);
 
-    // Reset share state whenever a different location is shown
+
     useEffect(() => { setShared(false); }, [location?.id]);
 
     if (!location) return null;
@@ -52,11 +45,8 @@ export default function LocationSheet({ location, onClose, onNavigate }) {
 
     const handleViewDetails = () => { router.push(`/location/${location.id}`); onClose(); };
     const handleNavigate    = () => { onNavigate(location); onClose(); };
-
-    // Shared content props
     const contentProps = { location, onClose, onNavigate: handleNavigate, onShare: handleShare, onViewDetails: handleViewDetails, shared };
 
-    // ── DESKTOP — right side panel ────────────────────────────────────────────
     if (isDesktop) {
         return (
             <AnimatePresence>
@@ -91,7 +81,6 @@ export default function LocationSheet({ location, onClose, onNavigate }) {
         );
     }
 
-    // ── MOBILE — bottom sheet ─────────────────────────────────────────────────
     return (
         <AnimatePresence>
             {location && (

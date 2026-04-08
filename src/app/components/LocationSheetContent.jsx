@@ -77,7 +77,7 @@ export default function LocationSheetContent({
                     />
                 )}
 
-                {/* Dark gradient so close button is always legible */}
+                {/* Dark gradient */}
                 <Box sx={{
                     position: 'absolute', inset: 0,
                     background: 'linear-gradient(to bottom, rgba(0,0,0,0.35) 0%, transparent 50%)',
@@ -155,7 +155,7 @@ export default function LocationSheetContent({
                 </Box>
             </Box>
 
-            {/* Action buttons — sticky footer */}
+            {/* Action buttons */}
             <Box sx={{
                 flexShrink: 0, px: 2, pt: 1.5,
                 pb: isMobile ? 'max(16px, env(safe-area-inset-bottom))' : '20px',

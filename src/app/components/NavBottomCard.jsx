@@ -4,12 +4,6 @@ import NavigationIcon from '@mui/icons-material/Navigation';
 import CloseIcon from '@mui/icons-material/Close';
 import { useRouter } from 'next/navigation';
 
-/**
- * NavBottomCard
- * Slides up from the bottom when a location is selected but navigation
- * hasn't started yet. Shows building info + View Details / Navigate buttons.
- * Props: navTarget, onNavigate, onDismiss
- */
 export default function NavBottomCard({ navTarget, onNavigate, onDismiss }) {
     const router = useRouter();
     if (!navTarget) return null;

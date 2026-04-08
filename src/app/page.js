@@ -2,16 +2,16 @@
 
 import { useState, useEffect, useRef, useCallback } from "react";
 import { Box } from "@mui/material";
-import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 
-import { locations }  from "./data/locations";
-import AppHeader      from "./components/AppHeader";
-import MapSidebar     from "./components/MapSidebar";
-import BottomBar      from "./components/BottomBar";
-import NavHUD         from "./components/NavHUD";
-import NavBottomCard  from "./components/NavBottomCard";
-import SearchDrawer   from "./components/SearchDrawer";
+import { locations }    from "./data/locations";
+import AppHeader        from "./components/AppHeader";
+import MapSidebar       from "./components/MapSidebar";
+import BottomBar        from "./components/BottomBar";
+import NavHUD           from "./components/NavHUD";
+import NavBottomCard    from "./components/NavBottomCard";
+import SearchDrawer     from "./components/SearchDrawer";
+import StaffAuthModal   from "./components/StaffAuthModal";
 
 // MapView is loaded client-side only (Mapbox requires window)
 const MapView = dynamic(() => import("./components/MapView"), {
@@ -22,34 +22,28 @@ const MapView = dynamic(() => import("./components/MapView"), {
 const CAMPUS_CENTER = { longitude: -6.37824, latitude: 53.405292 };
 
 export default function Home() {
-    const router = useRouter();
     const mapRef = useRef(null);
 
-    // ── UI state ──────────────────────────────────────────────────────────────
     const [isMounted,    setIsMounted]    = useState(false);
     const [searchOpen,   setSearchOpen]   = useState(false);
     const [query,        setQuery]        = useState("");
+    const [authOpen,     setAuthOpen]     = useState(false);
     const [isAdmin,      setIsAdmin]      = useState(false);
 
-    // ── Navigation state ──────────────────────────────────────────────────────
     const [navTarget,    setNavTarget]    = useState(null);
     const [isNavigating, setIsNavigating] = useState(false);
     const [gpsLocation,  setGpsLocation]  = useState(null);
 
-    // ── Map view state ────────────────────────────────────────────────────────
     const [viewState, setViewState] = useState({
         ...CAMPUS_CENTER, zoom: 16, pitch: 0, bearing: 0,
     });
 
-    // Prevent SSR mismatch with Mapbox
     useEffect(() => { setIsMounted(true); }, []);
 
-    // Restore staff session across page refreshes
     useEffect(() => {
         if (sessionStorage.getItem("cq_staff") === "true") setIsAdmin(true);
     }, []);
 
-    // GPS watch — powers the "Go to my location" button
     useEffect(() => {
         if (!navigator.geolocation) return;
         const id = navigator.geolocation.watchPosition(
@@ -60,7 +54,6 @@ export default function Home() {
         return () => navigator.geolocation.clearWatch(id);
     }, []);
 
-    // Keep trail data fresh when the window regains focus
     const fetchTrails = useCallback(async () => {
         try {
             const res  = await fetch("/api/trails", { cache: "no-store" });
@@ -75,7 +68,6 @@ export default function Home() {
         return () => window.removeEventListener("focus", fetchTrails);
     }, [fetchTrails]);
 
-    // ── Map controls ──────────────────────────────────────────────────────────
     const handleZoomIn   = () => setViewState(v => ({ ...v, zoom: Math.min(v.zoom + 1, 20) }));
     const handleZoomOut  = () => setViewState(v => ({ ...v, zoom: Math.max(v.zoom - 1, 0) }));
     const handleToggle3D = () => setViewState(p => ({ ...p, pitch: p.pitch === 0 ? 60 : 0, duration: 900 }));
@@ -85,20 +77,15 @@ export default function Home() {
             : { ...CAMPUS_CENTER, zoom: 16 };
         setViewState(p => ({ ...p, ...target, pitch: 0, duration: 1200 }));
     };
-
-    // ── Auth helpers ──────────────────────────────────────────────────────────
     const handleStaffClick = () => {
         if (isAdmin) {
-            // Sign out
             sessionStorage.removeItem("cq_staff");
             setIsAdmin(false);
         } else {
-            // TODO: open StaffAuthModal — wired in next PR
-            router.push("/admin");
+            setAuthOpen(true);
         }
     };
 
-    // ── Search filtering ──────────────────────────────────────────────────────
     const handleSelectLocation = (loc) => {
         setNavTarget(loc); setIsNavigating(false);
         setSearchOpen(false); setQuery("");
@@ -119,7 +106,7 @@ export default function Home() {
                 onStaffClick={handleStaffClick}
             />
 
-            {/* ── Map area ─────────────────────────────────────────────────── */}
+            {/* ─ Map area ─ */}
             <Box sx={{ flex: 1, position: "relative", minHeight: 0 }}>
                 <MapView
                     viewState={viewState}
@@ -168,9 +155,16 @@ export default function Home() {
                 onSelect={handleSelectLocation}
             />
 
+            {/* Staff auth modal activated through clicking header */}
+            <StaffAuthModal
+                open={authOpen}
+                onClose={() => setAuthOpen(false)}
+                onSuccess={() => setIsAdmin(true)}
+            />
+
             <style>{`
-                @keyframes slideUp   { from { transform:translateY(100%); opacity:0; } to { transform:translateY(0); opacity:1; } }
-                @keyframes hudPulse  { 0%,100% { box-shadow:0 0 0 3px rgba(27,163,156,0.3); } 50% { box-shadow:0 0 0 7px rgba(27,163,156,0.06); } }
+                @keyframes slideUp  { from { transform:translateY(100%); opacity:0; } to { transform:translateY(0); opacity:1; } }
+                @keyframes hudPulse { 0%,100% { box-shadow:0 0 0 3px rgba(27,163,156,0.3); } 50% { box-shadow:0 0 0 7px rgba(27,163,156,0.06); } }
             `}</style>
         </Box>
     );

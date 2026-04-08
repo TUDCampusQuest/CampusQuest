@@ -70,7 +70,7 @@ export default function AppHeader({ isAdmin, onStaffClick }) {
                     Campus Quest
                 </Typography>
 
-                {/* Staff badge — only visible when admin is active */}
+                {/* Staff badge */}
                 {isAdmin && (
                     <Box sx={{
                         px: 1, py: "2px", borderRadius: "6px",

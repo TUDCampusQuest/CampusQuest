@@ -3,11 +3,6 @@ import { Box, Drawer, List, ListItem, ListItemText, TextField, Typography, Stack
 import NavigationIcon from '@mui/icons-material/Navigation';
 import CloseIcon from '@mui/icons-material/Close';
 
-/**
- * SearchDrawer
- * Bottom sheet for searching campus locations.
- * Props: open, onClose, query, onQueryChange, results, onSelect
- */
 export default function SearchDrawer({ open, onClose, query, onQueryChange, results, onSelect }) {    return (
         <Drawer
             anchor="bottom"

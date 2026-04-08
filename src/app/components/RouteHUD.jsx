@@ -1,9 +1,5 @@
 'use client';
 
-/**
- * RouteHUD — bottom overlay during navigation
- * Shows walking stats, A→B building labels, and Change Start button
- */
 export default function RouteHUD({ routeStep, buildingA, buildingB, routeStats, routeError, isChained, onChangeStart }) {
     if (routeStep === 'IDLE') return null;
 

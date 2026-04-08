@@ -22,7 +22,6 @@ const CAMPUS_BOUNDS = [
     [-6.360, 53.415],
 ];
 
-// ── MapViewInner ──────────────────────────────────────────────────────────────
 function MapViewInner({
     viewState, onMove, onMapLoad,
     navTarget, isNavigating, onTrailSaved,
@@ -54,15 +53,12 @@ function MapViewInner({
         if (onMapLoad) onMapLoad(e.target);
     }, [onMapLoad]);
 
-    // Reset style-loaded flag whenever the map style switches
     useEffect(() => { setStyleLoaded(false); }, [is3D]);
 
-    // Hide capture UI when staff mode is revoked
     useEffect(() => {
         if (!isAdmin) { setShowCaptureUI(false); setCaptureMode(false); }
     }, [isAdmin]);
 
-    // Fly to nav target when it changes
     useEffect(() => {
         if (!navTarget || !mapRef.current) return;
         const [lng, lat] = navTarget.coordinates;
@@ -211,7 +207,6 @@ function MapViewInner({
     );
 }
 
-// ── MapView (public export) ───────────────────────────────────────────────────
 export default function MapView(props) {
     return (
         <Suspense fallback={<div style={{ width: '100%', height: '100%', background: '#f1f5f9' }} />}>

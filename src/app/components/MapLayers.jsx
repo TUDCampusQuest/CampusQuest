@@ -1,11 +1,6 @@
 'use client';
 import { Source, Layer } from 'react-map-gl';
 
-/**
- * MapLayers
- * All Mapbox GL Sources and Layers in one place.
- * Must be rendered inside a <Map> component after styleLoaded = true.
- */
 export default function MapLayers({ trailGeoJSON, capturedGeoJSON, routeGeoJSON }) {
     return (
         <>

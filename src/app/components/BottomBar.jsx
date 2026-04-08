@@ -19,7 +19,7 @@ export default function BottomBar({ onSearchClick }) {
             borderTop: "1px solid #e2e8f0",
             zIndex: 1100,
         }}>
-            {/* Search bar — tappable pill that opens the drawer */}
+            {/* Search bar  */}
             <Paper
                 elevation={0}
                 onClick={onSearchClick}
