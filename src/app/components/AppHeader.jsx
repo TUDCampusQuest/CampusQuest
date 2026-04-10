@@ -4,9 +4,8 @@ import { Box, Stack, Typography, Tooltip } from "@mui/material";
 import { useRouter } from "next/navigation";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import RouteIcon        from "@mui/icons-material/Route";
-import LockIcon         from "@mui/icons-material/Lock";
 
-function HeaderBtn({ icon, label, onClick, tooltip, active }) {
+function HeaderBtn({ icon, label, onClick, tooltip }) {
     return (
         <Tooltip title={tooltip} placement="bottom">
             <Box
@@ -14,9 +13,8 @@ function HeaderBtn({ icon, label, onClick, tooltip, active }) {
                 sx={{
                     display: "flex", alignItems: "center", gap: "5px",
                     px: 1.5, py: 0.6, borderRadius: "20px",
-                    border: "1px solid",
-                    borderColor: active ? "#1BA39C" : "#e2e8f0",
-                    bgcolor: active ? "#f0fdfa" : "#f8fafc",
+                    border: "1px solid #e2e8f0",
+                    bgcolor: "#f8fafc",
                     cursor: "pointer", transition: "all 0.15s",
                     "&:hover": { bgcolor: "#f0fdfa", borderColor: "#1BA39C" },
                 }}
@@ -49,15 +47,16 @@ export default function AppHeader({ isAdmin, onStaffClick }) {
             borderBottom: "1px solid #e2e8f0",
             zIndex: 1100,
         }}>
-            {/* Logo + title */}
+            {/* Logo give access to staff auth */}
             <Stack direction="row" alignItems="center" spacing={1} sx={{ flex: 1 }}>
                 <Box
-                    onDoubleClick={onStaffClick}   // hidden trigger double-click logo to toggle staff mode when you guys look at the code btw
+                    onDoubleClick={onStaffClick}
                     sx={{
                         width: 30, height: 30, borderRadius: "8px",
                         background: "linear-gradient(135deg, #1BA39C 0%, #0e6d68 100%)",
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 15, flexShrink: 0, cursor: "default",
+                        fontSize: 15, flexShrink: 0,
+                        cursor: "default", userSelect: "none",
                     }}
                 >
                     🧭
@@ -70,20 +69,26 @@ export default function AppHeader({ isAdmin, onStaffClick }) {
                     Campus Quest
                 </Typography>
 
-                {/* Staff badge */}
+                {/* Staff badge for logo */}
                 {isAdmin && (
-                    <Box sx={{
-                        px: 1, py: "2px", borderRadius: "6px",
-                        bgcolor: "#1BA39C", color: "#fff",
-                        fontSize: 10, fontWeight: 800, letterSpacing: "0.08em",
-                        textTransform: "uppercase",
-                    }}>
-                        Staff
+                    <Box
+                        onClick={onStaffClick}
+                        sx={{
+                            px: 1, py: "2px", borderRadius: "6px",
+                            bgcolor: "#1BA39C", color: "#fff",
+                            fontSize: 10, fontWeight: 800,
+                            letterSpacing: "0.08em", textTransform: "uppercase",
+                            cursor: "pointer",
+                            "&:hover": { bgcolor: "#dc2626" },
+                            transition: "background 0.15s",
+                        }}
+                    >
+                        Staff — Sign Out
                     </Box>
                 )}
             </Stack>
 
-            {/* Nav buttons */}
+            {/* Navigation buttons */}
             <Stack direction="row" spacing={1}>
                 <HeaderBtn
                     icon={<InfoOutlinedIcon sx={{ fontSize: 15, color: "#64748b" }} />}
@@ -96,13 +101,6 @@ export default function AppHeader({ isAdmin, onStaffClick }) {
                     label="Trails"
                     tooltip="Campus trails"
                     onClick={() => router.push("/trails")}
-                />
-                <HeaderBtn
-                    icon={<LockIcon sx={{ fontSize: 15, color: isAdmin ? "#1BA39C" : "#64748b" }} />}
-                    label={isAdmin ? "Sign Out" : "Staff"}
-                    tooltip={isAdmin ? "Exit staff mode" : "Staff login"}
-                    onClick={onStaffClick}
-                    active={isAdmin}
                 />
             </Stack>
         </Box>

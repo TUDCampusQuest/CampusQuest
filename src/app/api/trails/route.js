@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 
-import { getS3Data, putS3Data } from "@/lib/s3";
+import { getS3Data, putS3Data } from "../../../lib/s3";
 
 // -----------------------------------------------------------------------------
 // GET /api/trails

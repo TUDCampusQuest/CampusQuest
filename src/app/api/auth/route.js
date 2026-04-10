@@ -1,3 +1,7 @@
+import { GetCommand } from "@aws-sdk/lib-dynamodb";
+import bcrypt from "bcryptjs";
+import { db, STAFF_TABLE } from "../../../lib/dynamo";
+
 export const dynamic = "force-dynamic";
 
 export async function POST(request) {
@@ -10,21 +14,36 @@ export async function POST(request) {
 
     const { email, password } = body;
 
-    const correctEmail    = process.env.ADMIN_EMAIL    ?? "";
-    const correctPassword = process.env.ADMIN_PASSWORD ?? "";
-
-    if (!correctEmail || !correctPassword) {
-        return Response.json({ ok: false, error: "Admin credentials not configured." }, { status: 500 });
+    if (!email || !password) {
+        return Response.json({ ok: false, error: "Email and password are required." }, { status: 400 });
     }
 
-    const valid =
-        email?.trim().toLowerCase() === correctEmail.trim().toLowerCase() &&
-        password === correctPassword;
+    try {
+        const result = await db.send(new GetCommand({
+            TableName: STAFF_TABLE,
+            Key: { email: email.trim().toLowerCase() },
+        }));
 
-    if (valid) {
-        return Response.json({ ok: true }, { status: 200 });
+        const staff = result.Item;
+
+        if (!staff) {
+            return Response.json({ ok: false, error: "Incorrect email or password." }, { status: 401 });
+        }
+
+
+        const valid = await bcrypt.compare(password, staff.passwordHash);
+
+        if (!valid) {
+            return Response.json({ ok: false, error: "Incorrect email or password." }, { status: 401 });
+        }
+
+        return Response.json({
+            ok:   true,
+            name: staff.name ?? "Staff",
+        }, { status: 200 });
+
+    } catch (err) {
+        console.error("Auth error:", err);
+        return Response.json({ ok: false, error: "Server error — please try again." }, { status: 500 });
     }
-
-    // Generic error — don't reveal which field was wrong
-    return Response.json({ ok: false, error: "Incorrect email or password." }, { status: 401 });
 }

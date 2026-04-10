@@ -1,4 +1,4 @@
-import { getS3Data } from "@/lib/s3";
+import { getS3Data } from "../../../lib/s3";
 
 export const dynamic = 'force-dynamic';
 
