@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { createPortal }                 from 'react-dom';
 import { motion, AnimatePresence }      from 'framer-motion';
 import { Box, Typography, Stack }       from '@mui/material';
 import LockIcon          from '@mui/icons-material/Lock';
@@ -17,13 +18,17 @@ export default function StaffAuthModal({ open, onClose, onSuccess }) {
     const [loading,   setLoading]   = useState(false);
     const [succeeded, setSucceeded] = useState(false);
     const [countdown, setCountdown] = useState(null);
+    const [focusedField, setFocusedField] = useState(null);
+    const [mounted, setMounted] = useState(false);
     const emailRef = useRef(null);
+
+    useEffect(() => { setMounted(true); }, []);
 
     useEffect(() => {
         if (open) {
             setEmail(''); setPassword(''); setError('');
             setLoading(false); setSucceeded(false); setCountdown(null);
-            setTimeout(() => emailRef.current?.focus(), 120);
+            setTimeout(() => emailRef.current?.focus(), 180);
         }
     }, [open]);
 
@@ -69,87 +74,183 @@ export default function StaffAuthModal({ open, onClose, onSuccess }) {
         }
     };
 
-    return (
+    const inputStyle = (field) => ({
+        width: '100%',
+        padding: field === 'password' ? '14px 46px 14px 16px' : '14px 16px',
+        borderRadius: 12,
+        fontSize: 15,
+        border: focusedField === field
+            ? '1.5px solid rgba(27,163,156,0.6)'
+            : '1.5px solid rgba(255,255,255,0.1)',
+        outline: 'none',
+        boxSizing: 'border-box',
+        fontFamily: 'inherit',
+        background: focusedField === field
+            ? 'rgba(255,255,255,0.08)'
+            : 'rgba(255,255,255,0.04)',
+        color: '#fff',
+        transition: 'all 0.18s ease',
+        boxShadow: focusedField === field
+            ? '0 0 0 4px rgba(27,163,156,0.12)'
+            : 'none',
+    });
+
+    const modalContent = (
         <AnimatePresence>
             {open && (
-                <>
+                <div
+                    style={{
+                        position: 'fixed',
+                        top: 0, left: 0, right: 0, bottom: 0,
+                        zIndex: 2000,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: 16,
+                        boxSizing: 'border-box',
+                    }}
+                >
+                    {/* Backdrop */}
                     <motion.div
                         key="auth-backdrop"
                         initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        transition={{ duration: 0.2 }}
+                        transition={{ duration: 0.25 }}
                         onClick={countdown !== null ? undefined : onClose}
                         style={{
-                            position: 'fixed', inset: 0, zIndex: 2000,
-                            background: 'rgba(15,23,42,0.6)',
-                            backdropFilter: 'blur(4px)',
+                            position: 'absolute',
+                            top: 0, left: 0, right: 0, bottom: 0,
+                            background: 'rgba(10,15,28,0.55)',
+                            backdropFilter: 'blur(14px) saturate(160%)',
+                            WebkitBackdropFilter: 'blur(14px) saturate(160%)',
                         }}
                     />
 
+                    {/* Modal panel */}
                     <motion.div
                         key="auth-modal"
-                        initial={{ opacity: 0, scale: 0.94 }}
-                        animate={{ opacity: 1, scale: 1    }}
-                        exit={{   opacity: 0, scale: 0.94 }}
-                        transition={{ type: 'spring', stiffness: 380, damping: 30 }}
+                        initial={{ opacity: 0, scale: 0.92, y: 10 }}
+                        animate={{ opacity: 1, scale: 1,    y: 0  }}
+                        exit={{   opacity: 0, scale: 0.94, y: 6  }}
+                        transition={{ type: 'spring', stiffness: 360, damping: 28 }}
                         style={{
-                            position: 'fixed',
-                            top: '50%', left: '50%',
-                            transform: 'translate(-50%, -50%)',
-                            zIndex: 2001,
-                            width: 'calc(100% - 40px)',
-                            maxWidth: 400,
+                            position: 'relative',
+                            width: '100%',
+                            maxWidth: 500,
                             boxSizing: 'border-box',
                         }}
                     >
-                        <Box sx={{ bgcolor: '#fff', borderRadius: '20px', boxShadow: '0 32px 80px rgba(0,0,0,0.25)', overflow: 'hidden' }}>
-
+                        <Box sx={{
+                            position: 'relative',
+                            borderRadius: '24px',
+                            overflow: 'hidden',
+                            background: 'rgba(15,23,42,0.75)',
+                            backdropFilter: 'blur(40px) saturate(180%)',
+                            WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+                            border: '1px solid rgba(255,255,255,0.12)',
+                            boxShadow: `
+                                0 24px 60px rgba(0,0,0,0.5),
+                                0 2px 8px rgba(0,0,0,0.3),
+                                inset 0 1px 0 rgba(255,255,255,0.08)
+                            `,
+                        }}>
                             <Box sx={{
-                                px: 3, pt: 3, pb: 2.5,
-                                background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-                                position: 'relative',
-                            }}>
+                                position: 'absolute',
+                                top: -80, left: -80,
+                                width: 260, height: 260,
+                                borderRadius: '50%',
+                                background: 'radial-gradient(circle, rgba(27,163,156,0.35) 0%, rgba(27,163,156,0) 70%)',
+                                pointerEvents: 'none',
+                                filter: 'blur(20px)',
+                            }} />
+
+                            <Box sx={{ px: 4, pt: 4, pb: 3, position: 'relative' }}>
                                 {countdown === null && (
                                     <Box onClick={onClose} sx={{
-                                        position: 'absolute', top: 14, right: 14,
-                                        width: 28, height: 28, borderRadius: '8px',
+                                        position: 'absolute', top: 16, right: 16,
+                                        width: 32, height: 32, borderRadius: '50%',
                                         display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                        cursor: 'pointer', color: 'rgba(255,255,255,0.4)',
-                                        '&:hover': { bgcolor: 'rgba(255,255,255,0.1)', color: '#fff' },
-                                        transition: 'all 0.15s',
+                                        cursor: 'pointer',
+                                        color: 'rgba(255,255,255,0.5)',
+                                        background: 'rgba(255,255,255,0.06)',
+                                        border: '1px solid rgba(255,255,255,0.08)',
+                                        backdropFilter: 'blur(8px)',
+                                        '&:hover': {
+                                            bgcolor: 'rgba(255,255,255,0.12)',
+                                            color: '#fff',
+                                            transform: 'scale(1.05)',
+                                        },
+                                        transition: 'all 0.18s ease',
                                     }}>
                                         <CloseIcon sx={{ fontSize: 16 }} />
                                     </Box>
                                 )}
 
                                 <Box sx={{
-                                    width: 44, height: 44, borderRadius: '12px',
-                                    bgcolor: succeeded ? '#22c55e' : countdown !== null ? '#ef4444' : '#1BA39C',
+                                    width: 56, height: 56, borderRadius: '16px',
+                                    background: succeeded
+                                        ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'
+                                        : countdown !== null
+                                            ? 'linear-gradient(135deg, #ef4444 0%, #b91c1c 100%)'
+                                            : 'linear-gradient(135deg, #1BA39C 0%, #0e6d68 100%)',
                                     display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                    mb: 1.5, transition: 'background 0.3s',
+                                    mb: 2,
+                                    boxShadow: succeeded
+                                        ? '0 8px 24px rgba(34,197,94,0.35)'
+                                        : countdown !== null
+                                            ? '0 8px 24px rgba(239,68,68,0.35)'
+                                            : '0 8px 24px rgba(27,163,156,0.4)',
+                                    transition: 'all 0.3s',
                                 }}>
-                                    {succeeded ? <LockOpenIcon sx={{ color: '#fff', fontSize: 22 }} /> : <LockIcon sx={{ color: '#fff', fontSize: 22 }} />}
+                                    {succeeded
+                                        ? <LockOpenIcon sx={{ color: '#fff', fontSize: 28 }} />
+                                        : <LockIcon sx={{ color: '#fff', fontSize: 28 }} />}
                                 </Box>
 
-                                <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', color: '#fff' }}>
-                                    {succeeded ? 'Welcome back 👋' : countdown !== null ? 'Access Denied' : 'Staff Access'}
+                                <Typography sx={{
+                                    fontWeight: 700,
+                                    fontSize: '1.65rem',
+                                    color: '#fff',
+                                    letterSpacing: '-0.02em',
+                                    lineHeight: 1.15,
+                                }}>
+                                    {succeeded ? 'Welcome back' : countdown !== null ? 'Access Denied' : 'Staff Access'}
                                 </Typography>
-                                <Typography sx={{ fontSize: 12, color: 'rgba(255,255,255,0.45)', mt: 0.25 }}>
-                                    {succeeded ? 'Logging you in...' : countdown !== null ? `Returning to map in ${countdown}s...` : 'Campus Quest — TU Dublin'}
+                                <Typography sx={{
+                                    fontSize: 14,
+                                    color: 'rgba(255,255,255,0.55)',
+                                    mt: 0.5,
+                                    fontWeight: 400,
+                                }}>
+                                    {succeeded
+                                        ? 'Logging you in…'
+                                        : countdown !== null
+                                            ? `Returning to map in ${countdown}s…`
+                                            : 'Campus Quest — TU Dublin'}
                                 </Typography>
                             </Box>
 
-                            <Box sx={{ px: 3, pt: 2.5, pb: 3 }}>
+                            {!succeeded && countdown === null && (
+                                <Box sx={{
+                                    height: 1,
+                                    background: 'linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%)',
+                                    mx: 4,
+                                }} />
+                            )}
+
+                            <Box sx={{ px: 4, pt: 3, pb: 4, position: 'relative' }}>
                                 {countdown !== null && (
-                                    <Box sx={{ py: 2, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}>
+                                    <Box sx={{ py: 2, textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
                                         <Box sx={{
-                                            width: 56, height: 56, borderRadius: '50%',
-                                            bgcolor: '#fef2f2', border: '3px solid #fecaca',
+                                            width: 72, height: 72, borderRadius: '50%',
+                                            background: 'rgba(239,68,68,0.12)',
+                                            border: '2px solid rgba(239,68,68,0.4)',
                                             display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                            fontSize: 22, fontWeight: 900, color: '#dc2626',
+                                            fontSize: 28, fontWeight: 800, color: '#f87171',
+                                            boxShadow: '0 0 24px rgba(239,68,68,0.25)',
                                         }}>
                                             {countdown}
                                         </Box>
-                                        <Typography sx={{ fontSize: 13, color: '#64748b', textAlign: 'center', lineHeight: 1.5 }}>
+                                        <Typography sx={{ fontSize: 14, color: 'rgba(255,255,255,0.6)', textAlign: 'center', lineHeight: 1.6, maxWidth: 320 }}>
                                             You are not registered as a staff member.<br />
                                             You will be returned to the map shortly.
                                         </Typography>
@@ -158,87 +259,132 @@ export default function StaffAuthModal({ open, onClose, onSuccess }) {
 
                                 {succeeded && (
                                     <Box sx={{ py: 2, textAlign: 'center' }}>
-                                        <Typography sx={{ fontSize: 13, color: '#64748b' }}>Staff mode activated. Loading...</Typography>
+                                        <Typography sx={{ fontSize: 14, color: 'rgba(255,255,255,0.6)' }}>
+                                            Staff mode activated. Loading…
+                                        </Typography>
                                     </Box>
                                 )}
 
                                 {!succeeded && countdown === null && (
-                                    <Stack spacing={1.5}>
+                                    <Stack spacing={2.25}>
                                         <Box>
-                                            <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#64748b', mb: 0.5, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Email</Typography>
+                                            <Typography sx={{
+                                                fontSize: 11,
+                                                fontWeight: 700,
+                                                color: 'rgba(255,255,255,0.5)',
+                                                mb: 1,
+                                                letterSpacing: '0.08em',
+                                                textTransform: 'uppercase',
+                                            }}>Email</Typography>
                                             <input
                                                 ref={emailRef}
                                                 type="email"
                                                 value={email}
                                                 onChange={e => { setEmail(e.target.value); setError(''); }}
                                                 onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+                                                onFocus={() => setFocusedField('email')}
+                                                onBlur={() => setFocusedField(null)}
                                                 placeholder="staff@tudublin.ie"
-                                                style={{
-                                                    width: '100%', padding: '10px 14px', borderRadius: 10, fontSize: 14,
-                                                    border: '1.5px solid #e2e8f0', outline: 'none',
-                                                    boxSizing: 'border-box', fontFamily: 'inherit',
-                                                    background: '#f8fafc', color: '#0f172a', transition: 'border-color 0.15s',
-                                                }}
-                                                onFocus={e => e.target.style.borderColor = '#1BA39C'}
-                                                onBlur={e  => e.target.style.borderColor = '#e2e8f0'}
+                                                style={inputStyle('email')}
                                             />
                                         </Box>
 
                                         <Box>
-                                            <Typography sx={{ fontSize: 11, fontWeight: 700, color: '#64748b', mb: 0.5, letterSpacing: '0.05em', textTransform: 'uppercase' }}>Password</Typography>
+                                            <Typography sx={{
+                                                fontSize: 11,
+                                                fontWeight: 700,
+                                                color: 'rgba(255,255,255,0.5)',
+                                                mb: 1,
+                                                letterSpacing: '0.08em',
+                                                textTransform: 'uppercase',
+                                            }}>Password</Typography>
                                             <Box sx={{ position: 'relative' }}>
                                                 <input
                                                     type={showPass ? 'text' : 'password'}
                                                     value={password}
                                                     onChange={e => { setPassword(e.target.value); setError(''); }}
                                                     onKeyDown={e => e.key === 'Enter' && handleSubmit()}
+                                                    onFocus={() => setFocusedField('password')}
+                                                    onBlur={() => setFocusedField(null)}
                                                     placeholder="••••••••"
-                                                    style={{
-                                                        width: '100%', padding: '10px 40px 10px 14px', borderRadius: 10, fontSize: 14,
-                                                        border: '1.5px solid #e2e8f0', outline: 'none',
-                                                        boxSizing: 'border-box', fontFamily: 'inherit',
-                                                        background: '#f8fafc', color: '#0f172a', transition: 'border-color 0.15s',
-                                                    }}
-                                                    onFocus={e => e.target.style.borderColor = '#1BA39C'}
-                                                    onBlur={e  => e.target.style.borderColor = '#e2e8f0'}
+                                                    style={inputStyle('password')}
                                                 />
                                                 <Box onClick={() => setShowPass(s => !s)} sx={{
-                                                    position: 'absolute', right: 10, top: '50%', transform: 'translateY(-50%)',
-                                                    cursor: 'pointer', color: '#94a3b8', display: 'flex', alignItems: 'center',
-                                                    '&:hover': { color: '#475569' },
+                                                    position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)',
+                                                    cursor: 'pointer',
+                                                    color: 'rgba(255,255,255,0.45)',
+                                                    display: 'flex', alignItems: 'center',
+                                                    width: 28, height: 28, borderRadius: '8px',
+                                                    justifyContent: 'center',
+                                                    '&:hover': {
+                                                        color: 'rgba(255,255,255,0.9)',
+                                                        background: 'rgba(255,255,255,0.06)',
+                                                    },
+                                                    transition: 'all 0.15s',
                                                 }}>
-                                                    {showPass ? <VisibilityOffIcon sx={{ fontSize: 18 }} /> : <VisibilityIcon sx={{ fontSize: 18 }} />}
+                                                    {showPass ? <VisibilityOffIcon sx={{ fontSize: 19 }} /> : <VisibilityIcon sx={{ fontSize: 19 }} />}
                                                 </Box>
                                             </Box>
                                         </Box>
 
                                         {error && (
-                                            <Box sx={{ px: 1.5, py: 1, borderRadius: '8px', bgcolor: '#fef2f2', border: '1px solid #fecaca' }}>
-                                                <Typography sx={{ fontSize: 12, color: '#dc2626', fontWeight: 600 }}>{error}</Typography>
-                                            </Box>
+                                            <motion.div
+                                                initial={{ opacity: 0, y: -4 }}
+                                                animate={{ opacity: 1, y: 0 }}
+                                                transition={{ duration: 0.2 }}
+                                            >
+                                                <Box sx={{
+                                                    px: 2, py: 1.25, borderRadius: '10px',
+                                                    background: 'rgba(239,68,68,0.1)',
+                                                    border: '1px solid rgba(239,68,68,0.25)',
+                                                }}>
+                                                    <Typography sx={{ fontSize: 13, color: '#fca5a5', fontWeight: 500 }}>
+                                                        {error}
+                                                    </Typography>
+                                                </Box>
+                                            </motion.div>
                                         )}
 
                                         <Box
                                             onClick={!loading ? handleSubmit : undefined}
                                             sx={{
-                                                mt: 0.5, py: 1.4, borderRadius: '12px',
-                                                background: loading ? '#94a3b8' : 'linear-gradient(135deg, #1BA39C 0%, #0e6d68 100%)',
-                                                color: '#fff', textAlign: 'center', fontWeight: 800, fontSize: 14,
+                                                mt: 0.5, py: 1.75, borderRadius: '14px',
+                                                background: loading
+                                                    ? 'rgba(148,163,184,0.3)'
+                                                    : 'linear-gradient(135deg, #1BA39C 0%, #0e6d68 100%)',
+                                                color: '#fff',
+                                                textAlign: 'center',
+                                                fontWeight: 700,
+                                                fontSize: 15,
+                                                letterSpacing: '0.01em',
                                                 cursor: loading ? 'not-allowed' : 'pointer',
-                                                boxShadow: loading ? 'none' : '0 4px 14px rgba(27,163,156,0.4)',
-                                                transition: 'all 0.18s', userSelect: 'none',
-                                                '&:hover': loading ? {} : { transform: 'translateY(-1px)', boxShadow: '0 6px 18px rgba(27,163,156,0.45)' },
+                                                boxShadow: loading
+                                                    ? 'none'
+                                                    : '0 8px 24px rgba(27,163,156,0.4), inset 0 1px 0 rgba(255,255,255,0.15)',
+                                                transition: 'all 0.2s ease',
+                                                userSelect: 'none',
+                                                border: '1px solid rgba(255,255,255,0.08)',
+                                                '&:hover': loading ? {} : {
+                                                    transform: 'translateY(-1px)',
+                                                    boxShadow: '0 12px 28px rgba(27,163,156,0.5), inset 0 1px 0 rgba(255,255,255,0.2)',
+                                                },
+                                                '&:active': loading ? {} : {
+                                                    transform: 'translateY(0px)',
+                                                },
                                             }}
                                         >
-                                            {loading ? 'Verifying...' : 'Sign In'}
+                                            {loading ? 'Verifying…' : 'Sign In'}
                                         </Box>
                                     </Stack>
                                 )}
                             </Box>
                         </Box>
                     </motion.div>
-                </>
+                </div>
             )}
         </AnimatePresence>
     );
+
+    if (!mounted) return null;
+    return createPortal(modalContent, document.body);
 }
