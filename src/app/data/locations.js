@@ -18,7 +18,7 @@ export const locations = [
         "id": "AG-BLOCK",
         "name": "New Building",
         "image": `${S3}/agblock.jpg`,
-        "coordinates": [-6.379109, 53.404622],
+        "coordinates": [-6.378986834714482, 53.404555072834626],
         "description": "Classrooms, lecture halls, seating areas, meeting rooms.",
         "floors": ["Ground", "First"]
     },
@@ -74,7 +74,7 @@ export const locations = [
         "id": "CONNECT",
         "name": "Connect Building",
         "image": `${S3}/connectbuilding.jpg`,
-        "coordinates": [-6.379305, 53.404810],
+        "coordinates": [-6.379283132509414, 53.404780417206155],
         "description": "Student services desk.",
         "floors": ["Ground", "First"]
     },
