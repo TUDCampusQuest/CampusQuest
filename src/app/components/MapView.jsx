@@ -9,10 +9,12 @@ import { useGPS }           from '../hooks/useGPS';
 import { useNavigation }    from '../hooks/useNavigation';
 import { useTrailSelector } from '../hooks/useTrailSelector';
 import MapLayers            from './MapLayers';
-import RouteHUD             from './RouteHUD';
+import NavInstructions      from './NavInstructions';
 import TrailCaptureOverlay  from './TrailCaptureOverlay';
 import TrailsPanel          from './TrailsPanel';
 import RoomStatusPanel      from './RoomStatusPanel';
+import IndoorOverlay from './IndoorOverlay';
+import FloorSwitcher from './FloorSwitcher';
 
 const STYLE_FLAT = 'mapbox://styles/mapbox/streets-v12';
 const STYLE_3D   = 'mapbox://styles/mapbox/standard';
@@ -34,17 +36,16 @@ function MapViewInner({
     const [capturedPoints, setCapturedPoints] = useState([]);
     const [showCaptureUI,  setShowCaptureUI]  = useState(false);
     const [styleLoaded,    setStyleLoaded]    = useState(false);
-
-    const [routeStart,        setRouteStart]        = useState(null);
-    const [routeEnd,          setRouteEnd]          = useState(null);
-    const [routeGeoJSONState, setRouteGeoJSONState] = useState(null);
+    const [isIndoorMode,   setIsIndoorMode]   = useState(false);
+    const [activeFloor,    setActiveFloor]    = useState(0);
+    const [activeBuilding, setActiveBuilding] = useState('F-BLOCK');
 
     const userLocation = useGPS();
 
     const {
         routeStep, buildingA, buildingB,
         routeCoords, routeStats, routeError,
-        isChained, resetToPickA, pickBuildingA,
+        resetToPickA, pickBuildingA,
     } = useNavigation({ isNavigating, navTarget, userLocation, mapRef });
 
     const {
@@ -74,7 +75,6 @@ function MapViewInner({
     return (
         <div style={{ width: '100%', height: '100%', position: 'relative', cursor: captureMode ? 'crosshair' : 'inherit' }}>
 
-            {/* ── Left panel stack ── */}
             <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, width: 230, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <TrailsPanel
                     trailPaths={trailPaths}
@@ -99,65 +99,23 @@ function MapViewInner({
                 {isAdmin && <RoomStatusPanel />}
             </div>
 
-            {/* ── Route HUD (shown while navigating) ── */}
             {isNavigating && (
-                <RouteHUD
+                <NavInstructions
                     routeStep={routeStep}
+                    routeStats={routeStats}
+                    routeCoords={routeCoords}
                     buildingA={buildingA}
                     buildingB={buildingB}
-                    routeStats={routeStats}
                     routeError={routeError}
-                    isChained={isChained}
                     onChangeStart={resetToPickA}
                 />
             )}
 
-            {/* ── Mapbox canvas ── */}
             <Map
                 ref={mapRef}
                 {...viewState}
                 onMove={onMove}
-                onClick={(e) => {
-                    const { lng, lat } = e.lngLat;
-                    console.log('clicked node:', lng, lat);
-
-                    if (captureMode) {
-                        onMapClick(e);
-                        return;
-                    }
-
-                    if (!routeStart) {
-                        setRouteStart([lng, lat]);
-                        setRouteEnd(null);
-                        setRouteGeoJSONState(null);
-                        return;
-                    }
-
-                    if (!routeEnd) {
-                        const endCoords = [lng, lat];
-                        setRouteEnd(endCoords);
-
-                        setRouteGeoJSONState({
-                            type: 'FeatureCollection',
-                            features: [
-                                {
-                                    type: 'Feature',
-                                    geometry: {
-                                        type: 'LineString',
-                                        coordinates: [routeStart, endCoords],
-                                    },
-                                    properties: {},
-                                },
-                            ],
-                        });
-
-                        return;
-                    }
-
-                    setRouteStart([lng, lat]);
-                    setRouteEnd(null);
-                    setRouteGeoJSONState(null);
-                }}
+                onClick={onMapClick}
                 mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
                 mapStyle={is3D ? STYLE_3D : STYLE_FLAT}
                 style={{ width: '100%', height: '100%' }}
@@ -173,11 +131,10 @@ function MapViewInner({
                     <MapLayers
                         trailGeoJSON={trailGeoJSON}
                         capturedGeoJSON={capturedGeoJSON(capturedPoints)}
-                        routeGeoJSON={routeGeoJSONState || routeGeoJSON(routeCoords)}
+                        routeGeoJSON={routeGeoJSON(routeCoords)}
                     />
                 )}
 
-                {/* Location markers */}
                 {locations.map(loc => {
                     const isTarget   = navTarget?.id  === loc.id;
                     const isStart    = buildingA?.id  === loc.id;
@@ -217,19 +174,6 @@ function MapViewInner({
                     );
                 })}
 
-                {/* Auto-route click markers */}
-                {routeStart && (
-                    <Marker longitude={routeStart[0]} latitude={routeStart[1]} anchor="top">
-                        <div style={{ background: '#22c55e', color: '#fff', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 11, border: '2px solid #fff', boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}>A</div>
-                    </Marker>
-                )}
-                {routeEnd && (
-                    <Marker longitude={routeEnd[0]} latitude={routeEnd[1]} anchor="top">
-                        <div style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 11, border: '2px solid #fff', boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}>B</div>
-                    </Marker>
-                )}
-
-                {/* Route endpoint markers */}
                 {buildingA && (
                     <Marker longitude={buildingA.coordinates[0]} latitude={buildingA.coordinates[1]} anchor="top">
                         <div style={{ background: '#22c55e', color: '#fff', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 11, border: '2px solid #fff', boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}>A</div>
@@ -241,14 +185,12 @@ function MapViewInner({
                     </Marker>
                 )}
 
-                {/* User GPS dot */}
                 {userLocation && (
                     <Marker longitude={userLocation.lng} latitude={userLocation.lat} anchor="center">
                         <div className="user-location-pulse" onClick={e => e.stopPropagation()} />
                     </Marker>
                 )}
 
-                {/* Fallback popup — only when parent doesn't handle location select */}
                 {selectedLoc && !onLocationSelect && (
                     <Popup
                         longitude={selectedLoc.coordinates?.[0] ?? selectedLoc.lng}
@@ -260,6 +202,20 @@ function MapViewInner({
                         <div style={{ color: '#111', fontWeight: 700 }}>{selectedLoc.name}</div>
                     </Popup>
                 )}
+
+                <IndoorOverlay
+                    isIndoorMode={isIndoorMode}
+                    buildingId={activeBuilding}
+                    activeFloor={activeFloor}
+                />
+
+                <FloorSwitcher
+                    isIndoorMode={isIndoorMode}
+                    setIsIndoorMode={setIsIndoorMode}
+                    buildingId={activeBuilding}
+                    activeFloor={activeFloor}
+                    setActiveFloor={setActiveFloor}
+                />
             </Map>
         </div>
     );

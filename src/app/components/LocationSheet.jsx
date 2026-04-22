@@ -1,15 +1,16 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { motion, AnimatePresence }      from 'framer-motion';
-import { useRouter }                    from 'next/navigation';
-import { Box }                          from '@mui/material';
-import LocationSheetContent             from './LocationSheetContent';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+import LocationSheetContent from './LocationSheetContent';
+
+const SPRING = { type: 'spring', stiffness: 300, damping: 35 };
 
 function useIsDesktop() {
     const [desktop, setDesktop] = useState(false);
     useEffect(() => {
-        const mq      = window.matchMedia('(min-width: 768px)');
+        const mq = window.matchMedia('(min-width: 768px)');
         setDesktop(mq.matches);
         const handler = e => setDesktop(e.matches);
         mq.addEventListener('change', handler);
@@ -22,30 +23,21 @@ export default function LocationSheet({ location, onClose, onNavigate }) {
     const router    = useRouter();
     const isDesktop = useIsDesktop();
     const dragRef   = useRef(null);
-    const [shared, setShared] = useState(false);
+    const [expanded, setExpanded] = useState(false);
 
-
-    useEffect(() => { setShared(false); }, [location?.id]);
+    // Reset to peek whenever a new location is opened
+    useEffect(() => { setExpanded(false); }, [location?.id]);
 
     if (!location) return null;
 
-    const handleShare = async () => {
-        const url  = `${window.location.origin}/location/${location.id}`;
-        const text = `${location.name} — Campus Quest, TU Dublin`;
-        try {
-            if (navigator.share) {
-                await navigator.share({ title: text, url });
-            } else {
-                await navigator.clipboard.writeText(url);
-                setShared(true);
-                setTimeout(() => setShared(false), 2000);
-            }
-        } catch { /* user cancelled */ }
-    };
-
     const handleViewDetails = () => { router.push(`/location/${location.id}`); onClose(); };
     const handleNavigate    = () => { onNavigate(location); onClose(); };
-    const contentProps = { location, onClose, onNavigate: handleNavigate, onShare: handleShare, onViewDetails: handleViewDetails, shared };
+
+    const contentProps = {
+        location, onClose,
+        onNavigate:    handleNavigate,
+        onViewDetails: handleViewDetails,
+    };
 
     if (isDesktop) {
         return (
@@ -53,23 +45,24 @@ export default function LocationSheet({ location, onClose, onNavigate }) {
                 {location && (
                     <>
                         <motion.div
-                            key="desktop-backdrop"
+                            key="desk-bd"
                             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
                             transition={{ duration: 0.2 }}
                             onClick={onClose}
-                            style={{ position: 'absolute', inset: 0, zIndex: 18, background: 'rgba(15,23,42,0.15)', backdropFilter: 'blur(1px)' }}
+                            style={{ position: 'absolute', inset: 0, zIndex: 18, background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(2px)' }}
                         />
                         <motion.div
-                            key="desktop-panel"
+                            key="desk-panel"
                             initial={{ x: 380, opacity: 0 }}
-                            animate={{ x: 0,   opacity: 1 }}
-                            exit={{   x: 380, opacity: 0 }}
-                            transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            exit={{ x: 380, opacity: 0 }}
+                            transition={SPRING}
                             style={{
-                                position: 'absolute', top: 0, right: 0, bottom: 0,
-                                width: 380, zIndex: 19,
-                                background: '#fff',
-                                boxShadow: '-8px 0 40px rgba(0,0,0,0.14)',
+                                position: 'absolute', top: 0, right: 0, bottom: 0, width: 380, zIndex: 19,
+                                background: 'rgba(15,23,42,0.92)',
+                                backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+                                borderLeft: '1px solid rgba(255,255,255,0.1)',
+                                boxShadow: '-8px 0 40px rgba(0,0,0,0.5)',
                                 display: 'flex', flexDirection: 'column', overflow: 'hidden',
                             }}
                         >
@@ -84,44 +77,59 @@ export default function LocationSheet({ location, onClose, onNavigate }) {
     return (
         <AnimatePresence>
             {location && (
-                <>
-                    <motion.div
-                        key="mobile-backdrop"
-                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                        onClick={onClose}
-                        style={{ position: 'absolute', inset: 0, zIndex: 18, background: 'rgba(15,23,42,0.3)' }}
-                    />
-                    <motion.div
-                        key="mobile-sheet"
-                        ref={dragRef}
-                        drag="y"
-                        dragConstraints={{ top: 0, bottom: 0 }}
-                        dragElastic={{ top: 0.05, bottom: 0.4 }}
-                        onDragEnd={(_, info) => {
-                            if (info.offset.y > 80 || info.velocity.y > 400) onClose();
-                        }}
-                        initial={{ y: '100%' }}
-                        animate={{ y: 0 }}
-                        exit={{ y: '100%' }}
-                        transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+                <motion.div
+                    key="mob-sheet"
+                    ref={dragRef}
+                    drag="y"
+                    dragConstraints={{ top: 0, bottom: 0 }}
+                    dragElastic={{ top: 0.08, bottom: 0.35 }}
+                    onDragEnd={(_, info) => {
+                        if (info.offset.y < -40 || info.velocity.y < -350) {
+                            setExpanded(true);
+                        } else if (info.offset.y > 70 && !expanded) {
+                            onClose();
+                        } else if (info.offset.y > 50 && expanded) {
+                            setExpanded(false);
+                        }
+                    }}
+                    initial={{ y: '100%' }}
+                    animate={{
+                        y: 0,
+                        height: expanded ? '68dvh' : '38dvh',
+                        background: expanded ? 'rgba(15,23,42,0.93)' : 'rgba(15,23,42,0.58)',
+                    }}
+                    exit={{ y: '100%' }}
+                    transition={SPRING}
+                    style={{
+                        position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 19,
+                        backdropFilter: 'blur(22px)', WebkitBackdropFilter: 'blur(22px)',
+                        border: '1px solid rgba(255,255,255,0.1)', borderBottom: 'none',
+                        borderRadius: '22px 22px 0 0',
+                        boxShadow: '0 -8px 40px rgba(0,0,0,0.4)',
+                        display: 'flex', flexDirection: 'column',
+                        overflow: 'hidden', touchAction: 'none',
+                    }}
+                >
+                    {/* Drag handle — tap to expand in peek mode */}
+                    <div
+                        onClick={() => !expanded && setExpanded(true)}
                         style={{
-                            position: 'absolute', bottom: 0, left: 0, right: 0,
-                            zIndex: 19, background: '#fff',
-                            borderRadius: '24px 24px 0 0',
-                            boxShadow: '0 -8px 40px rgba(0,0,0,0.18)',
-                            maxHeight: '88dvh',
-                            display: 'flex', flexDirection: 'column',
-                            overflow: 'hidden', touchAction: 'none',
+                            paddingTop: 10, paddingBottom: expanded ? 4 : 6,
+                            display: 'flex', flexDirection: 'column', alignItems: 'center',
+                            flexShrink: 0, cursor: expanded ? 'default' : 'pointer',
+                            gap: 4,
                         }}
                     >
-                        {/* Drag handle */}
-                        <Box sx={{ pt: 1.5, pb: 0.5, display: 'flex', justifyContent: 'center', flexShrink: 0 }}>
-                            <Box sx={{ width: 40, height: 4, borderRadius: 99, bgcolor: '#e2e8f0' }} />
-                        </Box>
+                        <div style={{ width: 38, height: 4, borderRadius: 99, background: 'rgba(255,255,255,0.28)' }} />
+                        {!expanded && (
+                            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.38)', letterSpacing: '0.05em' }}>
+                                swipe up for details
+                            </span>
+                        )}
+                    </div>
 
-                        <LocationSheetContent {...contentProps} isMobile />
-                    </motion.div>
-                </>
+                    <LocationSheetContent {...contentProps} isMobile />
+                </motion.div>
             )}
         </AnimatePresence>
     );

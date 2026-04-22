@@ -8,12 +8,11 @@ import { locations }    from "./data/locations";
 import AppHeader        from "./components/AppHeader";
 import MapSidebar       from "./components/MapSidebar";
 import BottomBar        from "./components/BottomBar";
-import NavHUD           from "./components/NavHUD";
-import NavBottomCard    from "./components/NavBottomCard";
+import NavHUD        from "./components/NavHUD";
+import LocationSheet from "./components/LocationSheet";
 import SearchDrawer     from "./components/SearchDrawer";
 import StaffAuthModal   from "./components/StaffAuthModal";
 
-// MapView is loaded client-side only (Mapbox requires window)
 const MapView = dynamic(() => import("./components/MapView"), {
     ssr: false,
     loading: () => <Box sx={{ height: "100dvh", width: "100vw", bgcolor: "#f1f5f9" }} />,
@@ -30,9 +29,10 @@ export default function Home() {
     const [authOpen,     setAuthOpen]     = useState(false);
     const [isAdmin,      setIsAdmin]      = useState(false);
 
-    const [navTarget,    setNavTarget]    = useState(null);
-    const [isNavigating, setIsNavigating] = useState(false);
-    const [gpsLocation,  setGpsLocation]  = useState(null);
+    const [navTarget,        setNavTarget]        = useState(null);
+    const [isNavigating,     setIsNavigating]     = useState(false);
+    const [gpsLocation,      setGpsLocation]      = useState(null);
+    const [selectedLocation, setSelectedLocation] = useState(null);
 
     const [viewState, setViewState] = useState({
         ...CAMPUS_CENTER, zoom: 16, pitch: 0, bearing: 0,
@@ -87,8 +87,15 @@ export default function Home() {
     };
 
     const handleSelectLocation = (loc) => {
-        setNavTarget(loc); setIsNavigating(false);
-        setSearchOpen(false); setQuery("");
+        setSelectedLocation(loc);
+        setSearchOpen(false);
+        setQuery("");
+    };
+
+    const handleNavigateFromSheet = (loc) => {
+        setNavTarget(loc);
+        setIsNavigating(true);
+        setSelectedLocation(null);
     };
 
     const filtered = (Array.isArray(locations) ? locations : []).filter(l =>
@@ -106,7 +113,6 @@ export default function Home() {
                 onStaffClick={handleStaffClick}
             />
 
-            {/* ─ Map area ─ */}
             <Box sx={{ flex: 1, position: "relative", minHeight: 0 }}>
                 <MapView
                     viewState={viewState}
@@ -133,13 +139,14 @@ export default function Home() {
                         onExit={() => { setNavTarget(null); setIsNavigating(false); }}
                     />
                 )}
-                {navTarget && !isNavigating && (
-                    <NavBottomCard
-                        navTarget={navTarget}
-                        onNavigate={() => setIsNavigating(true)}
-                        onDismiss={() => setNavTarget(null)}
+                {selectedLocation && !isNavigating && (
+                    <LocationSheet
+                        location={selectedLocation}
+                        onClose={() => setSelectedLocation(null)}
+                        onNavigate={handleNavigateFromSheet}
                     />
                 )}
+
             </Box>
 
             {!isNavigating && (
@@ -155,7 +162,6 @@ export default function Home() {
                 onSelect={handleSelectLocation}
             />
 
-            {/* Staff auth modal activated through clicking header */}
             <StaffAuthModal
                 open={authOpen}
                 onClose={() => setAuthOpen(false)}

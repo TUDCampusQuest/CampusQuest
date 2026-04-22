@@ -285,10 +285,6 @@ async function buildHybridRouteFromCampusToCoords(startLocation, endCoords) {
         campusPathIds: bestOption.campusPathIds,
     };
 }
-/**
- * useNavigation
- * Campus graph + hybrid routing version
- */
 export function useNavigation({ isNavigating, navTarget, userLocation, mapRef }) {
     const [routeStep, setRouteStep] = useState('IDLE');
     const [buildingA, setBuildingA] = useState(null);
@@ -313,7 +309,6 @@ export function useNavigation({ isNavigating, navTarget, userLocation, mapRef })
         );
     }, [mapRef]);
 
-    // When Navigate pressed — set B, snap A from GPS if user is close enough, or ask user to pick
     useEffect(() => {
         if (isNavigating && navTarget) {
             setBuildingB(navTarget);
@@ -330,7 +325,6 @@ export function useNavigation({ isNavigating, navTarget, userLocation, mapRef })
                     const nearestCoords = nearest.coordinates || [nearest.lng, nearest.lat];
                     const distToNearest = haversineMetres(userCoords, nearestCoords);
 
-                    // only snap when the user is actually near a building
                     if (distToNearest <= 40 && nearest.id !== navTarget.id) {
                         setBuildingA(nearest);
                         setRouteStep('ACTIVE');
@@ -354,7 +348,6 @@ export function useNavigation({ isNavigating, navTarget, userLocation, mapRef })
         }
     }, [isNavigating, navTarget, userLocation]);
 
-    // Resolve route whenever destination exists and route is active
     useEffect(() => {
         if (!buildingB || routeStep !== 'ACTIVE') return;
 
@@ -365,12 +358,6 @@ export function useNavigation({ isNavigating, navTarget, userLocation, mapRef })
             setIsChained(false);
 
             try {
-                console.log('Start building:', buildingA);
-                console.log('End building:', buildingB);
-                console.log('Start building id:', buildingA?.id);
-                console.log('End building id:', buildingB?.id);
-
-                // If we have a selected start building, decide mode from A -> B
                 if (buildingA) {
                     if (buildingA.id === buildingB.id) {
                         setRouteError("You're already at this building.");
@@ -379,7 +366,6 @@ export function useNavigation({ isNavigating, navTarget, userLocation, mapRef })
                     }
 
                     const routingMode = getRoutingMode(buildingA, buildingB);
-                    console.log('Routing mode:', routingMode);
 
                     if (routingMode === 'campus') {
                         const result = routeFromGraph(buildingA, buildingB);
@@ -389,9 +375,6 @@ export function useNavigation({ isNavigating, navTarget, userLocation, mapRef })
                             setRouteStep('ERROR');
                             return;
                         }
-
-                        console.log('Campus graph path ids:', result.pathIds);
-                        console.log('Campus graph coords:', result.coords);
 
                         if (cancelled) return;
                         setRouteCoords(result.coords);
@@ -411,8 +394,6 @@ export function useNavigation({ isNavigating, navTarget, userLocation, mapRef })
                             return;
                         }
 
-                        console.log('Mapbox-only coords:', result.coords);
-
                         if (cancelled) return;
                         setRouteCoords(result.coords);
                         setRouteStats(walkingStats(result.coords));
@@ -424,7 +405,6 @@ export function useNavigation({ isNavigating, navTarget, userLocation, mapRef })
                         const startOnCampus = isCampusLocation(buildingA);
                         const endOnCampus = isCampusLocation(buildingB);
 
-                        // Off-campus -> campus
                         if (!startOnCampus && endOnCampus) {
                             const startCoords = buildingA.coordinates || [buildingA.lng, buildingA.lat];
                             const result = await buildHybridRouteFromCoordsToCampus(startCoords, buildingB);
@@ -435,10 +415,6 @@ export function useNavigation({ isNavigating, navTarget, userLocation, mapRef })
                                 return;
                             }
 
-                            console.log('Hybrid entry node:', result.entryNodeId);
-                            console.log('Hybrid campus path ids:', result.campusPathIds);
-                            console.log('Hybrid merged coords:', result.coords);
-
                             if (cancelled) return;
                             setRouteCoords(result.coords);
                             setRouteStats(walkingStats(result.coords));
@@ -446,7 +422,6 @@ export function useNavigation({ isNavigating, navTarget, userLocation, mapRef })
                             return;
                         }
 
-                        // Campus -> off-campus
                         if (startOnCampus && !endOnCampus) {
                             const endCoords = buildingB.coordinates || [buildingB.lng, buildingB.lat];
                             const result = await buildHybridRouteFromCampusToCoords(buildingA, endCoords);
@@ -456,10 +431,6 @@ export function useNavigation({ isNavigating, navTarget, userLocation, mapRef })
                                 setRouteStep('ERROR');
                                 return;
                             }
-
-                            console.log('Hybrid exit node:', result.entryNodeId);
-                            console.log('Hybrid campus path ids:', result.campusPathIds);
-                            console.log('Hybrid merged coords:', result.coords);
 
                             if (cancelled) return;
                             setRouteCoords(result.coords);
@@ -474,7 +445,6 @@ export function useNavigation({ isNavigating, navTarget, userLocation, mapRef })
                     }
                 }
 
-                // No selected buildingA, but GPS exists -> assume off-campus/user-location hybrid into campus
                 if (!buildingA && userLocation) {
                     const startCoords = [userLocation.lng, userLocation.lat];
                     const result = await buildHybridRouteFromCoordsToCampus(startCoords, buildingB);
@@ -484,10 +454,6 @@ export function useNavigation({ isNavigating, navTarget, userLocation, mapRef })
                         setRouteStep('ERROR');
                         return;
                     }
-
-                    console.log('Hybrid entry node:', result.entryNodeId);
-                    console.log('Hybrid campus path ids:', result.campusPathIds);
-                    console.log('Hybrid merged coords:', result.coords);
 
                     if (cancelled) return;
                     setRouteCoords(result.coords);
@@ -499,7 +465,6 @@ export function useNavigation({ isNavigating, navTarget, userLocation, mapRef })
                 setRouteError('Could not determine a route.');
                 setRouteStep('ERROR');
             } catch (err) {
-                console.error('Route resolve error:', err);
                 if (!cancelled) {
                     setRouteError('Failed to build route.');
                     setRouteStep('ERROR');
