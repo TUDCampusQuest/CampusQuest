@@ -23,17 +23,21 @@ const CAMPUS_BOUNDS = [
 ];
 
 function MapViewInner({
-    viewState, onMove, onMapLoad,
-    navTarget, isNavigating, onTrailSaved,
-    is3D, isAdmin = false, onLocationSelect,
-}) {
+                          viewState, onMove, onMapLoad,
+                          navTarget, isNavigating, onTrailSaved,
+                          is3D, isAdmin = false, onLocationSelect,
+                      }) {
     const mapRef = useRef(null);
 
-    const [selectedLoc,   setSelectedLoc]   = useState(null);
-    const [captureMode,   setCaptureMode]   = useState(false);
+    const [selectedLoc,    setSelectedLoc]    = useState(null);
+    const [captureMode,    setCaptureMode]    = useState(false);
     const [capturedPoints, setCapturedPoints] = useState([]);
-    const [showCaptureUI, setShowCaptureUI] = useState(false);
-    const [styleLoaded,   setStyleLoaded]   = useState(false);
+    const [showCaptureUI,  setShowCaptureUI]  = useState(false);
+    const [styleLoaded,    setStyleLoaded]    = useState(false);
+
+    const [routeStart,        setRouteStart]        = useState(null);
+    const [routeEnd,          setRouteEnd]          = useState(null);
+    const [routeGeoJSONState, setRouteGeoJSONState] = useState(null);
 
     const userLocation = useGPS();
 
@@ -47,6 +51,8 @@ function MapViewInner({
         selectedTrailName, setTrailInUrl,
         onMapClick, trailGeoJSON, routeGeoJSON, capturedGeoJSON, trailPaths,
     } = useTrailSelector({ captureMode, setCapturedPoints, mapRef });
+
+
 
     const handleMapLoad = useCallback((e) => {
         setStyleLoaded(true);
@@ -111,7 +117,47 @@ function MapViewInner({
                 ref={mapRef}
                 {...viewState}
                 onMove={onMove}
-                onClick={onMapClick}
+                onClick={(e) => {
+                    const { lng, lat } = e.lngLat;
+                    console.log('clicked node:', lng, lat);
+
+                    if (captureMode) {
+                        onMapClick(e);
+                        return;
+                    }
+
+                    if (!routeStart) {
+                        setRouteStart([lng, lat]);
+                        setRouteEnd(null);
+                        setRouteGeoJSONState(null);
+                        return;
+                    }
+
+                    if (!routeEnd) {
+                        const endCoords = [lng, lat];
+                        setRouteEnd(endCoords);
+
+                        setRouteGeoJSONState({
+                            type: 'FeatureCollection',
+                            features: [
+                                {
+                                    type: 'Feature',
+                                    geometry: {
+                                        type: 'LineString',
+                                        coordinates: [routeStart, endCoords],
+                                    },
+                                    properties: {},
+                                },
+                            ],
+                        });
+
+                        return;
+                    }
+
+                    setRouteStart([lng, lat]);
+                    setRouteEnd(null);
+                    setRouteGeoJSONState(null);
+                }}
                 mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
                 mapStyle={is3D ? STYLE_3D : STYLE_FLAT}
                 style={{ width: '100%', height: '100%' }}
@@ -127,7 +173,7 @@ function MapViewInner({
                     <MapLayers
                         trailGeoJSON={trailGeoJSON}
                         capturedGeoJSON={capturedGeoJSON(capturedPoints)}
-                        routeGeoJSON={routeGeoJSON(routeCoords)}
+                        routeGeoJSON={routeGeoJSONState || routeGeoJSON(routeCoords)}
                     />
                 )}
 
@@ -150,9 +196,9 @@ function MapViewInner({
                                     cursor: 'pointer',
                                     transition: 'font-size 0.2s, filter 0.2s',
                                     filter: isTarget   ? 'drop-shadow(0 0 8px rgba(239,68,68,0.9))'
-                                          : isStart    ? 'drop-shadow(0 0 8px rgba(34,197,94,0.9))'
-                                          : isPickable ? 'drop-shadow(0 0 4px rgba(27,163,156,0.6))'
-                                          : 'none',
+                                        : isStart    ? 'drop-shadow(0 0 8px rgba(34,197,94,0.9))'
+                                            : isPickable ? 'drop-shadow(0 0 4px rgba(27,163,156,0.6))'
+                                                : 'none',
                                 }}
                                 onClick={e => {
                                     e.stopPropagation();
@@ -170,6 +216,18 @@ function MapViewInner({
                         </Marker>
                     );
                 })}
+
+                {/* Auto-route click markers */}
+                {routeStart && (
+                    <Marker longitude={routeStart[0]} latitude={routeStart[1]} anchor="top">
+                        <div style={{ background: '#22c55e', color: '#fff', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 11, border: '2px solid #fff', boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}>A</div>
+                    </Marker>
+                )}
+                {routeEnd && (
+                    <Marker longitude={routeEnd[0]} latitude={routeEnd[1]} anchor="top">
+                        <div style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 11, border: '2px solid #fff', boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}>B</div>
+                    </Marker>
+                )}
 
                 {/* Route endpoint markers */}
                 {buildingA && (
