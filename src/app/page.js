@@ -5,6 +5,7 @@ import { Box } from "@mui/material";
 import dynamic from "next/dynamic";
 
 import { locations }    from "./data/locations";
+import { BUILDINGS, BUILDING_LOOKUP } from "./data/mazemap-buildings";
 import AppHeader        from "./components/AppHeader";
 import MapSidebar       from "./components/MapSidebar";
 import BottomBar        from "./components/BottomBar";
@@ -33,6 +34,8 @@ export default function Home() {
     const [isNavigating,     setIsNavigating]     = useState(false);
     const [gpsLocation,      setGpsLocation]      = useState(null);
     const [selectedLocation, setSelectedLocation] = useState(null);
+    const [activeBuilding,   setActiveBuilding]   = useState(null);
+    const [activeFloorId,    setActiveFloorId]    = useState(null);
 
     const [viewState, setViewState] = useState({
         ...CAMPUS_CENTER, zoom: 16, pitch: 0, bearing: 0,
@@ -86,10 +89,40 @@ export default function Home() {
         }
     };
 
+    const matchBuildingFromLocation = (loc) => {
+        if (!loc) return null;
+        if (loc.buildingId && BUILDING_LOOKUP[loc.buildingId]) {
+            return BUILDING_LOOKUP[loc.buildingId];
+        }
+        const text = ((loc.name || "") + " " + (loc.id || "")).toLowerCase().trim();
+        if (!text) return null;
+        const blockMatch = text.match(/block\s+([a-z])\b/);
+        if (blockMatch) {
+            const letter = blockMatch[1];
+            const byBlock = BUILDINGS.find(b => new RegExp(`block\\s*${letter}\\b`, "i").test(b.name));
+            if (byBlock) return byBlock;
+        }
+        return BUILDINGS.find(b => {
+            const bname = b.name.toLowerCase();
+            if (text.includes(bname) || bname.includes(text)) return true;
+            const tokens = bname.split(/[\s\-()]+/).filter(t => t.length > 3);
+            return tokens.some(tok => text.includes(tok));
+        }) || null;
+    };
+
     const handleSelectLocation = (loc) => {
         setSelectedLocation(loc);
         setSearchOpen(false);
         setQuery("");
+        const matched = matchBuildingFromLocation(loc);
+        if (matched) {
+            setActiveBuilding(matched);
+            const ground = matched.floors.find(f => f.z === 1) || matched.floors[0];
+            setActiveFloorId(ground ? ground.floorId : null);
+        } else {
+            setActiveBuilding(null);
+            setActiveFloorId(null);
+        }
     };
 
     const handleNavigateFromSheet = (loc) => {
@@ -122,6 +155,10 @@ export default function Home() {
                     isNavigating={isNavigating}
                     onTrailSaved={fetchTrails}
                     isAdmin={isAdmin}
+                    onLocationSelect={handleSelectLocation}
+                    activeBuilding={activeBuilding}
+                    activeFloorId={activeFloorId}
+                    onFloorChange={setActiveFloorId}
                 />
 
                 <MapSidebar

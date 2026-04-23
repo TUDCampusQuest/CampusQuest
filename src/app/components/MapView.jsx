@@ -28,6 +28,7 @@ function MapViewInner({
                           viewState, onMove, onMapLoad,
                           navTarget, isNavigating, onTrailSaved,
                           is3D, isAdmin = false, onLocationSelect,
+                          activeBuilding, activeFloorId, onFloorChange,
                       }) {
     const mapRef = useRef(null);
 
@@ -37,8 +38,6 @@ function MapViewInner({
     const [showCaptureUI,  setShowCaptureUI]  = useState(false);
     const [styleLoaded,    setStyleLoaded]    = useState(false);
     const [isIndoorMode,   setIsIndoorMode]   = useState(false);
-    const [activeFloor,    setActiveFloor]    = useState(0);
-    const [activeBuilding, setActiveBuilding] = useState('F-BLOCK');
 
     const userLocation = useGPS();
 
@@ -204,17 +203,17 @@ function MapViewInner({
                 )}
 
                 <IndoorOverlay
-                    isIndoorMode={isIndoorMode}
-                    buildingId={activeBuilding}
-                    activeFloor={activeFloor}
+                    indoorMode={isIndoorMode}
+                    activeBuilding={activeBuilding}
+                    activeFloorId={activeFloorId}
                 />
 
                 <FloorSwitcher
-                    isIndoorMode={isIndoorMode}
-                    setIsIndoorMode={setIsIndoorMode}
-                    buildingId={activeBuilding}
-                    activeFloor={activeFloor}
-                    setActiveFloor={setActiveFloor}
+                    activeBuilding={activeBuilding}
+                    activeFloorId={activeFloorId}
+                    onFloorChange={onFloorChange}
+                    indoorMode={isIndoorMode}
+                    onToggleIndoor={() => setIsIndoorMode(m => !m)}
                 />
             </Map>
         </div>
