@@ -1,6 +1,6 @@
 "use client";
 
-import { Tooltip } from "@mui/material";
+import { Tooltip, Box } from "@mui/material";
 import AddIcon        from "@mui/icons-material/Add";
 import RemoveIcon     from "@mui/icons-material/Remove";
 import ViewInArIcon   from "@mui/icons-material/ViewInAr";
@@ -122,15 +122,17 @@ export default function MapSidebar({
 
     return (
         <>
-            {/* Map controls column */}
+            {/* Map controls column — 3D/Me hidden on mobile (bottom nav handles them) */}
             <div style={{ ...colStyle, top: 12 }}>
-                <SqBtn
-                    icon={<ViewInArIcon sx={{ fontSize: 18 }} />}
-                    label="3D"
-                    onClick={onToggle3D}
-                    active={pitch > 0}
-                    tooltip={pitch > 0 ? "Switch to 2D" : "Switch to 3D"}
-                />
+                <Box sx={{ display: { xs: "none", sm: "block" } }}>
+                    <SqBtn
+                        icon={<ViewInArIcon sx={{ fontSize: 18 }} />}
+                        label="3D"
+                        onClick={onToggle3D}
+                        active={pitch > 0}
+                        tooltip={pitch > 0 ? "Switch to 2D" : "Switch to 3D"}
+                    />
+                </Box>
                 <SqBtn
                     icon={<AddIcon sx={{ fontSize: 18 }} />}
                     label="In"
@@ -143,17 +145,19 @@ export default function MapSidebar({
                     onClick={onZoomOut}
                     tooltip="Zoom out"
                 />
-                <SqBtn
-                    icon={<MyLocationIcon sx={{ fontSize: 18 }} />}
-                    label="Me"
-                    onClick={onRecenter}
-                    active={!!gpsLocation}
-                    tooltip={gpsLocation ? "Go to my location" : "Recenter on campus"}
-                />
+                <Box sx={{ display: { xs: "none", sm: "block" } }}>
+                    <SqBtn
+                        icon={<MyLocationIcon sx={{ fontSize: 18 }} />}
+                        label="Me"
+                        onClick={onRecenter}
+                        active={!!gpsLocation}
+                        tooltip={gpsLocation ? "Go to my location" : "Recenter on campus"}
+                    />
+                </Box>
             </div>
 
-            {/* Floor switcher column — always visible */}
-            <div style={{ ...colStyle, bottom: 90 }}>
+            {/* Floor switcher column — always visible, z-index 22 keeps it above LocationSheet (19) */}
+            <div style={{ ...colStyle, bottom: 90, zIndex: 22 }}>
                 {FLOOR_NAMES.map(name => (
                     <FloorSqBtn
                         key={name}

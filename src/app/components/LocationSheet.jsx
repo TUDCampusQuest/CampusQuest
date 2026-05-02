@@ -45,13 +45,6 @@ export default function LocationSheet({ location, onClose, onNavigate }) {
                 {location && (
                     <>
                         <motion.div
-                            key="desk-bd"
-                            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-                            transition={{ duration: 0.2 }}
-                            onClick={onClose}
-                            style={{ position: 'absolute', inset: 0, zIndex: 18, background: 'rgba(0,0,0,0.35)', backdropFilter: 'blur(2px)' }}
-                        />
-                        <motion.div
                             key="desk-panel"
                             initial={{ x: 380, opacity: 0 }}
                             animate={{ x: 0, opacity: 1 }}

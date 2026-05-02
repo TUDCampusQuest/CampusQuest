@@ -72,14 +72,16 @@ function MapViewInner({
         <div style={{ width: '100%', height: '100%', position: 'relative', cursor: captureMode ? 'crosshair' : 'inherit' }}>
 
             <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, width: 230, display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <TrailsPanel
-                    trailPaths={trailPaths}
-                    selectedTrailName={selectedTrailName}
-                    setTrailInUrl={setTrailInUrl}
-                    isAdmin={isAdmin}
-                    showCaptureUI={showCaptureUI}
-                    onToggleCaptureUI={() => setShowCaptureUI(o => !o)}
-                />
+                {isAdmin && (
+                    <TrailsPanel
+                        trailPaths={trailPaths}
+                        selectedTrailName={selectedTrailName}
+                        setTrailInUrl={setTrailInUrl}
+                        isAdmin={isAdmin}
+                        showCaptureUI={showCaptureUI}
+                        onToggleCaptureUI={() => setShowCaptureUI(o => !o)}
+                    />
+                )}
 
                 {isAdmin && showCaptureUI && (
                     <TrailCaptureOverlay

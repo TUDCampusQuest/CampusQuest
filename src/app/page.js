@@ -129,6 +129,11 @@ export default function Home() {
             setActiveBuilding(null);
             setActiveFloorName(null);
         }
+        const lng = loc.coordinates?.[0] ?? loc.lng;
+        const lat = loc.coordinates?.[1] ?? loc.lat;
+        if (lng != null && lat != null && mapRef.current) {
+            mapRef.current.flyTo({ center: [lng, lat], zoom: 17.5, duration: 1200 });
+        }
     };
 
     const handleNavigateFromSheet = (loc) => {
@@ -178,6 +183,7 @@ export default function Home() {
             <AppHeader
                 isAdmin={isAdmin}
                 onStaffClick={handleStaffClick}
+                onSearchClick={() => setSearchOpen(true)}
             />
 
             <Box sx={{ flex: 1, position: "relative", minHeight: 0 }}>
@@ -261,7 +267,13 @@ export default function Home() {
             </Box>
 
             {!isNavigating && (
-                <BottomBar onSearchClick={() => setSearchOpen(true)} />
+                <BottomBar
+                    onSearchClick={() => setSearchOpen(true)}
+                    onToggle3D={handleToggle3D}
+                    onRecenter={handleRecenter}
+                    gpsLocation={gpsLocation}
+                    pitch={viewState.pitch}
+                />
             )}
 
             <SearchDrawer

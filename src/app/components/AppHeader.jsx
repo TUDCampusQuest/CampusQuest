@@ -3,7 +3,7 @@
 import { Box, Stack, Typography, Tooltip } from "@mui/material";
 import { useRouter } from "next/navigation";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import RouteIcon        from "@mui/icons-material/Route";
+import SearchIcon       from "@mui/icons-material/Search";
 
 function HeaderBtn({ icon, label, onClick, tooltip }) {
     return (
@@ -33,7 +33,7 @@ function HeaderBtn({ icon, label, onClick, tooltip }) {
     );
 }
 
-export default function AppHeader({ isAdmin, onStaffClick }) {
+export default function AppHeader({ isAdmin, onStaffClick, onSearchClick }) {
     const router = useRouter();
 
     return (
@@ -47,7 +47,7 @@ export default function AppHeader({ isAdmin, onStaffClick }) {
             borderBottom: "1px solid #e2e8f0",
             zIndex: 1100,
         }}>
-            {/* Logo give access to staff auth */}
+            {/* Logo — double-click to access staff auth */}
             <Stack direction="row" alignItems="center" spacing={1} sx={{ flex: 1 }}>
                 <Box
                     onDoubleClick={onStaffClick}
@@ -69,7 +69,6 @@ export default function AppHeader({ isAdmin, onStaffClick }) {
                     Campus Quest
                 </Typography>
 
-                {/* Staff badge for logo */}
                 {isAdmin && (
                     <Box
                         onClick={onStaffClick}
@@ -88,20 +87,34 @@ export default function AppHeader({ isAdmin, onStaffClick }) {
                 )}
             </Stack>
 
-            {/* Navigation buttons */}
+            {/* Nav buttons */}
             <Stack direction="row" spacing={1}>
+                {/* Search — desktop only (mobile has bottom nav) */}
+                <Box sx={{ display: { xs: "none", sm: "block" } }}>
+                    <HeaderBtn
+                        icon={<SearchIcon sx={{ fontSize: 15, color: "#64748b" }} />}
+                        label="Search"
+                        tooltip="Search buildings & rooms"
+                        onClick={onSearchClick}
+                    />
+                </Box>
+
                 <HeaderBtn
                     icon={<InfoOutlinedIcon sx={{ fontSize: 15, color: "#64748b" }} />}
                     label="Info"
                     tooltip="App info"
                     onClick={() => router.push("/info")}
                 />
-                <HeaderBtn
-                    icon={<RouteIcon sx={{ fontSize: 15, color: "#64748b" }} />}
-                    label="Trails"
-                    tooltip="Campus trails"
-                    onClick={() => router.push("/trails")}
-                />
+
+                {/* Trails link — staff only */}
+                {isAdmin && (
+                    <HeaderBtn
+                        icon={<span style={{ fontSize: 13 }}>🗺</span>}
+                        label="Trails"
+                        tooltip="Campus trails"
+                        onClick={() => router.push("/trails")}
+                    />
+                )}
             </Stack>
         </Box>
     );

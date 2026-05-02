@@ -1,72 +1,97 @@
 "use client";
 
-import { Box, Paper, IconButton, Typography, Tooltip } from "@mui/material";
+import { Box, Tooltip } from "@mui/material";
 import { useRouter } from "next/navigation";
 import SearchIcon        from "@mui/icons-material/Search";
 import QrCodeScannerIcon from "@mui/icons-material/QrCodeScanner";
+import MyLocationIcon    from "@mui/icons-material/MyLocation";
+import ViewInArIcon      from "@mui/icons-material/ViewInAr";
 
-export default function BottomBar({ onSearchClick }) {
+const PURPLE = "#7C3AED";
+
+function NavBtn({ icon, label, onClick, active, tooltip }) {
+    return (
+        <Tooltip title={tooltip} placement="top" arrow>
+            <Box
+                onClick={onClick}
+                sx={{
+                    flex: 1,
+                    display: "flex", flexDirection: "column",
+                    alignItems: "center", justifyContent: "center",
+                    gap: "3px",
+                    py: 1,
+                    cursor: "pointer",
+                    color: active ? PURPLE : "rgba(255,255,255,0.55)",
+                    transition: "color 0.15s",
+                    "&:active": { opacity: 0.7 },
+                    userSelect: "none",
+                }}
+            >
+                <Box sx={{
+                    width: 42, height: 42,
+                    borderRadius: "12px",
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    bgcolor: active ? "rgba(124,58,237,0.18)" : "rgba(255,255,255,0.05)",
+                    border: active ? `1px solid rgba(124,58,237,0.45)` : "1px solid rgba(255,255,255,0.08)",
+                    transition: "all 0.15s",
+                    boxShadow: active ? `0 2px 12px rgba(124,58,237,0.35)` : "none",
+                }}>
+                    {icon}
+                </Box>
+                <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: "0.04em", lineHeight: 1 }}>
+                    {label}
+                </span>
+            </Box>
+        </Tooltip>
+    );
+}
+
+export default function BottomBar({
+    onSearchClick, onToggle3D, onRecenter,
+    gpsLocation, pitch,
+}) {
     const router = useRouter();
 
     return (
         <Box sx={{
             flexShrink: 0,
-            display: "flex", alignItems: "center", gap: 1.5,
-            px: { xs: 2, sm: 3 },
-            pt: 1.5,
-            pb: { xs: "max(16px, env(safe-area-inset-bottom))", sm: "20px" },
-            bgcolor: "rgba(255,255,255,0.97)",
-            borderTop: "1px solid #e2e8f0",
+            display: { xs: "flex", sm: "none" },
+            alignItems: "center",
+            px: 1,
+            pt: 0.5,
+            pb: "max(10px, env(safe-area-inset-bottom))",
+            background: "rgba(10,18,36,0.95)",
+            backdropFilter: "blur(20px)",
+            WebkitBackdropFilter: "blur(20px)",
+            borderTop: "1px solid rgba(255,255,255,0.08)",
             zIndex: 1100,
         }}>
-            {/* Search bar  */}
-            <Paper
-                elevation={0}
+            <NavBtn
+                icon={<QrCodeScannerIcon sx={{ fontSize: 20 }} />}
+                label="Scan"
+                onClick={() => router.push("/scan")}
+                tooltip="Scan QR code"
+            />
+            <NavBtn
+                icon={<SearchIcon sx={{ fontSize: 20 }} />}
+                label="Search"
                 onClick={onSearchClick}
-                sx={{
-                    flex: 1, minWidth: 0,
-                    borderRadius: "14px",
-                    display: "flex", alignItems: "center",
-                    px: 2,
-                    height: { xs: 50, sm: 54 },
-                    cursor: "pointer",
-                    bgcolor: "#f8fafc",
-                    border: "1.5px solid #e2e8f0",
-                    transition: "all 0.15s",
-                    "&:hover": { borderColor: "#1BA39C", bgcolor: "#f0fdfa" },
-                }}
-            >
-                <SearchIcon sx={{ color: "#94a3b8", mr: 1.5, flexShrink: 0, fontSize: 20 }} />
-                <Typography noWrap sx={{
-                    color: "#94a3b8", flex: 1,
-                    fontSize: { xs: "0.85rem", sm: "0.9rem" },
-                    fontWeight: 500,
-                }}>
-                    Search buildings & locations...
-                </Typography>
-            </Paper>
-
-            {/* QR scanner button */}
-            <Tooltip title="Scan QR code" placement="top">
-                <IconButton
-                    onClick={() => router.push("/scan")}
-                    sx={{
-                        bgcolor: "#1BA39C", color: "#fff",
-                        width: { xs: 50, sm: 54 },
-                        height: { xs: 50, sm: 54 },
-                        borderRadius: "14px", flexShrink: 0,
-                        boxShadow: "0 4px 14px rgba(27,163,156,0.4)",
-                        "&:hover": {
-                            bgcolor: "#15857f",
-                            transform: "translateY(-1px)",
-                            boxShadow: "0 6px 18px rgba(27,163,156,0.45)",
-                        },
-                        transition: "all 0.18s",
-                    }}
-                >
-                    <QrCodeScannerIcon />
-                </IconButton>
-            </Tooltip>
+                tooltip="Search locations"
+            />
+            <NavBtn
+                icon={<MyLocationIcon sx={{ fontSize: 20 }} />}
+                label="Me"
+                onClick={onRecenter}
+                active={!!gpsLocation}
+                tooltip={gpsLocation ? "Go to my location" : "Recenter on campus"}
+            />
+            <NavBtn
+                icon={<ViewInArIcon sx={{ fontSize: 20 }} />}
+                label="3D"
+                onClick={onToggle3D}
+                active={pitch > 0}
+                tooltip={pitch > 0 ? "Switch to 2D" : "Switch to 3D"}
+            />
         </Box>
     );
 }
