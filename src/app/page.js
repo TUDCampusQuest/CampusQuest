@@ -13,6 +13,7 @@ import NavHUD        from "./components/NavHUD";
 import LocationSheet from "./components/LocationSheet";
 import SearchDrawer     from "./components/SearchDrawer";
 import StaffAuthModal   from "./components/StaffAuthModal";
+import useIndoorData from './hooks/useIndoorData';
 
 const MapView = dynamic(() => import("./components/MapView"), {
     ssr: false,
@@ -23,6 +24,8 @@ const CAMPUS_CENTER = { longitude: -6.37824, latitude: 53.405292 };
 
 export default function Home() {
     const mapRef = useRef(null);
+
+    const { rooms, stairs, floorplans, loading, error } = useIndoorData();
 
     const [isMounted,    setIsMounted]    = useState(false);
     const [searchOpen,   setSearchOpen]   = useState(false);
@@ -136,7 +139,21 @@ export default function Home() {
         l.id?.toLowerCase().includes(query.toLowerCase()),
     );
 
+    console.log('Rooms count:', rooms?.features?.length, 'Stairs count:', stairs?.features?.length);
+
     if (!isMounted) return null;
+
+    if (loading) return (
+        <div style={{ height: "100dvh", width: "100vw", background: "#111", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ color: "#fff", fontSize: "1.1rem" }}>Loading campus data...</span>
+        </div>
+    );
+
+    if (error) return (
+        <div style={{ height: "100dvh", width: "100vw", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ color: "red", fontSize: "1rem" }}>{error}</span>
+        </div>
+    );
 
     return (
         <Box sx={{ height: "100dvh", width: "100vw", display: "flex", flexDirection: "column", overflow: "hidden" }}>
@@ -159,6 +176,9 @@ export default function Home() {
                     activeBuilding={activeBuilding}
                     activeFloorId={activeFloorId}
                     onFloorChange={setActiveFloorId}
+                    rooms={rooms}
+                    stairs={stairs}
+                    floorplans={floorplans}
                 />
 
                 <MapSidebar
