@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Box } from "@mui/material";
+import { Box, Typography, IconButton } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import dynamic from "next/dynamic";
 
 import { locations }    from "./data/locations";
@@ -39,6 +40,8 @@ export default function Home() {
     const [selectedLocation, setSelectedLocation] = useState(null);
     const [activeBuilding,   setActiveBuilding]   = useState(null);
     const [activeFloorId,    setActiveFloorId]    = useState(null);
+    const [highlightedRoomId, setHighlightedRoomId] = useState(null);
+    const [selectedRoom,      setSelectedRoom]      = useState(null);
 
     const [viewState, setViewState] = useState({
         ...CAMPUS_CENTER, zoom: 16, pitch: 0, bearing: 0,
@@ -134,6 +137,20 @@ export default function Home() {
         setSelectedLocation(null);
     };
 
+    const handleRoomSelect = useCallback((feature) => {
+        const p = feature.properties;
+        setHighlightedRoomId(p.poiId);
+        setSelectedRoom(feature);
+        if (p.floorId != null) setActiveFloorId(p.floorId);
+        if (p.centerLng != null && p.centerLat != null) {
+            mapRef.current?.flyTo({
+                center: [p.centerLng, p.centerLat],
+                zoom: 19.5,
+                duration: 1200,
+            });
+        }
+    }, []);
+
     const filtered = (Array.isArray(locations) ? locations : []).filter(l =>
         l.name?.toLowerCase().includes(query.toLowerCase()) ||
         l.id?.toLowerCase().includes(query.toLowerCase()),
@@ -179,7 +196,7 @@ export default function Home() {
                     rooms={rooms}
                     stairs={stairs}
                     floorplans={floorplans}
-                    highlightedRoomId={null}
+                    highlightedRoomId={highlightedRoomId}
                 />
 
                 <MapSidebar
@@ -205,6 +222,40 @@ export default function Home() {
                     />
                 )}
 
+                {selectedRoom && !selectedLocation && !isNavigating && (
+                    <Box sx={{
+                        position: "absolute", bottom: 0, left: 0, right: 0, zIndex: 20,
+                        background: "rgba(255,255,255,0.97)",
+                        backdropFilter: "blur(16px)",
+                        WebkitBackdropFilter: "blur(16px)",
+                        borderTop: "1px solid #e2e8f0",
+                        borderRadius: "20px 20px 0 0",
+                        boxShadow: "0 -4px 24px rgba(0,0,0,0.10)",
+                        px: 2.5, py: 2,
+                        display: "flex", alignItems: "center", justifyContent: "space-between",
+                    }}>
+                        <Box>
+                            <Typography sx={{ fontWeight: 800, fontSize: 16, lineHeight: 1.25, color: "#0f172a" }}>
+                                {selectedRoom.properties.name || selectedRoom.properties.roomCode}
+                            </Typography>
+                            <Typography sx={{ fontSize: 12, color: "#94a3b8", mt: 0.4 }}>
+                                {selectedRoom.properties.name && selectedRoom.properties.name !== selectedRoom.properties.roomCode
+                                    ? `${selectedRoom.properties.roomCode} · ` : ""}
+                                {selectedRoom.properties.buildingName}
+                                {selectedRoom.properties.floorName
+                                    ? ` · Floor ${selectedRoom.properties.floorName}` : ""}
+                            </Typography>
+                        </Box>
+                        <IconButton
+                            size="small"
+                            onClick={() => { setSelectedRoom(null); setHighlightedRoomId(null); }}
+                            sx={{ color: "#64748b" }}
+                        >
+                            <CloseIcon fontSize="small" />
+                        </IconButton>
+                    </Box>
+                )}
+
             </Box>
 
             {!isNavigating && (
@@ -218,6 +269,8 @@ export default function Home() {
                 onQueryChange={setQuery}
                 results={filtered}
                 onSelect={handleSelectLocation}
+                rooms={rooms}
+                onRoomSelect={handleRoomSelect}
             />
 
             <StaffAuthModal

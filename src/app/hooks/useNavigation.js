@@ -321,16 +321,20 @@ export function useNavigation({ isNavigating, navTarget, userLocation, mapRef })
                 const userCoords = [userLocation.lng, userLocation.lat];
                 const nearest = snapToNearestBuilding(userCoords, locations);
 
-                if (nearest) {
+                if (nearest && nearest.id !== navTarget.id) {
                     const nearestCoords = nearest.coordinates || [nearest.lng, nearest.lat];
                     const distToNearest = haversineMetres(userCoords, nearestCoords);
-
-                    if (distToNearest <= 40 && nearest.id !== navTarget.id) {
+                    // Snap to nearest campus building when close enough for pure graph routing
+                    if (distToNearest <= 150) {
                         setBuildingA(nearest);
-                        setRouteStep('ACTIVE');
-                        return;
                     }
+                    // else: buildingA stays null — resolveRoute handles GPS→campus hybrid routing
                 }
+
+                // GPS is available: go straight to ACTIVE regardless of snap distance.
+                // resolveRoute already handles the !buildingA && userLocation case.
+                setRouteStep('ACTIVE');
+                return;
             }
 
             setBuildingA(null);

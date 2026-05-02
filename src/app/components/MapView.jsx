@@ -204,7 +204,7 @@ function MapViewInner({
                 )}
 
                 <IndoorOverlay
-                    indoorMode={isIndoorMode}
+                    indoorMode={isIndoorMode || !!highlightedRoomId}
                     activeBuilding={activeBuilding}
                     activeFloorId={activeFloorId}
                     rooms={rooms}
