@@ -39,7 +39,7 @@ export default function Home() {
     const [gpsLocation,      setGpsLocation]      = useState(null);
     const [selectedLocation, setSelectedLocation] = useState(null);
     const [activeBuilding,   setActiveBuilding]   = useState(null);
-    const [activeFloorId,    setActiveFloorId]    = useState(null);
+    const [activeFloorName,  setActiveFloorName]  = useState(null);
     const [highlightedRoomId, setHighlightedRoomId] = useState(null);
     const [selectedRoom,      setSelectedRoom]      = useState(null);
 
@@ -124,10 +124,10 @@ export default function Home() {
         if (matched) {
             setActiveBuilding(matched);
             const ground = matched.floors.find(f => f.z === 1) || matched.floors[0];
-            setActiveFloorId(ground ? ground.floorId : null);
+            setActiveFloorName(ground ? ground.name : null);
         } else {
             setActiveBuilding(null);
-            setActiveFloorId(null);
+            setActiveFloorName(null);
         }
     };
 
@@ -141,7 +141,7 @@ export default function Home() {
         const p = feature.properties;
         setHighlightedRoomId(p.poiId);
         setSelectedRoom(feature);
-        if (p.floorId != null) setActiveFloorId(p.floorId);
+        if (p.floorName) setActiveFloorName(p.floorName);
         if (p.centerLng != null && p.centerLat != null) {
             mapRef.current?.flyTo({
                 center: [p.centerLng, p.centerLat],
@@ -191,8 +191,7 @@ export default function Home() {
                     isAdmin={isAdmin}
                     onLocationSelect={handleSelectLocation}
                     activeBuilding={activeBuilding}
-                    activeFloorId={activeFloorId}
-                    onFloorChange={setActiveFloorId}
+                    activeFloorName={activeFloorName}
                     rooms={rooms}
                     stairs={stairs}
                     floorplans={floorplans}
@@ -207,9 +206,8 @@ export default function Home() {
                     onZoomOut={handleZoomOut}
                     onToggle3D={handleToggle3D}
                     onRecenter={handleRecenter}
-                    activeBuilding={activeBuilding}
-                    activeFloorId={activeFloorId}
-                    onFloorChange={setActiveFloorId}
+                    activeFloorName={activeFloorName}
+                    onFloorNameChange={setActiveFloorName}
                 />
 
                 {isNavigating && navTarget && (

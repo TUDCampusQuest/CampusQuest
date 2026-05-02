@@ -14,27 +14,27 @@ const FILL_COLOR = [
 ];
 
 export default function IndoorOverlay({
-    activeFloorId,
+    activeFloorName,
     activeBuilding,
     rooms,
     highlightedRoomId,
 }) {
     const floorOutlineGeoJSON = useMemo(() => {
-        if (!activeBuilding || activeFloorId == null) return null;
-        const floor = activeBuilding.floors.find(f => f.floorId === activeFloorId);
+        if (!activeBuilding || !activeFloorName) return null;
+        const floor = activeBuilding.floors.find(f => f.name === activeFloorName);
         if (!floor?.outline) return null;
         return {
             type: 'FeatureCollection',
             features: [{
                 type: 'Feature',
-                properties: { floorId: activeFloorId },
+                properties: { floorName: activeFloorName },
                 geometry: floor.outline,
             }],
         };
-    }, [activeBuilding, activeFloorId]);
+    }, [activeBuilding, activeFloorName]);
 
-    const floorFilter = activeFloorId != null
-        ? ['==', ['get', 'floorId'], activeFloorId]
+    const floorFilter = activeFloorName
+        ? ['==', ['get', 'floorName'], activeFloorName]
         : ['literal', true];
 
     // -1 sentinel → matches nothing when no room is selected

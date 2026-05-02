@@ -27,7 +27,7 @@ function MapViewInner({
                           viewState, onMove, onMapLoad,
                           navTarget, isNavigating, onTrailSaved,
                           is3D, isAdmin = false, onLocationSelect,
-                          activeBuilding, activeFloorId,
+                          activeBuilding, activeFloorName,
                           rooms, highlightedRoomId, campusGraph,
                       }) {
     const mapRef = useRef(null);
@@ -202,7 +202,7 @@ function MapViewInner({
 
                         <IndoorOverlay
                             activeBuilding={activeBuilding}
-                            activeFloorId={activeFloorId}
+                            activeFloorName={activeFloorName}
                             rooms={rooms}
                             highlightedRoomId={highlightedRoomId}
                         />
