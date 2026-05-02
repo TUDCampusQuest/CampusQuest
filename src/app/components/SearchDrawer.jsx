@@ -68,7 +68,7 @@ export default function SearchDrawer({
     };
 
     const showSectionLabels = results.length > 0 && filteredRooms.length > 0;
-    const showFilterTabs    = query.trim().length > 0 && roomIndex.length > 0;
+    const showFilterTabs    = roomIndex.length > 0;
 
     return (
         <Drawer

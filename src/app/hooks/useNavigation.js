@@ -1,7 +1,11 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { locations } from '../data/locations';
-import { campusNodes, campusEdges, locationNodeMap } from '../data/campusGraph';
+
+// Populated at runtime from the campusGraph prop — avoids importing the deleted local file
+let campusNodes = [];
+let campusEdges = [];
+let locationNodeMap = {};
 
 const campusEntryNodeIds = [
     'main_1',
@@ -285,7 +289,14 @@ async function buildHybridRouteFromCampusToCoords(startLocation, endCoords) {
         campusPathIds: bestOption.campusPathIds,
     };
 }
-export function useNavigation({ isNavigating, navTarget, userLocation, mapRef }) {
+export function useNavigation({ isNavigating, navTarget, userLocation, mapRef, campusGraph }) {
+    // Sync S3-fetched graph data into module-level vars so all helper functions pick it up
+    useEffect(() => {
+        if (!campusGraph) return;
+        campusNodes    = campusGraph.campusNodes    || campusGraph.nodes  || [];
+        campusEdges    = campusGraph.campusEdges    || campusGraph.edges  || [];
+        locationNodeMap = campusGraph.locationNodeMap || {};
+    }, [campusGraph]);
     const [routeStep, setRouteStep] = useState('IDLE');
     const [buildingA, setBuildingA] = useState(null);
     const [buildingB, setBuildingB] = useState(null);

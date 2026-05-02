@@ -1,9 +1,9 @@
 "use client";
 
 import { Box, Paper, Tooltip, Typography } from "@mui/material";
-import AddIcon      from "@mui/icons-material/Add";
-import RemoveIcon   from "@mui/icons-material/Remove";
-import ViewInArIcon from "@mui/icons-material/ViewInAr";
+import AddIcon        from "@mui/icons-material/Add";
+import RemoveIcon     from "@mui/icons-material/Remove";
+import ViewInArIcon   from "@mui/icons-material/ViewInAr";
 import MyLocationIcon from "@mui/icons-material/MyLocation";
 
 function SideBtn({ icon, label, onClick, active, tooltip }) {
@@ -40,7 +40,42 @@ function SideDivider() {
     return <Box sx={{ height: "1px", bgcolor: "#f1f5f9", mx: "8px" }} />;
 }
 
-export default function MapSidebar({ pitch, gpsLocation, onZoomIn, onZoomOut, onToggle3D, onRecenter }) {
+function FloorBtn({ name, active, onClick }) {
+    return (
+        <Tooltip title={`Floor ${name}`} placement="left" arrow>
+            <Box
+                onClick={onClick}
+                sx={{
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    py: "8px", px: "6px",
+                    cursor: "pointer",
+                    color: active ? "#fff" : "#64748b",
+                    bgcolor: active ? "#1BA39C" : "transparent",
+                    borderRadius: "10px",
+                    fontWeight: 800,
+                    fontSize: "13px",
+                    lineHeight: 1,
+                    transition: "all 0.16s",
+                    "&:hover": { bgcolor: active ? "#15857f" : "rgba(27,163,156,0.1)", color: active ? "#fff" : "#1BA39C" },
+                    userSelect: "none",
+                    minHeight: "34px",
+                }}
+            >
+                {name}
+            </Box>
+        </Tooltip>
+    );
+}
+
+export default function MapSidebar({
+    pitch, gpsLocation,
+    onZoomIn, onZoomOut, onToggle3D, onRecenter,
+    activeBuilding, activeFloorId, onFloorChange,
+}) {
+    const floors = activeBuilding
+        ? [...activeBuilding.floors].sort((a, b) => b.z - a.z)
+        : [];
+
     return (
         <Paper
             elevation={3}
@@ -84,6 +119,20 @@ export default function MapSidebar({ pitch, gpsLocation, onZoomIn, onZoomOut, on
                 active={!!gpsLocation}
                 tooltip={gpsLocation ? "Go to my location" : "Recenter on campus"}
             />
+
+            {floors.length > 0 && (
+                <>
+                    <SideDivider />
+                    {floors.map(f => (
+                        <FloorBtn
+                            key={f.floorId}
+                            name={f.name}
+                            active={f.floorId === activeFloorId}
+                            onClick={() => onFloorChange(f.floorId)}
+                        />
+                    ))}
+                </>
+            )}
         </Paper>
     );
 }

@@ -26,7 +26,7 @@ const CAMPUS_CENTER = { longitude: -6.37824, latitude: 53.405292 };
 export default function Home() {
     const mapRef = useRef(null);
 
-    const { rooms, stairs, floorplans, loading, error } = useIndoorData();
+    const { rooms, stairs, floorplans, campusGraph, loading, error } = useIndoorData();
 
     const [isMounted,    setIsMounted]    = useState(false);
     const [searchOpen,   setSearchOpen]   = useState(false);
@@ -196,6 +196,7 @@ export default function Home() {
                     rooms={rooms}
                     stairs={stairs}
                     floorplans={floorplans}
+                    campusGraph={campusGraph}
                     highlightedRoomId={highlightedRoomId}
                 />
 
@@ -206,6 +207,9 @@ export default function Home() {
                     onZoomOut={handleZoomOut}
                     onToggle3D={handleToggle3D}
                     onRecenter={handleRecenter}
+                    activeBuilding={activeBuilding}
+                    activeFloorId={activeFloorId}
+                    onFloorChange={setActiveFloorId}
                 />
 
                 {isNavigating && navTarget && (

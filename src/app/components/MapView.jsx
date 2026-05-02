@@ -13,8 +13,7 @@ import NavInstructions      from './NavInstructions';
 import TrailCaptureOverlay  from './TrailCaptureOverlay';
 import TrailsPanel          from './TrailsPanel';
 import RoomStatusPanel      from './RoomStatusPanel';
-import IndoorOverlay from './IndoorOverlay';
-import FloorSwitcher from './FloorSwitcher';
+import IndoorOverlay        from './IndoorOverlay';
 
 const STYLE_FLAT = 'mapbox://styles/mapbox/streets-v12';
 const STYLE_3D   = 'mapbox://styles/mapbox/standard';
@@ -28,8 +27,8 @@ function MapViewInner({
                           viewState, onMove, onMapLoad,
                           navTarget, isNavigating, onTrailSaved,
                           is3D, isAdmin = false, onLocationSelect,
-                          activeBuilding, activeFloorId, onFloorChange,
-                          rooms, highlightedRoomId,
+                          activeBuilding, activeFloorId,
+                          rooms, highlightedRoomId, campusGraph,
                       }) {
     const mapRef = useRef(null);
 
@@ -38,7 +37,6 @@ function MapViewInner({
     const [capturedPoints, setCapturedPoints] = useState([]);
     const [showCaptureUI,  setShowCaptureUI]  = useState(false);
     const [styleLoaded,    setStyleLoaded]    = useState(false);
-    const [isIndoorMode,   setIsIndoorMode]   = useState(false);
 
     const userLocation = useGPS();
 
@@ -46,14 +44,12 @@ function MapViewInner({
         routeStep, buildingA, buildingB,
         routeCoords, routeStats, routeError,
         resetToPickA, pickBuildingA,
-    } = useNavigation({ isNavigating, navTarget, userLocation, mapRef });
+    } = useNavigation({ isNavigating, navTarget, userLocation, mapRef, campusGraph });
 
     const {
         selectedTrailName, setTrailInUrl,
         onMapClick, trailGeoJSON, routeGeoJSON, capturedGeoJSON, trailPaths,
     } = useTrailSelector({ captureMode, setCapturedPoints, mapRef });
-
-
 
     const handleMapLoad = useCallback((e) => {
         setStyleLoaded(true);
@@ -127,97 +123,91 @@ function MapViewInner({
             >
                 <NavigationControl position="top-right" />
 
+                {/* Guard everything behind styleLoaded to prevent appendChild errors
+                    during initial mount and map style transitions */}
                 {styleLoaded && (
-                    <MapLayers
-                        trailGeoJSON={trailGeoJSON}
-                        capturedGeoJSON={capturedGeoJSON(capturedPoints)}
-                        routeGeoJSON={routeGeoJSON(routeCoords)}
-                    />
-                )}
+                    <>
+                        <MapLayers
+                            trailGeoJSON={trailGeoJSON}
+                            capturedGeoJSON={capturedGeoJSON(capturedPoints)}
+                            routeGeoJSON={routeGeoJSON(routeCoords)}
+                        />
 
-                {locations.map(loc => {
-                    const isTarget   = navTarget?.id  === loc.id;
-                    const isStart    = buildingA?.id  === loc.id;
-                    const isPickable = routeStep === 'PICK_A' && loc.id !== navTarget?.id;
+                        {locations.map(loc => {
+                            const lng = loc.coordinates?.[0] ?? loc.lng;
+                            const lat = loc.coordinates?.[1] ?? loc.lat;
+                            if (lng == null || lat == null) return null;
 
-                    return (
-                        <Marker
-                            key={loc.id}
-                            longitude={loc.coordinates?.[0] ?? loc.lng}
-                            latitude={loc.coordinates?.[1]  ?? loc.lat}
-                            anchor="bottom"
-                        >
-                            <div
-                                style={{
-                                    fontSize: isTarget || isStart ? 32 : 24,
-                                    cursor: 'pointer',
-                                    transition: 'font-size 0.2s, filter 0.2s',
-                                    filter: isTarget   ? 'drop-shadow(0 0 8px rgba(239,68,68,0.9))'
-                                        : isStart    ? 'drop-shadow(0 0 8px rgba(34,197,94,0.9))'
-                                            : isPickable ? 'drop-shadow(0 0 4px rgba(27,163,156,0.6))'
+                            const isTarget   = navTarget?.id  === loc.id;
+                            const isStart    = buildingA?.id  === loc.id;
+                            const isPickable = routeStep === 'PICK_A' && loc.id !== navTarget?.id;
+
+                            return (
+                                <Marker key={loc.id} longitude={lng} latitude={lat} anchor="bottom">
+                                    <div
+                                        style={{
+                                            fontSize: isTarget || isStart ? 32 : 24,
+                                            cursor: 'pointer',
+                                            transition: 'font-size 0.2s, filter 0.2s',
+                                            filter: isTarget   ? 'drop-shadow(0 0 8px rgba(239,68,68,0.9))'
+                                                : isStart    ? 'drop-shadow(0 0 8px rgba(34,197,94,0.9))'
+                                                : isPickable ? 'drop-shadow(0 0 4px rgba(27,163,156,0.6))'
                                                 : 'none',
-                                }}
-                                onClick={e => {
-                                    e.stopPropagation();
-                                    if (routeStep === 'PICK_A' && loc.id !== navTarget?.id) {
-                                        pickBuildingA(loc);
-                                    } else if (onLocationSelect) {
-                                        onLocationSelect(loc);
-                                    } else {
-                                        setSelectedLoc(loc);
-                                    }
-                                }}
+                                        }}
+                                        onClick={e => {
+                                            e.stopPropagation();
+                                            if (routeStep === 'PICK_A' && loc.id !== navTarget?.id) {
+                                                pickBuildingA(loc);
+                                            } else if (onLocationSelect) {
+                                                onLocationSelect(loc);
+                                            } else {
+                                                setSelectedLoc(loc);
+                                            }
+                                        }}
+                                    >
+                                        📍
+                                    </div>
+                                </Marker>
+                            );
+                        })}
+
+                        {buildingA?.coordinates && (
+                            <Marker longitude={buildingA.coordinates[0]} latitude={buildingA.coordinates[1]} anchor="top">
+                                <div style={{ background: '#22c55e', color: '#fff', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 11, border: '2px solid #fff', boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}>A</div>
+                            </Marker>
+                        )}
+                        {buildingB?.coordinates && isNavigating && (
+                            <Marker longitude={buildingB.coordinates[0]} latitude={buildingB.coordinates[1]} anchor="top">
+                                <div style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 11, border: '2px solid #fff', boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}>B</div>
+                            </Marker>
+                        )}
+
+                        {userLocation?.lng != null && userLocation?.lat != null && (
+                            <Marker longitude={userLocation.lng} latitude={userLocation.lat} anchor="center">
+                                <div className="user-location-pulse" onClick={e => e.stopPropagation()} />
+                            </Marker>
+                        )}
+
+                        {selectedLoc && !onLocationSelect && (
+                            <Popup
+                                longitude={selectedLoc.coordinates?.[0] ?? selectedLoc.lng}
+                                latitude={selectedLoc.coordinates?.[1]  ?? selectedLoc.lat}
+                                onClose={() => setSelectedLoc(null)}
+                                anchor="top"
+                                offset={10}
                             >
-                                📍
-                            </div>
-                        </Marker>
-                    );
-                })}
+                                <div style={{ color: '#111', fontWeight: 700 }}>{selectedLoc.name}</div>
+                            </Popup>
+                        )}
 
-                {buildingA && (
-                    <Marker longitude={buildingA.coordinates[0]} latitude={buildingA.coordinates[1]} anchor="top">
-                        <div style={{ background: '#22c55e', color: '#fff', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 11, border: '2px solid #fff', boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}>A</div>
-                    </Marker>
+                        <IndoorOverlay
+                            activeBuilding={activeBuilding}
+                            activeFloorId={activeFloorId}
+                            rooms={rooms}
+                            highlightedRoomId={highlightedRoomId}
+                        />
+                    </>
                 )}
-                {buildingB && isNavigating && (
-                    <Marker longitude={buildingB.coordinates[0]} latitude={buildingB.coordinates[1]} anchor="top">
-                        <div style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 11, border: '2px solid #fff', boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}>B</div>
-                    </Marker>
-                )}
-
-                {userLocation && (
-                    <Marker longitude={userLocation.lng} latitude={userLocation.lat} anchor="center">
-                        <div className="user-location-pulse" onClick={e => e.stopPropagation()} />
-                    </Marker>
-                )}
-
-                {selectedLoc && !onLocationSelect && (
-                    <Popup
-                        longitude={selectedLoc.coordinates?.[0] ?? selectedLoc.lng}
-                        latitude={selectedLoc.coordinates?.[1]  ?? selectedLoc.lat}
-                        onClose={() => setSelectedLoc(null)}
-                        anchor="top"
-                        offset={10}
-                    >
-                        <div style={{ color: '#111', fontWeight: 700 }}>{selectedLoc.name}</div>
-                    </Popup>
-                )}
-
-                <IndoorOverlay
-                    indoorMode={isIndoorMode || !!highlightedRoomId}
-                    activeBuilding={activeBuilding}
-                    activeFloorId={activeFloorId}
-                    rooms={rooms}
-                    highlightedRoomId={highlightedRoomId}
-                />
-
-                <FloorSwitcher
-                    activeBuilding={activeBuilding}
-                    activeFloorId={activeFloorId}
-                    onFloorChange={onFloorChange}
-                    indoorMode={isIndoorMode}
-                    onToggleIndoor={() => setIsIndoorMode(m => !m)}
-                />
             </Map>
         </div>
     );
