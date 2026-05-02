@@ -179,6 +179,7 @@ export default function Home() {
                     rooms={rooms}
                     stairs={stairs}
                     floorplans={floorplans}
+                    highlightedRoomId={null}
                 />
 
                 <MapSidebar

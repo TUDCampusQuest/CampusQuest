@@ -29,6 +29,7 @@ function MapViewInner({
                           navTarget, isNavigating, onTrailSaved,
                           is3D, isAdmin = false, onLocationSelect,
                           activeBuilding, activeFloorId, onFloorChange,
+                          rooms, highlightedRoomId,
                       }) {
     const mapRef = useRef(null);
 
@@ -206,6 +207,8 @@ function MapViewInner({
                     indoorMode={isIndoorMode}
                     activeBuilding={activeBuilding}
                     activeFloorId={activeFloorId}
+                    rooms={rooms}
+                    highlightedRoomId={highlightedRoomId}
                 />
 
                 <FloorSwitcher

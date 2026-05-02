@@ -2,18 +2,24 @@
 
 import { useMemo } from 'react';
 import { Source, Layer } from 'react-map-gl';
-import { INDOOR_ROOMS_GEOJSON } from '../data/mazemap-indoorRooms';
 
-const KIND_COLOR = [
-    'match', ['get', 'kind'],
-    'room', '#e8e0f0',
-    'stairs', '#d4e8d4',
-    'elevator', '#d4e4f4',
-    'circulation_room', '#f0e8d4',
-    '#ece8e0',
+const EMPTY_GEOJSON = { type: 'FeatureCollection', features: [] };
+
+const FILL_COLOR = [
+    'case',
+    ['==', ['get', 'kind'], 'stairs'],           '#FFE0A0',
+    ['==', ['get', 'kind'], 'elevator'],          '#D4EED4',
+    ['==', ['get', 'kind'], 'circulation_room'],  '#EBEBEB',
+    '#FFFFFF',
 ];
 
-export default function IndoorOverlay({ activeFloorId, activeBuilding, indoorMode }) {
+export default function IndoorOverlay({
+    activeFloorId,
+    activeBuilding,
+    indoorMode,
+    rooms,
+    highlightedRoomId,
+}) {
     const floorOutlineGeoJSON = useMemo(() => {
         if (!activeBuilding || activeFloorId == null) return null;
         const floor = activeBuilding.floors.find(f => f.floorId === activeFloorId);
@@ -34,16 +40,19 @@ export default function IndoorOverlay({ activeFloorId, activeBuilding, indoorMod
         ? ['==', ['get', 'floorId'], activeFloorId]
         : ['==', ['get', 'z'], 1];
 
+    // Use -1 as sentinel so the filter matches nothing when no room is highlighted
+    const highlightFilter = ['==', ['get', 'poiId'], highlightedRoomId ?? -1];
+
     return (
         <>
-            <Source id="indoor-rooms" type="geojson" data={INDOOR_ROOMS_GEOJSON}>
+            <Source id="indoor-rooms" type="geojson" data={rooms ?? EMPTY_GEOJSON}>
                 <Layer
                     id="indoor-rooms-fill"
                     type="fill"
                     filter={floorFilter}
                     paint={{
-                        'fill-color': KIND_COLOR,
-                        'fill-opacity': 0.85,
+                        'fill-color': FILL_COLOR,
+                        'fill-opacity': 0.92,
                     }}
                 />
                 <Layer
@@ -51,25 +60,44 @@ export default function IndoorOverlay({ activeFloorId, activeBuilding, indoorMod
                     type="line"
                     filter={floorFilter}
                     paint={{
-                        'line-color': '#888888',
-                        'line-width': 0.8,
+                        'line-color': '#aaaaaa',
+                        'line-width': 1.0,
                     }}
                 />
                 <Layer
                     id="indoor-room-labels"
                     type="symbol"
                     filter={floorFilter}
-                    minzoom={18.5}
+                    minzoom={18}
                     layout={{
-                        'text-field': ['get', 'roomCode'],
-                        'text-size': 10,
+                        'text-field': ['coalesce', ['get', 'name'], ['get', 'roomCode']],
+                        'text-size': 13,
                         'text-allow-overlap': false,
                         'text-ignore-placement': false,
+                        'text-font': ['DIN Offc Pro Medium', 'Arial Unicode MS Bold'],
                     }}
                     paint={{
-                        'text-color': '#333333',
+                        'text-color': '#111111',
                         'text-halo-color': '#ffffff',
-                        'text-halo-width': 1,
+                        'text-halo-width': 2,
+                    }}
+                />
+                <Layer
+                    id="indoor-rooms-highlighted"
+                    type="fill"
+                    filter={highlightFilter}
+                    paint={{
+                        'fill-color': '#FFD700',
+                        'fill-opacity': 1.0,
+                    }}
+                />
+                <Layer
+                    id="indoor-rooms-highlighted-outline"
+                    type="line"
+                    filter={highlightFilter}
+                    paint={{
+                        'line-color': '#FF6600',
+                        'line-width': 3,
                     }}
                 />
             </Source>
