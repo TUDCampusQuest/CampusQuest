@@ -308,8 +308,6 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
     const [routeCoords, setRouteCoords] = useState(null);
     const [routeStats, setRouteStats] = useState(null);
     const [routeError, setRouteError] = useState(null);
-    const [isChained, setIsChained] = useState(false);
-
     const fitRouteOnMap = useCallback((coords) => {
         if (!mapRef.current || !coords?.length) return;
 
@@ -331,7 +329,6 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
             setRouteCoords(null);
             setRouteStats(null);
             setRouteError(null);
-            setIsChained(false);
 
             // Explicit start override from NavigationDrawer — skip GPS/snap logic
             if (navStart) {
@@ -539,7 +536,6 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
         routeCoords,
         routeStats,
         routeError,
-        isChained,
         resetToPickA,
         pickBuildingA,
     };
