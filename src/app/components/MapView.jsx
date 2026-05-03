@@ -15,7 +15,7 @@ import TrailsPanel          from './TrailsPanel';
 import RoomStatusPanel      from './RoomStatusPanel';
 import IndoorOverlay        from './IndoorOverlay';
 
-const STYLE_FLAT = 'mapbox://styles/mapbox/streets-v12';
+const STYLE_FLAT = process.env.NEXT_PUBLIC_MAPBOX_STYLE || 'mapbox://styles/mapbox/light-v11';
 const STYLE_3D   = 'mapbox://styles/mapbox/standard';
 
 const CAMPUS_BOUNDS = [
@@ -25,10 +25,13 @@ const CAMPUS_BOUNDS = [
 
 function MapViewInner({
                           viewState, onMove, onMapLoad,
-                          navTarget, isNavigating, onTrailSaved,
+                          navTarget, navStart, isNavigating, onTrailSaved,
                           is3D, isAdmin = false, onLocationSelect,
                           activeBuilding, activeFloorName,
                           rooms, highlightedRoomId, campusGraph,
+                          activeRoute, currentStepIndex,
+                          pickingNavPoint, onNavPick,
+                          roomNameMap,
                       }) {
     const mapRef = useRef(null);
 
@@ -37,6 +40,14 @@ function MapViewInner({
     const [capturedPoints, setCapturedPoints] = useState([]);
     const [showCaptureUI,  setShowCaptureUI]  = useState(false);
     const [styleLoaded,    setStyleLoaded]    = useState(false);
+    const [prevIs3D,       setPrevIs3D]       = useState(is3D);
+
+    // Reset styleLoaded synchronously when is3D changes so no Markers render
+    // during the style-transition frame (prevents appendChild errors).
+    if (prevIs3D !== is3D) {
+        setPrevIs3D(is3D);
+        setStyleLoaded(false);
+    }
 
     const userLocation = useGPS();
 
@@ -44,7 +55,7 @@ function MapViewInner({
         routeStep, buildingA, buildingB,
         routeCoords, routeStats, routeError,
         resetToPickA, pickBuildingA,
-    } = useNavigation({ isNavigating, navTarget, userLocation, mapRef, campusGraph });
+    } = useNavigation({ isNavigating, navTarget, navStart, userLocation, mapRef, campusGraph });
 
     const {
         selectedTrailName, setTrailInUrl,
@@ -56,7 +67,14 @@ function MapViewInner({
         if (onMapLoad) onMapLoad(e.target);
     }, [onMapLoad]);
 
-    useEffect(() => { setStyleLoaded(false); }, [is3D]);
+    // Combined click: nav-pick mode takes priority over trail capture
+    const handleClick = useCallback((e) => {
+        if (pickingNavPoint) {
+            onNavPick?.(e.lngLat);
+            return;
+        }
+        onMapClick(e);
+    }, [pickingNavPoint, onNavPick, onMapClick]);
 
     useEffect(() => {
         if (!isAdmin) { setShowCaptureUI(false); setCaptureMode(false); }
@@ -68,8 +86,23 @@ function MapViewInner({
         mapRef.current.flyTo({ center: [lng, lat], zoom: 17.5, duration: 1400, pitch: 45 });
     }, [navTarget]);
 
+    const activeCursor = pickingNavPoint ? 'crosshair' : captureMode ? 'crosshair' : 'inherit';
+
     return (
-        <div style={{ width: '100%', height: '100%', position: 'relative', cursor: captureMode ? 'crosshair' : 'inherit' }}>
+        <div style={{ width: '100%', height: '100%', position: 'relative', cursor: activeCursor }}>
+
+            {/* Pick-mode banner */}
+            {pickingNavPoint && (
+                <div style={{
+                    position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)',
+                    zIndex: 25, background: 'rgba(29,78,216,0.92)', color: '#fff',
+                    fontWeight: 700, fontSize: 13, padding: '10px 20px',
+                    borderRadius: 99, boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+                    whiteSpace: 'nowrap', pointerEvents: 'none',
+                }}>
+                    📌 Tap a room or location to set as {pickingNavPoint === 'A' ? 'start' : 'destination'}
+                </div>
+            )}
 
             <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, width: 230, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {isAdmin && (
@@ -97,7 +130,7 @@ function MapViewInner({
                 {isAdmin && <RoomStatusPanel />}
             </div>
 
-            {isNavigating && (
+            {(isNavigating || activeRoute) && (
                 <NavInstructions
                     routeStep={routeStep}
                     routeStats={routeStats}
@@ -106,6 +139,9 @@ function MapViewInner({
                     buildingB={buildingB}
                     routeError={routeError}
                     onChangeStart={resetToPickA}
+                    activeRoute={activeRoute}
+                    currentStepIndex={currentStepIndex}
+                    roomNameMap={roomNameMap}
                 />
             )}
 
@@ -113,14 +149,14 @@ function MapViewInner({
                 ref={mapRef}
                 {...viewState}
                 onMove={onMove}
-                onClick={onMapClick}
+                onClick={handleClick}
                 mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
                 mapStyle={is3D ? STYLE_3D : STYLE_FLAT}
                 style={{ width: '100%', height: '100%' }}
                 onLoad={handleMapLoad}
                 maxBounds={CAMPUS_BOUNDS}
                 minZoom={13}
-                maxZoom={19}
+                maxZoom={20}
                 antialias={false}
             >
                 <NavigationControl position="top-right" />
@@ -207,6 +243,7 @@ function MapViewInner({
                             activeFloorName={activeFloorName}
                             rooms={rooms}
                             highlightedRoomId={highlightedRoomId}
+                            routePath={activeRoute?.path}
                         />
                     </>
                 )}

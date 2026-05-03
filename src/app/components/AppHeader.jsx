@@ -4,6 +4,7 @@ import { Box, Stack, Typography, Tooltip } from "@mui/material";
 import { useRouter } from "next/navigation";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import SearchIcon       from "@mui/icons-material/Search";
+import DirectionsIcon   from "@mui/icons-material/Directions";
 
 function HeaderBtn({ icon, label, onClick, tooltip }) {
     return (
@@ -33,7 +34,7 @@ function HeaderBtn({ icon, label, onClick, tooltip }) {
     );
 }
 
-export default function AppHeader({ isAdmin, onStaffClick, onSearchClick }) {
+export default function AppHeader({ isAdmin, onStaffClick, onSearchClick, onNavigateClick }) {
     const router = useRouter();
 
     return (
@@ -89,6 +90,14 @@ export default function AppHeader({ isAdmin, onStaffClick, onSearchClick }) {
 
             {/* Nav buttons */}
             <Stack direction="row" spacing={1}>
+                {/* Navigate A→B — always visible */}
+                <HeaderBtn
+                    icon={<DirectionsIcon sx={{ fontSize: 15, color: "#1BA39C" }} />}
+                    label="Navigate"
+                    tooltip="Route from A to B"
+                    onClick={onNavigateClick}
+                />
+
                 {/* Search — desktop only (mobile has bottom nav) */}
                 <Box sx={{ display: { xs: "none", sm: "block" } }}>
                     <HeaderBtn

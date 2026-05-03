@@ -7,16 +7,17 @@ import {
 import NavigationIcon  from '@mui/icons-material/Navigation';
 import CloseIcon       from '@mui/icons-material/Close';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
+import { getRoomDisplayName } from '../lib/roomUtils';
 
 const FILTER_TABS = ['All', 'Lectures', 'Labs', 'Toilets', 'Stairs'];
 
 function getRoomCategory(props) {
     const t = (props.typeName || '').toLowerCase().trim();
     const k = (props.kind    || '').toLowerCase().trim();
-    if (k === 'stairs' || t === 'stairs') return 'Stairs';
-    if (t === 'lecture') return 'Lectures';
-    if (t === 'computer lab' || t === 'laboratory') return 'Labs';
-    if (t.startsWith('wc')) return 'Toilets';
+    if (k === 'stairs' || t.includes('stair')) return 'Stairs';
+    if (t.includes('lecture') || t.includes('theatre') || t.includes('auditorium')) return 'Lectures';
+    if (t.includes('computer') || t.includes('lab') || t.includes('workshop') || t.includes('studio')) return 'Labs';
+    if (t.startsWith('wc') || t.includes('toilet') || t.includes('bathroom') || t.includes('washroom')) return 'Toilets';
     return 'All';
 }
 
@@ -24,6 +25,7 @@ export default function SearchDrawer({
     open, onClose, query, onQueryChange,
     results, onSelect,
     rooms, onRoomSelect,
+    roomNameMap,
 }) {
     const [activeFilter, setActiveFilter] = useState('All');
 
@@ -31,10 +33,12 @@ export default function SearchDrawer({
         if (!rooms?.features) return [];
         return rooms.features.map(f => {
             const p = f.properties;
+            const displayName = getRoomDisplayName(p.roomCode, roomNameMap) || p.name || p.roomCode || '';
             return {
                 poiId:        p.poiId,
                 roomCode:     p.roomCode     || '',
                 name:         p.name         || '',
+                displayName,
                 buildingName: p.buildingName || '',
                 floorName:    p.floorName    || '',
                 centerLng:    p.centerLng,
@@ -44,15 +48,16 @@ export default function SearchDrawer({
                 category:     getRoomCategory(p),
             };
         });
-    }, [rooms]);
+    }, [rooms, roomNameMap]);
 
     const filteredRooms = useMemo(() => {
         if (!query.trim()) return [];
         const q = query.toLowerCase();
         return roomIndex.filter(r => {
             const matchesQuery =
-                r.roomCode.toLowerCase().includes(q) ||
-                r.name.toLowerCase().includes(q)     ||
+                r.roomCode.toLowerCase().includes(q)      ||
+                r.displayName.toLowerCase().includes(q)   ||
+                r.name.toLowerCase().includes(q)          ||
                 r.buildingName.toLowerCase().includes(q);
             const matchesFilter = activeFilter === 'All' || r.category === activeFilter;
             return matchesQuery && matchesFilter;
@@ -163,11 +168,11 @@ export default function SearchDrawer({
                                 Indoor Rooms
                             </Typography>
                             {filteredRooms.map(room => {
-                                const hasDistinctName = room.name && room.name !== room.roomCode;
-                                const primary   = hasDistinctName ? room.name : room.roomCode;
+                                const primary   = room.displayName || room.roomCode;
+                                const showCode  = primary !== room.roomCode;
                                 const secondary = (
                                     <span>
-                                        {hasDistinctName && (
+                                        {showCode && (
                                             <span style={{ color: '#64748b', marginRight: 6 }}>{room.roomCode}</span>
                                         )}
                                         {room.buildingName}

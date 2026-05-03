@@ -5,12 +5,20 @@ import { Source, Layer } from 'react-map-gl';
 
 const EMPTY_GEOJSON = { type: 'FeatureCollection', features: [] };
 
+// Color rooms by kind first, then by typeName for semantic differentiation
 const FILL_COLOR = [
     'case',
     ['==', ['get', 'kind'], 'stairs'],           '#FFE0A0',
     ['==', ['get', 'kind'], 'elevator'],          '#D4EED4',
     ['==', ['get', 'kind'], 'circulation_room'],  '#EBEBEB',
-    '#FFFFFF',
+    ['match',
+        ['downcase', ['coalesce', ['get', 'typeName'], '']],
+        ['lecture', 'lecture theatre', 'lecture hall', 'auditorium', 'theatre'], '#DCF0FF',
+        ['computer lab', 'computer room', 'laboratory', 'lab'], '#E8F8F0',
+        ['wc', 'toilet', 'bathroom', 'washroom'], '#FFF3E0',
+        ['office', 'staff office', 'staff room'], '#F5F0FF',
+        '#FFFFFF',
+    ],
 ];
 
 export default function IndoorOverlay({
@@ -18,6 +26,7 @@ export default function IndoorOverlay({
     activeBuilding,
     rooms,
     highlightedRoomId,
+    routePath,
 }) {
     const floorOutlineGeoJSON = useMemo(() => {
         if (!activeBuilding || !activeFloorName) return null;
@@ -33,6 +42,15 @@ export default function IndoorOverlay({
         };
     }, [activeBuilding, activeFloorName]);
 
+    const routeGeoJSON = useMemo(() => {
+        if (!routePath || routePath.length < 2) return null;
+        return {
+            type: 'Feature',
+            geometry: { type: 'LineString', coordinates: routePath },
+            properties: {},
+        };
+    }, [routePath]);
+
     const floorFilter = activeFloorName
         ? ['==', ['get', 'floorName'], activeFloorName]
         : ['literal', true];
@@ -43,11 +61,12 @@ export default function IndoorOverlay({
     return (
         <>
             <Source id="indoor-rooms" type="geojson" data={rooms ?? EMPTY_GEOJSON}>
-                {/* Room fills — visible from zoom 17 */}
+                {/* Room fills */}
                 <Layer
                     id="indoor-rooms-fill"
                     type="fill"
                     minzoom={17}
+                    maxzoom={22}
                     filter={floorFilter}
                     paint={{
                         'fill-color': FILL_COLOR,
@@ -60,6 +79,7 @@ export default function IndoorOverlay({
                     id="indoor-rooms-outline"
                     type="line"
                     minzoom={17}
+                    maxzoom={22}
                     filter={floorFilter}
                     paint={{
                         'line-color': '#aaaaaa',
@@ -72,6 +92,7 @@ export default function IndoorOverlay({
                     id="indoor-room-labels"
                     type="symbol"
                     minzoom={18}
+                    maxzoom={22}
                     filter={floorFilter}
                     layout={{
                         'text-field': ['coalesce', ['get', 'name'], ['get', 'roomCode']],
@@ -87,7 +108,7 @@ export default function IndoorOverlay({
                     }}
                 />
 
-                {/* Highlighted room — thick coloured outline only so the label stays readable */}
+                {/* Highlighted room — outline only so label stays readable */}
                 <Layer
                     id="indoor-rooms-highlighted-outline"
                     type="line"
@@ -109,6 +130,40 @@ export default function IndoorOverlay({
                             'fill-opacity': 0,
                             'fill-outline-color': '#555555',
                         }}
+                    />
+                </Source>
+            )}
+
+            {/* Indoor route polyline */}
+            {routeGeoJSON && (
+                <Source id="indoor-route" type="geojson" data={routeGeoJSON}>
+                    <Layer
+                        id="indoor-route-line"
+                        type="line"
+                        paint={{
+                            'line-color': '#00B4B4',
+                            'line-width': 4,
+                            'line-opacity': 0.9,
+                        }}
+                        layout={{
+                            'line-cap': 'round',
+                            'line-join': 'round',
+                        }}
+                    />
+                    {/* Casing for visibility on white floors */}
+                    <Layer
+                        id="indoor-route-line-casing"
+                        type="line"
+                        paint={{
+                            'line-color': 'rgba(0,0,0,0.15)',
+                            'line-width': 6,
+                            'line-opacity': 0.6,
+                        }}
+                        layout={{
+                            'line-cap': 'round',
+                            'line-join': 'round',
+                        }}
+                        beforeId="indoor-route-line"
                     />
                 </Source>
             )}

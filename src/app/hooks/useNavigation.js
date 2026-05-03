@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { locations } from '../data/locations';
 
 // Populated at runtime from the campusGraph prop — avoids importing the deleted local file
@@ -289,7 +289,7 @@ async function buildHybridRouteFromCampusToCoords(startLocation, endCoords) {
         campusPathIds: bestOption.campusPathIds,
     };
 }
-export function useNavigation({ isNavigating, navTarget, userLocation, mapRef, campusGraph }) {
+export function useNavigation({ isNavigating, navTarget, navStart, userLocation, mapRef, campusGraph }) {
     // Sync S3-fetched graph data into module-level vars so all helper functions pick it up
     useEffect(() => {
         if (!campusGraph) return;
@@ -297,6 +297,11 @@ export function useNavigation({ isNavigating, navTarget, userLocation, mapRef, c
         campusEdges    = campusGraph.campusEdges    || campusGraph.edges  || [];
         locationNodeMap = campusGraph.locationNodeMap || {};
     }, [campusGraph]);
+
+    // Capture latest userLocation in a ref so the route-calculation effect can read it
+    // without re-running on every GPS update (which caused repeated fitRouteOnMap calls).
+    const userLocationRef = useRef(userLocation);
+    useEffect(() => { userLocationRef.current = userLocation; });
     const [routeStep, setRouteStep] = useState('IDLE');
     const [buildingA, setBuildingA] = useState(null);
     const [buildingB, setBuildingB] = useState(null);
@@ -328,6 +333,13 @@ export function useNavigation({ isNavigating, navTarget, userLocation, mapRef, c
             setRouteError(null);
             setIsChained(false);
 
+            // Explicit start override from NavigationDrawer — skip GPS/snap logic
+            if (navStart) {
+                setBuildingA(navStart);
+                setRouteStep('ACTIVE');
+                return;
+            }
+
             if (userLocation) {
                 const userCoords = [userLocation.lng, userLocation.lat];
                 const nearest = snapToNearestBuilding(userCoords, locations);
@@ -335,15 +347,11 @@ export function useNavigation({ isNavigating, navTarget, userLocation, mapRef, c
                 if (nearest && nearest.id !== navTarget.id) {
                     const nearestCoords = nearest.coordinates || [nearest.lng, nearest.lat];
                     const distToNearest = haversineMetres(userCoords, nearestCoords);
-                    // Snap to nearest campus building when close enough for pure graph routing
                     if (distToNearest <= 150) {
                         setBuildingA(nearest);
                     }
-                    // else: buildingA stays null — resolveRoute handles GPS→campus hybrid routing
                 }
 
-                // GPS is available: go straight to ACTIVE regardless of snap distance.
-                // resolveRoute already handles the !buildingA && userLocation case.
                 setRouteStep('ACTIVE');
                 return;
             }
@@ -361,7 +369,7 @@ export function useNavigation({ isNavigating, navTarget, userLocation, mapRef, c
             setRouteError(null);
             setIsChained(false);
         }
-    }, [isNavigating, navTarget, userLocation]);
+    }, [isNavigating, navTarget, navStart, userLocation]);
 
     useEffect(() => {
         if (!buildingB || routeStep !== 'ACTIVE') return;
@@ -460,8 +468,23 @@ export function useNavigation({ isNavigating, navTarget, userLocation, mapRef, c
                     }
                 }
 
-                if (!buildingA && userLocation) {
-                    const startCoords = [userLocation.lng, userLocation.lat];
+                const currentUserLocation = userLocationRef.current;
+                if (!buildingA && currentUserLocation) {
+                    const startCoords = [currentUserLocation.lng, currentUserLocation.lat];
+
+                    // Destination is a synthetic room object (not in the campus graph) —
+                    // use direct Mapbox routing rather than the campus hybrid system.
+                    if (!isCampusLocation(buildingB)) {
+                        const endCoords = buildingB.coordinates || [buildingB.lng, buildingB.lat];
+                        const result = await fetchMapboxRoute(startCoords, endCoords);
+                        if (result.error) { setRouteError(result.error); setRouteStep('ERROR'); return; }
+                        if (cancelled) return;
+                        setRouteCoords(result.coords);
+                        setRouteStats(walkingStats(result.coords));
+                        fitRouteOnMap(result.coords);
+                        return;
+                    }
+
                     const result = await buildHybridRouteFromCoordsToCampus(startCoords, buildingB);
 
                     if (result.error) {
@@ -492,7 +515,9 @@ export function useNavigation({ isNavigating, navTarget, userLocation, mapRef, c
         return () => {
             cancelled = true;
         };
-    }, [buildingA, buildingB, routeStep, fitRouteOnMap, userLocation]);
+    // userLocation intentionally excluded — read via ref to avoid re-routing on every GPS tick
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [buildingA, buildingB, routeStep, fitRouteOnMap]);
 
     const resetToPickA = useCallback(() => {
         setBuildingA(null);

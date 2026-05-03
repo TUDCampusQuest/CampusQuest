@@ -6,6 +6,7 @@ import SearchIcon        from "@mui/icons-material/Search";
 import QrCodeScannerIcon from "@mui/icons-material/QrCodeScanner";
 import MyLocationIcon    from "@mui/icons-material/MyLocation";
 import ViewInArIcon      from "@mui/icons-material/ViewInAr";
+import DirectionsIcon    from "@mui/icons-material/Directions";
 
 const PURPLE = "#7C3AED";
 
@@ -47,7 +48,7 @@ function NavBtn({ icon, label, onClick, active, tooltip }) {
 }
 
 export default function BottomBar({
-    onSearchClick, onToggle3D, onRecenter,
+    onSearchClick, onToggle3D, onRecenter, onNavigateClick,
     gpsLocation, pitch,
 }) {
     const router = useRouter();
@@ -77,6 +78,12 @@ export default function BottomBar({
                 label="Search"
                 onClick={onSearchClick}
                 tooltip="Search locations"
+            />
+            <NavBtn
+                icon={<DirectionsIcon sx={{ fontSize: 20 }} />}
+                label="Navigate"
+                onClick={onNavigateClick}
+                tooltip="Route A to B"
             />
             <NavBtn
                 icon={<MyLocationIcon sx={{ fontSize: 20 }} />}
