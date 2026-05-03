@@ -364,7 +364,6 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
             setRouteCoords(null);
             setRouteStats(null);
             setRouteError(null);
-            setIsChained(false);
         }
     }, [isNavigating, navTarget, navStart, userLocation]);
 
@@ -375,7 +374,6 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
 
         async function resolveRoute() {
             setRouteError(null);
-            setIsChained(false);
 
             try {
                 if (buildingA) {

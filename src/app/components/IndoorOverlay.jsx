@@ -27,6 +27,7 @@ export default function IndoorOverlay({
     rooms,
     highlightedRoomId,
     routePath,
+    isCrossBuilding,
 }) {
     const floorOutlineGeoJSON = useMemo(() => {
         if (!activeBuilding || !activeFloorName) return null;
@@ -134,16 +135,17 @@ export default function IndoorOverlay({
                 </Source>
             )}
 
-            {/* Indoor route polyline */}
+            {/* Indoor / cross-building route polyline */}
             {routeGeoJSON && (
                 <Source id="indoor-route" type="geojson" data={routeGeoJSON}>
                     <Layer
                         id="indoor-route-line"
                         type="line"
                         paint={{
-                            'line-color': '#00B4B4',
+                            'line-color': isCrossBuilding ? '#1E90FF' : '#00B4B4',
                             'line-width': 4,
                             'line-opacity': 0.9,
+                            ...(isCrossBuilding ? { 'line-dasharray': [4, 3] } : {}),
                         }}
                         layout={{
                             'line-cap': 'round',

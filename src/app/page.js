@@ -68,6 +68,7 @@ export default function Home() {
         handleNavigateTo, handleCancelNavigation,
     } = useIndoorNavigation({
         rooms, stairs, gpsLocation, mapRef,
+        campusGraph,
         onHighlightRoom:      setHighlightedRoomId,
         onClearSelectedRoom:  () => setSelectedRoom(null),
         // Called when rooms are in different buildings — route outdoors between room centroids.

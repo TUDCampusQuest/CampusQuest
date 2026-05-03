@@ -244,6 +244,7 @@ function MapViewInner({
                             rooms={rooms}
                             highlightedRoomId={highlightedRoomId}
                             routePath={activeRoute?.path}
+                            isCrossBuilding={activeRoute?.isCrossBuilding ?? false}
                         />
                     </>
                 )}
