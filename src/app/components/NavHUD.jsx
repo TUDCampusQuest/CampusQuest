@@ -7,7 +7,7 @@ function fmtDist(m) {
 }
 
 export default function NavHUD({ navTarget, activeRoute, onExit }) {
-    const isIndoor   = activeRoute != null;
+    const isIndoor   = activeRoute != null && activeRoute.steps?.length > 0;
     const isOutdoor  = navTarget != null;
     if (!isIndoor && !isOutdoor) return null;
 
@@ -20,7 +20,8 @@ export default function NavHUD({ navTarget, activeRoute, onExit }) {
     return (
         <Box sx={{
             position: 'absolute', top: 0, left: 0, right: 0, zIndex: 20,
-            background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+            background: 'var(--header-bg)',
+            borderBottom: '1px solid var(--header-border)',
             px: 2.5, py: 1.5,
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             boxShadow: '0 4px 24px rgba(0,0,0,0.35)',
@@ -36,10 +37,10 @@ export default function NavHUD({ navTarget, activeRoute, onExit }) {
                     flexShrink: 0,
                 }} />
                 <Box>
-                    <Typography sx={{ fontSize: 11, color: '#94a3b8', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+                    <Typography sx={{ fontSize: 11, color: 'var(--text-secondary)', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
                         {isIndoor ? 'Indoor navigation' : 'Navigating to'}
                     </Typography>
-                    <Typography sx={{ fontSize: 16, color: '#f1f5f9', fontWeight: 800, lineHeight: 1.2 }}>
+                    <Typography sx={{ fontSize: 16, color: 'var(--text-primary)', fontWeight: 800, lineHeight: 1.2 }}>
                         {isIndoor ? indoorDestName : navTarget.name}
                     </Typography>
                     {isIndoor && (
