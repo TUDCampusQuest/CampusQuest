@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Box } from "@mui/material";
 import dynamic from "next/dynamic";
 
@@ -14,6 +15,7 @@ import LocationSheet    from "./components/LocationSheet";
 import RoomSheet        from "./components/RoomSheet";
 import SearchDrawer     from "./components/SearchDrawer";
 import StaffAuthModal   from "./components/StaffAuthModal";
+import OnboardingTour  from "./components/OnboardingTour";
 import NavigationDrawer from "./components/NavigationDrawer";
 import useIndoorData    from "./hooks/useIndoorData";
 import { useIndoorNavigation } from "./hooks/useIndoorNavigation";
@@ -32,8 +34,9 @@ function haversineLocal([lng1, lat1], [lng2, lat2]) {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-export default function Home() {
+function Home() {
     const mapRef = useRef(null);
+    const searchParams = useSearchParams();
 
     const { rooms, stairs, floorplans, campusGraph, roomNameMap, loading, error } = useIndoorData();
 
@@ -63,6 +66,11 @@ export default function Home() {
     });
 
     const [pickingIndoorStart, setPickingIndoorStart] = useState(false);
+    const [pickingRoomStart,   setPickingRoomStart]   = useState(false);
+    const [destinationRoom,    setDestinationRoom]    = useState(null);
+
+    const [activeTrail,           setActiveTrail]           = useState(null);
+    const [currentTrailStopIndex, setCurrentTrailStopIndex] = useState(0);
 
     // ── Indoor navigation hook ──────────────────────────────────────────────
     const {
@@ -139,6 +147,31 @@ export default function Home() {
     useEffect(() => {
         if (!isNavigating) setNavStartOverride(null);
     }, [isNavigating]);
+
+    // Read activeTrail / startTrail placed in localStorage by the trails page
+    useEffect(() => {
+        const storedView  = localStorage.getItem('activeTrail');
+        const storedStart = localStorage.getItem('startTrail');
+
+        if (storedView) {
+            localStorage.removeItem('activeTrail');
+            try {
+                const trail = JSON.parse(storedView);
+                if (trail?.computedPath?.length) {
+                    setActiveTrail(trail);
+                }
+            } catch {}
+        } else if (storedStart) {
+            localStorage.removeItem('startTrail');
+            try {
+                const trail = JSON.parse(storedStart);
+                if (trail?.computedPath?.length) {
+                    setActiveTrail(trail);
+                    setCurrentTrailStopIndex(0);
+                }
+            } catch {}
+        }
+    }, []);
 
     // ── Map-pick mode ────────────────────────────────────────────────────────
     const handleNavPick = useCallback((lngLat) => {
@@ -269,6 +302,12 @@ export default function Home() {
     };
 
     const handleRoomSelect = useCallback((feature) => {
+        if (pickingRoomStart && destinationRoom) {
+            setPickingRoomStart(false);
+            handleNavigateTo(destinationRoom, feature);
+            setDestinationRoom(null);
+            return;
+        }
         const p = feature.properties;
         setHighlightedRoomId(p.poiId);
         setSelectedRoom(feature);
@@ -276,7 +315,15 @@ export default function Home() {
         if (p.centerLng != null && p.centerLat != null) {
             mapRef.current?.flyTo({ center: [p.centerLng, p.centerLat], zoom: 19.5, duration: 1200 });
         }
-    }, []);
+    }, [pickingRoomStart, destinationRoom]);
+
+    // FIX 4 — open a room passed back from the building detail page
+    useEffect(() => {
+        const roomId = searchParams.get("selectedRoomId");
+        if (!roomId || !rooms?.features) return;
+        const feature = rooms.features.find(f => String(f.properties.poiId) === String(roomId));
+        if (feature) handleRoomSelect(feature);
+    }, [searchParams, rooms, handleRoomSelect]);
 
     // ── Indoor "Change Start" pick mode ──────────────────────────────────────
     // Mirrors the outdoor PICK_A flow: user taps Change Start → banner appears →
@@ -291,6 +338,12 @@ export default function Home() {
             handleNavigateTo(activeDestination, feature);
         }
     }, [activeDestination, handleNavigateTo]);
+
+    const handleNavigateFromRoom = useCallback((roomFeature) => {
+        setDestinationRoom(roomFeature);
+        setSelectedRoom(null);
+        setPickingRoomStart(true);
+    }, []);
 
     const filtered = (Array.isArray(locations) ? locations : []).filter(l =>
         l.name?.toLowerCase().includes(query.toLowerCase()) ||
@@ -349,6 +402,9 @@ export default function Home() {
                     pickingIndoorStart={pickingIndoorStart}
                     onIndoorRoomPick={handleIndoorRoomPick}
                     onIndoorChangeStart={handleIndoorChangeStart}
+                    activeTrail={activeTrail}
+                    onCloseTrail={() => { setActiveTrail(null); setCurrentTrailStopIndex(0); }}
+                    pickingRoomStart={pickingRoomStart}
                 />
 
                 <MapSidebar
@@ -386,6 +442,7 @@ export default function Home() {
                         gpsLocation={gpsLocation}
                         onClose={() => { setSelectedRoom(null); setHighlightedRoomId(null); }}
                         onNavigate={handleNavigateTo}
+                        onNavigateFrom={handleNavigateFromRoom}
                         roomNameMap={roomNameMap}
                     />
                 )}
@@ -402,6 +459,82 @@ export default function Home() {
                     </Box>
                 )}
             </Box>
+
+            {/* Trail next-stop card — shown when startTrail is active */}
+            {activeTrail && !isNavigating && !activeRoute && (
+                <Box sx={{
+                    position: "fixed", bottom: "calc(72px + env(safe-area-inset-bottom, 0px))",
+                    left: 0, right: 0, zIndex: 40,
+                    px: 2, pb: 1,
+                }}>
+                    <Box sx={{
+                        background: "var(--bg-secondary)",
+                        border: "1px solid var(--border-color)",
+                        borderRadius: "16px",
+                        p: 2,
+                        boxShadow: "0 -4px 24px rgba(0,0,0,0.3)",
+                    }}>
+                        {currentTrailStopIndex < (activeTrail.stops?.length ?? 0) ? (
+                            <>
+                                <Box sx={{ fontSize: 12, color: "var(--text-secondary)", mb: 0.5 }}>
+                                    Stop {currentTrailStopIndex + 1} of {activeTrail.stops.length}
+                                </Box>
+                                <Box sx={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)", mb: 0.5 }}>
+                                    Next stop: {activeTrail.stops[currentTrailStopIndex]?.name}
+                                </Box>
+                                <Box sx={{ fontSize: 13, color: "var(--text-secondary)", mb: 1.5 }}>
+                                    {activeTrail.stops[currentTrailStopIndex]?.description}
+                                </Box>
+                                <Box sx={{ display: "flex", gap: 1 }}>
+                                    <Box
+                                        onClick={() => setCurrentTrailStopIndex(i => i + 1)}
+                                        sx={{
+                                            flex: 1, height: 38, borderRadius: "10px",
+                                            background: "var(--accent-purple)", color: "#fff",
+                                            display: "flex", alignItems: "center", justifyContent: "center",
+                                            fontWeight: 700, fontSize: 13, cursor: "pointer",
+                                        }}
+                                    >
+                                        I'm Here ✓
+                                    </Box>
+                                    <Box
+                                        onClick={() => { setActiveTrail(null); setCurrentTrailStopIndex(0); }}
+                                        sx={{
+                                            px: 2, height: 38, borderRadius: "10px",
+                                            border: "1px solid var(--border-color)",
+                                            color: "var(--text-secondary)",
+                                            display: "flex", alignItems: "center", justifyContent: "center",
+                                            fontSize: 13, cursor: "pointer",
+                                        }}
+                                    >
+                                        Exit
+                                    </Box>
+                                </Box>
+                            </>
+                        ) : (
+                            <>
+                                <Box sx={{ fontWeight: 700, fontSize: 16, color: "var(--text-primary)", mb: 0.5 }}>
+                                    Trail Complete! 🎉
+                                </Box>
+                                <Box sx={{ fontSize: 13, color: "var(--text-secondary)", mb: 1.5 }}>
+                                    You visited all {activeTrail.stops?.length} stops on {activeTrail.name}.
+                                </Box>
+                                <Box
+                                    onClick={() => { setActiveTrail(null); setCurrentTrailStopIndex(0); }}
+                                    sx={{
+                                        height: 38, borderRadius: "10px",
+                                        background: "var(--accent-teal)", color: "#fff",
+                                        display: "flex", alignItems: "center", justifyContent: "center",
+                                        fontWeight: 700, fontSize: 13, cursor: "pointer",
+                                    }}
+                                >
+                                    Done
+                                </Box>
+                            </>
+                        )}
+                    </Box>
+                </Box>
+            )}
 
             {!isNavigating && !activeRoute && (
                 <BottomBar
@@ -449,10 +582,15 @@ export default function Home() {
                 onSuccess={() => setIsAdmin(true)}
             />
 
-            <style>{`
-                @keyframes slideUp  { from { transform:translateY(100%); opacity:0; } to { transform:translateY(0); opacity:1; } }
-                @keyframes hudPulse { 0%,100% { box-shadow:0 0 0 3px rgba(27,163,156,0.3); } 50% { box-shadow:0 0 0 7px rgba(27,163,156,0.06); } }
-            `}</style>
+            <OnboardingTour />
         </Box>
+    );
+}
+
+export default function Page() {
+    return (
+        <Suspense fallback={<div style={{ height: "100dvh", width: "100vw", background: "#111" }} />}>
+            <Home />
+        </Suspense>
     );
 }
