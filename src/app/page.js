@@ -17,7 +17,10 @@ import SearchDrawer     from "./components/SearchDrawer";
 import StaffAuthModal   from "./components/StaffAuthModal";
 import OnboardingTour  from "./components/OnboardingTour";
 import NavigationDrawer from "./components/NavigationDrawer";
+import GeofenceBanner   from "./components/GeofenceBanner";
+import QRModal          from "./components/QRModal";
 import useIndoorData    from "./hooks/useIndoorData";
+import useGeofence      from "./hooks/useGeofence";
 import { useIndoorNavigation } from "./hooks/useIndoorNavigation";
 
 const MapView = dynamic(() => import("./components/MapView"), {
@@ -38,7 +41,7 @@ function Home() {
     const mapRef = useRef(null);
     const searchParams = useSearchParams();
 
-    const { rooms, stairs, floorplans, campusGraph, roomNameMap, loading, error } = useIndoorData();
+    const { rooms, stairs, floorplans, campusGraph, roomNameMap, entrances, loading, error } = useIndoorData();
 
     const [isMounted,    setIsMounted]    = useState(false);
     const [searchOpen,   setSearchOpen]   = useState(false);
@@ -71,6 +74,17 @@ function Home() {
 
     const [activeTrail,           setActiveTrail]           = useState(null);
     const [currentTrailStopIndex, setCurrentTrailStopIndex] = useState(0);
+
+    const [qrOpen,          setQrOpen]          = useState(false);
+    const [bannerDismissed, setBannerDismissed] = useState(false);
+    const dismissTimerRef = useRef(null);
+
+    const { nearestEntrance } = useGeofence({ userLocation: gpsLocation, entrances });
+
+    const handleDismissBanner = () => {
+        setBannerDismissed(true);
+        dismissTimerRef.current = setTimeout(() => setBannerDismissed(false), 60000);
+    };
 
     // ── Indoor navigation hook ──────────────────────────────────────────────
     const {
@@ -147,6 +161,10 @@ function Home() {
     useEffect(() => {
         if (!isNavigating) setNavStartOverride(null);
     }, [isNavigating]);
+
+    useEffect(() => {
+        return () => { if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current); };
+    }, []);
 
     // Read activeTrail / startTrail placed in localStorage by the trails page
     useEffect(() => {
@@ -428,6 +446,14 @@ function Home() {
                     />
                 )}
 
+                {nearestEntrance && !bannerDismissed && !isNavigating && !activeRoute && (
+                    <GeofenceBanner
+                        entrance={nearestEntrance}
+                        onDismiss={handleDismissBanner}
+                        onScanQR={() => setQrOpen(true)}
+                    />
+                )}
+
                 {selectedLocation && !isNavigating && (
                     <LocationSheet
                         location={selectedLocation}
@@ -581,6 +607,8 @@ function Home() {
                 onClose={() => setAuthOpen(false)}
                 onSuccess={() => setIsAdmin(true)}
             />
+
+            <QRModal open={qrOpen} onClose={() => setQrOpen(false)} />
 
             <OnboardingTour />
         </Box>
