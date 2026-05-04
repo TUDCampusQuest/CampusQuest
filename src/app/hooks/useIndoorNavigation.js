@@ -127,36 +127,41 @@ async function buildCrossBuildingRoute(
         ? buildIndoorRoute(destEntryRoom, destFeature, stairs)
         : null;
 
-    const startC = [sp.centerLng, sp.centerLat];
+    // outdoorCoords runs from the start-building campus node to the end-building campus node.
+    // These are already on the physical path network so they connect smoothly.
+    // The indoor leg (if found) starts at destEntryRoom centroid and ends at destFeature centroid;
+    // we bridge from the last outdoor node to the first indoor coord with a short straight segment.
     const indoorPath = indoorLeg?.path ?? [[ep.centerLng, ep.centerLat]];
-
-    const fullPath = [startC, ...outdoorCoords, ...indoorPath];
+    const fullPath = [...outdoorCoords, ...indoorPath];
 
     const outdoorDist = outdoorCoords.reduce((sum, c, i) => {
         if (i === 0) return sum;
         return sum + haversineM2(outdoorCoords[i - 1], c);
     }, 0);
 
+    const exitLocation = outdoorCoords[0];
+    const entryLocation = outdoorCoords[outdoorCoords.length - 1];
+
     const steps = [
         {
             type: 'exit_building',
             description: `Exit ${startLoc.name}`,
             metres: 0,
-            location: startC,
+            location: exitLocation,
             stairRoomCode: null,
         },
         {
             type: 'walk',
             description: `Walk to ${endLoc.name}`,
             metres: Math.round(outdoorDist),
-            location: outdoorCoords[outdoorCoords.length - 1],
+            location: entryLocation,
             stairRoomCode: null,
         },
         {
             type: 'enter_building',
             description: `Enter ${endLoc.name}`,
             metres: 0,
-            location: outdoorCoords[outdoorCoords.length - 1],
+            location: entryLocation,
             stairRoomCode: null,
         },
         ...(indoorLeg?.steps ?? [
@@ -182,6 +187,8 @@ async function buildCrossBuildingRoute(
     return {
         steps,
         path: fullPath,
+        // Index where the outdoor section ends so IndoorOverlay can split the line
+        outdoorPathLength: outdoorCoords.length,
         totalMetres,
         totalMinutes: Math.ceil(totalMetres / 80),
         requiresStairs: indoorLeg?.requiresStairs ?? false,
@@ -215,9 +222,10 @@ export function useIndoorNavigation({
     onClearSelectedRoom,
     onOutdoorFallback,
 }) {
-    const [activeRoute,      setActiveRoute]      = useState(null);
-    const [currentStepIndex, setCurrentStepIndex] = useState(0);
-    const [arrivedMessage,   setArrivedMessage]   = useState(false);
+    const [activeRoute,        setActiveRoute]        = useState(null);
+    const [currentStepIndex,   setCurrentStepIndex]   = useState(0);
+    const [arrivedMessage,     setArrivedMessage]     = useState(false);
+    const [activeDestination,  setActiveDestination]  = useState(null);
 
     // Advance navigation step when user approaches the next waypoint
     useEffect(() => {
@@ -281,6 +289,7 @@ export function useIndoorNavigation({
 
             if (crossRoute) {
                 setActiveRoute(crossRoute);
+                setActiveDestination(destinationFeature);
                 setCurrentStepIndex(0);
                 setArrivedMessage(false);
                 onClearSelectedRoom?.();
@@ -305,6 +314,7 @@ export function useIndoorNavigation({
         }
 
         setActiveRoute(route);
+        setActiveDestination(destinationFeature);
         setCurrentStepIndex(0);
         setArrivedMessage(false);
         onClearSelectedRoom?.();
@@ -317,6 +327,7 @@ export function useIndoorNavigation({
 
     const handleCancelNavigation = useCallback(() => {
         setActiveRoute(null);
+        setActiveDestination(null);
         setCurrentStepIndex(0);
         setArrivedMessage(false);
         onHighlightRoom?.(null);
@@ -325,6 +336,7 @@ export function useIndoorNavigation({
     return {
         activeRoute,
         setActiveRoute,
+        activeDestination,
         currentStepIndex,
         arrivedMessage,
         handleNavigateTo,

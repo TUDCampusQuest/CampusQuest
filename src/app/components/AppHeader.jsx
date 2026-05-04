@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import SearchIcon       from "@mui/icons-material/Search";
 import DirectionsIcon   from "@mui/icons-material/Directions";
+import { useTheme }     from "../context/ThemeContext";
 
 function HeaderBtn({ icon, label, onClick, tooltip }) {
     return (
@@ -14,21 +15,43 @@ function HeaderBtn({ icon, label, onClick, tooltip }) {
                 sx={{
                     display: "flex", alignItems: "center", gap: "5px",
                     px: 1.5, py: 0.6, borderRadius: "20px",
-                    border: "1px solid #e2e8f0",
-                    bgcolor: "#f8fafc",
+                    border: "1px solid var(--border-card)",
+                    bgcolor: "var(--btn-ghost-bg)",
                     cursor: "pointer", transition: "all 0.15s",
-                    "&:hover": { bgcolor: "#f0fdfa", borderColor: "#1BA39C" },
+                    "&:hover": { bgcolor: "var(--room-item-hover)", borderColor: "var(--accent-teal)" },
                 }}
             >
                 {icon}
                 {label && (
                     <Typography sx={{
-                        fontSize: 12, fontWeight: 700, color: "#475569",
+                        fontSize: 12, fontWeight: 700, color: "var(--text-secondary)",
                         display: { xs: "none", sm: "block" },
                     }}>
                         {label}
                     </Typography>
                 )}
+            </Box>
+        </Tooltip>
+    );
+}
+
+function ThemeToggle() {
+    const { isDark, toggleTheme } = useTheme();
+    return (
+        <Tooltip title={isDark ? "Switch to light mode" : "Switch to dark mode"} placement="bottom">
+            <Box
+                onClick={toggleTheme}
+                sx={{
+                    display: "flex", alignItems: "center", justifyContent: "center",
+                    width: 36, height: 36, borderRadius: "12px",
+                    border: "1px solid var(--border-card)",
+                    bgcolor: "var(--btn-ghost-bg)",
+                    cursor: "pointer", transition: "all 0.2s",
+                    fontSize: 16,
+                    "&:hover": { bgcolor: "var(--accent-purple)", borderColor: "var(--accent-purple)", transform: "scale(1.05)" },
+                }}
+            >
+                {isDark ? "☀️" : "🌙"}
             </Box>
         </Tooltip>
     );
@@ -41,23 +64,25 @@ export default function AppHeader({ isAdmin, onStaffClick, onSearchClick, onNavi
         <Box sx={{
             flexShrink: 0,
             height: { xs: 56, sm: 60 },
-            bgcolor: "rgba(255,255,255,0.97)",
-            backdropFilter: "blur(10px)",
+            bgcolor: "var(--header-bg)",
+            backdropFilter: "blur(12px)",
+            WebkitBackdropFilter: "blur(12px)",
             display: "flex", alignItems: "center",
             px: { xs: 1.5, sm: 2.5 },
-            borderBottom: "1px solid #e2e8f0",
+            borderBottom: "1px solid var(--header-border)",
             zIndex: 1100,
         }}>
-            {/* Logo — double-click to access staff auth */}
+            {/* Logo */}
             <Stack direction="row" alignItems="center" spacing={1} sx={{ flex: 1 }}>
                 <Box
                     onDoubleClick={onStaffClick}
                     sx={{
-                        width: 30, height: 30, borderRadius: "8px",
-                        background: "linear-gradient(135deg, #1BA39C 0%, #0e6d68 100%)",
+                        width: 32, height: 32, borderRadius: "10px",
+                        background: "linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%)",
                         display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 15, flexShrink: 0,
+                        fontSize: 16, flexShrink: 0,
                         cursor: "default", userSelect: "none",
+                        boxShadow: "0 2px 8px rgba(124,58,237,0.4)",
                     }}
                 >
                     🧭
@@ -65,7 +90,7 @@ export default function AppHeader({ isAdmin, onStaffClick, onSearchClick, onNavi
 
                 <Typography
                     variant="h6"
-                    sx={{ fontWeight: 800, color: "#1e293b", fontSize: { xs: "1rem", sm: "1.15rem" } }}
+                    sx={{ fontWeight: 800, color: "var(--text-primary)", fontSize: { xs: "1rem", sm: "1.15rem" } }}
                 >
                     Campus Quest
                 </Typography>
@@ -75,7 +100,7 @@ export default function AppHeader({ isAdmin, onStaffClick, onSearchClick, onNavi
                         onClick={onStaffClick}
                         sx={{
                             px: 1, py: "2px", borderRadius: "6px",
-                            bgcolor: "#1BA39C", color: "#fff",
+                            bgcolor: "#7C3AED", color: "#fff",
                             fontSize: 10, fontWeight: 800,
                             letterSpacing: "0.08em", textTransform: "uppercase",
                             cursor: "pointer",
@@ -89,19 +114,17 @@ export default function AppHeader({ isAdmin, onStaffClick, onSearchClick, onNavi
             </Stack>
 
             {/* Nav buttons */}
-            <Stack direction="row" spacing={1}>
-                {/* Navigate A→B — always visible */}
+            <Stack direction="row" spacing={1} alignItems="center">
                 <HeaderBtn
-                    icon={<DirectionsIcon sx={{ fontSize: 15, color: "#1BA39C" }} />}
+                    icon={<DirectionsIcon sx={{ fontSize: 15, color: "var(--accent-teal)" }} />}
                     label="Navigate"
                     tooltip="Route from A to B"
                     onClick={onNavigateClick}
                 />
 
-                {/* Search — desktop only (mobile has bottom nav) */}
                 <Box sx={{ display: { xs: "none", sm: "block" } }}>
                     <HeaderBtn
-                        icon={<SearchIcon sx={{ fontSize: 15, color: "#64748b" }} />}
+                        icon={<SearchIcon sx={{ fontSize: 15, color: "var(--text-secondary)" }} />}
                         label="Search"
                         tooltip="Search buildings & rooms"
                         onClick={onSearchClick}
@@ -109,13 +132,12 @@ export default function AppHeader({ isAdmin, onStaffClick, onSearchClick, onNavi
                 </Box>
 
                 <HeaderBtn
-                    icon={<InfoOutlinedIcon sx={{ fontSize: 15, color: "#64748b" }} />}
+                    icon={<InfoOutlinedIcon sx={{ fontSize: 15, color: "var(--text-secondary)" }} />}
                     label="Info"
                     tooltip="App info"
                     onClick={() => router.push("/info")}
                 />
 
-                {/* Trails link — staff only */}
                 {isAdmin && (
                     <HeaderBtn
                         icon={<span style={{ fontSize: 13 }}>🗺</span>}
@@ -124,6 +146,8 @@ export default function AppHeader({ isAdmin, onStaffClick, onSearchClick, onNavi
                         onClick={() => router.push("/trails")}
                     />
                 )}
+
+                <ThemeToggle />
             </Stack>
         </Box>
     );

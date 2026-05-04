@@ -1,6 +1,18 @@
 {
+  "/_global-error/page": "app/_global-error/page.js",
   "/_not-found/page": "app/_not-found/page.js",
-  "/page": "app/page.js",
+  "/admin/page": "app/admin/page.js",
+  "/api/auth/route": "app/api/auth/route.js",
+  "/api/indoor/route": "app/api/indoor/route.js",
+  "/api/locations/route": "app/api/locations/route.js",
+  "/api/navigation/route": "app/api/navigation/route.js",
+  "/api/staff/register/route": "app/api/staff/register/route.js",
+  "/api/staff/seed/route": "app/api/staff/seed/route.js",
+  "/api/trails/route": "app/api/trails/route.js",
+  "/favicon.ico/route": "app/favicon.ico/route.js",
   "/info/page": "app/info/page.js",
-  "/scan/page": "app/scan/page.js"
+  "/location/[id]/page": "app/location/[id]/page.js",
+  "/page": "app/page.js",
+  "/scan/page": "app/scan/page.js",
+  "/trails/page": "app/trails/page.js"
 }

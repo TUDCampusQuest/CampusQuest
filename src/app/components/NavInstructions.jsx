@@ -193,6 +193,7 @@ export default function NavInstructions({
     onChangeStart,
     // indoor props
     activeRoute, currentStepIndex,
+    onIndoorChangeStart,
     roomNameMap,
 }) {
     const [avoidStairs, setAvoidStairs] = useState(false);
@@ -225,14 +226,24 @@ export default function NavInstructions({
                             {activeRoute.requiresStairs && ' · Stairs required'}
                         </div>
                     </div>
-                    <div style={{
-                        fontSize: 10, fontWeight: 700, color: INDOOR_TEAL,
-                        background: 'rgba(0,180,180,0.15)',
-                        border: '1px solid rgba(0,180,180,0.3)',
-                        borderRadius: 20, padding: '3px 10px',
-                        letterSpacing: '0.07em', textTransform: 'uppercase',
-                    }}>
-                        Indoor
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
+                        <div style={{
+                            fontSize: 10, fontWeight: 700, color: INDOOR_TEAL,
+                            background: 'rgba(0,180,180,0.15)',
+                            border: '1px solid rgba(0,180,180,0.3)',
+                            borderRadius: 20, padding: '3px 10px',
+                            letterSpacing: '0.07em', textTransform: 'uppercase',
+                        }}>
+                            Indoor
+                        </div>
+                        {onIndoorChangeStart && (
+                            <button onClick={onIndoorChangeStart} style={{
+                                padding: '6px 14px', borderRadius: 99,
+                                border: '1px solid rgba(255,255,255,0.15)',
+                                background: 'rgba(255,255,255,0.07)',
+                                color: '#f1f5f9', fontWeight: 700, fontSize: 11, cursor: 'pointer',
+                            }}>↺ Change Start</button>
+                        )}
                     </div>
                 </div>
 

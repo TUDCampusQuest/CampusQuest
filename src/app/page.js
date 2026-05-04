@@ -62,9 +62,12 @@ export default function Home() {
         ...CAMPUS_CENTER, zoom: 16, pitch: 0, bearing: 0,
     });
 
+    const [pickingIndoorStart, setPickingIndoorStart] = useState(false);
+
     // ── Indoor navigation hook ──────────────────────────────────────────────
     const {
         activeRoute, currentStepIndex, arrivedMessage,
+        activeDestination,
         handleNavigateTo, handleCancelNavigation,
     } = useIndoorNavigation({
         rooms, stairs, gpsLocation, mapRef,
@@ -275,6 +278,20 @@ export default function Home() {
         }
     }, []);
 
+    // ── Indoor "Change Start" pick mode ──────────────────────────────────────
+    // Mirrors the outdoor PICK_A flow: user taps Change Start → banner appears →
+    // tapping any room on the map re-runs the route with that room as the new start.
+    const handleIndoorChangeStart = useCallback(() => {
+        setPickingIndoorStart(true);
+    }, []);
+
+    const handleIndoorRoomPick = useCallback((feature) => {
+        setPickingIndoorStart(false);
+        if (activeDestination) {
+            handleNavigateTo(activeDestination, feature);
+        }
+    }, [activeDestination, handleNavigateTo]);
+
     const filtered = (Array.isArray(locations) ? locations : []).filter(l =>
         l.name?.toLowerCase().includes(query.toLowerCase()) ||
         l.id?.toLowerCase().includes(query.toLowerCase()),
@@ -329,6 +346,9 @@ export default function Home() {
                     pickingNavPoint={pickingNavPoint}
                     onNavPick={handleNavPick}
                     roomNameMap={roomNameMap}
+                    pickingIndoorStart={pickingIndoorStart}
+                    onIndoorRoomPick={handleIndoorRoomPick}
+                    onIndoorChangeStart={handleIndoorChangeStart}
                 />
 
                 <MapSidebar
@@ -347,7 +367,7 @@ export default function Home() {
                         navTarget={navTarget}
                         activeRoute={activeRoute}
                         onExit={activeRoute
-                            ? handleCancelNavigation
+                            ? () => { handleCancelNavigation(); setPickingIndoorStart(false); }
                             : () => { setNavTarget(null); setIsNavigating(false); }}
                     />
                 )}

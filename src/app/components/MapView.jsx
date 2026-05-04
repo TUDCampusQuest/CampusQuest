@@ -14,9 +14,11 @@ import TrailCaptureOverlay  from './TrailCaptureOverlay';
 import TrailsPanel          from './TrailsPanel';
 import RoomStatusPanel      from './RoomStatusPanel';
 import IndoorOverlay        from './IndoorOverlay';
+import { useTheme }         from '../context/ThemeContext';
 
-const STYLE_FLAT = process.env.NEXT_PUBLIC_MAPBOX_STYLE || 'mapbox://styles/mapbox/light-v11';
-const STYLE_3D   = 'mapbox://styles/mapbox/standard';
+const STYLE_LIGHT = process.env.NEXT_PUBLIC_MAPBOX_STYLE || 'mapbox://styles/mapbox/light-v11';
+const STYLE_DARK  = 'mapbox://styles/mapbox/dark-v11';
+const STYLE_3D    = 'mapbox://styles/mapbox/standard';
 
 const CAMPUS_BOUNDS = [
     [-6.395, 53.398],
@@ -32,8 +34,11 @@ function MapViewInner({
                           activeRoute, currentStepIndex,
                           pickingNavPoint, onNavPick,
                           roomNameMap,
+                          pickingIndoorStart, onIndoorRoomPick, onIndoorChangeStart,
                       }) {
     const mapRef = useRef(null);
+    const { isDark } = useTheme();
+    const flatStyle = isDark ? STYLE_DARK : STYLE_LIGHT;
 
     const [selectedLoc,    setSelectedLoc]    = useState(null);
     const [captureMode,    setCaptureMode]    = useState(false);
@@ -67,14 +72,26 @@ function MapViewInner({
         if (onMapLoad) onMapLoad(e.target);
     }, [onMapLoad]);
 
-    // Combined click: nav-pick mode takes priority over trail capture
+    // Combined click: indoor-start pick → nav-pick → trail capture
     const handleClick = useCallback((e) => {
+        if (pickingIndoorStart && onIndoorRoomPick) {
+            // Query the room fill layer at the click pixel
+            const features = mapRef.current?.queryRenderedFeatures(e.point, {
+                layers: ['indoor-rooms-fill'],
+            });
+            if (features?.length) {
+                // Reconstruct a minimal GeoJSON feature the router expects
+                const f = features[0];
+                onIndoorRoomPick({ type: 'Feature', geometry: f.geometry, properties: f.properties });
+            }
+            return;
+        }
         if (pickingNavPoint) {
             onNavPick?.(e.lngLat);
             return;
         }
         onMapClick(e);
-    }, [pickingNavPoint, onNavPick, onMapClick]);
+    }, [pickingIndoorStart, onIndoorRoomPick, pickingNavPoint, onNavPick, onMapClick]);
 
     useEffect(() => {
         if (!isAdmin) { setShowCaptureUI(false); setCaptureMode(false); }
@@ -86,7 +103,7 @@ function MapViewInner({
         mapRef.current.flyTo({ center: [lng, lat], zoom: 17.5, duration: 1400, pitch: 45 });
     }, [navTarget]);
 
-    const activeCursor = pickingNavPoint ? 'crosshair' : captureMode ? 'crosshair' : 'inherit';
+    const activeCursor = pickingNavPoint || pickingIndoorStart ? 'crosshair' : captureMode ? 'crosshair' : 'inherit';
 
     return (
         <div style={{ width: '100%', height: '100%', position: 'relative', cursor: activeCursor }}>
@@ -101,6 +118,19 @@ function MapViewInner({
                     whiteSpace: 'nowrap', pointerEvents: 'none',
                 }}>
                     📌 Tap a room or location to set as {pickingNavPoint === 'A' ? 'start' : 'destination'}
+                </div>
+            )}
+
+            {/* Indoor change-start banner */}
+            {pickingIndoorStart && (
+                <div style={{
+                    position: 'absolute', top: 16, left: '50%', transform: 'translateX(-50%)',
+                    zIndex: 25, background: 'rgba(0,180,180,0.92)', color: '#fff',
+                    fontWeight: 700, fontSize: 13, padding: '10px 20px',
+                    borderRadius: 99, boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
+                    whiteSpace: 'nowrap', pointerEvents: 'none',
+                }}>
+                    📌 Tap a room on the map to set as your new start
                 </div>
             )}
 
@@ -141,6 +171,7 @@ function MapViewInner({
                     onChangeStart={resetToPickA}
                     activeRoute={activeRoute}
                     currentStepIndex={currentStepIndex}
+                    onIndoorChangeStart={onIndoorChangeStart}
                     roomNameMap={roomNameMap}
                 />
             )}
@@ -151,7 +182,7 @@ function MapViewInner({
                 onMove={onMove}
                 onClick={handleClick}
                 mapboxAccessToken={process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN}
-                mapStyle={is3D ? STYLE_3D : STYLE_FLAT}
+                mapStyle={is3D ? STYLE_3D : flatStyle}
                 style={{ width: '100%', height: '100%' }}
                 onLoad={handleMapLoad}
                 maxBounds={CAMPUS_BOUNDS}
@@ -180,18 +211,19 @@ function MapViewInner({
                             const isStart    = buildingA?.id  === loc.id;
                             const isPickable = routeStep === 'PICK_A' && loc.id !== navTarget?.id;
 
+                            const bg = isTarget  ? 'linear-gradient(135deg,#ef4444,#dc2626)'
+                                     : isStart   ? 'linear-gradient(135deg,#22c55e,#16a34a)'
+                                     : isPickable? 'linear-gradient(135deg,#1BA39C,#0e6d68)'
+                                     : 'linear-gradient(135deg,#7C3AED,#5B21B6)';
+
+                            const shadow = isTarget  ? '0 2px 10px rgba(239,68,68,0.6)'
+                                         : isStart   ? '0 2px 10px rgba(34,197,94,0.6)'
+                                         : isPickable? '0 2px 10px rgba(27,163,156,0.5)'
+                                         : '0 2px 8px rgba(124,58,237,0.45)';
+
                             return (
                                 <Marker key={loc.id} longitude={lng} latitude={lat} anchor="bottom">
                                     <div
-                                        style={{
-                                            fontSize: isTarget || isStart ? 32 : 24,
-                                            cursor: 'pointer',
-                                            transition: 'font-size 0.2s, filter 0.2s',
-                                            filter: isTarget   ? 'drop-shadow(0 0 8px rgba(239,68,68,0.9))'
-                                                : isStart    ? 'drop-shadow(0 0 8px rgba(34,197,94,0.9))'
-                                                : isPickable ? 'drop-shadow(0 0 4px rgba(27,163,156,0.6))'
-                                                : 'none',
-                                        }}
                                         onClick={e => {
                                             e.stopPropagation();
                                             if (routeStep === 'PICK_A' && loc.id !== navTarget?.id) {
@@ -202,8 +234,20 @@ function MapViewInner({
                                                 setSelectedLoc(loc);
                                             }
                                         }}
+                                        style={{
+                                            width: isTarget || isStart ? 36 : 30,
+                                            height: isTarget || isStart ? 36 : 30,
+                                            borderRadius: '10px',
+                                            background: bg,
+                                            boxShadow: shadow,
+                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                                            fontSize: isTarget || isStart ? 18 : 15,
+                                            cursor: 'pointer',
+                                            transition: 'all 0.2s',
+                                            border: '2px solid rgba(255,255,255,0.25)',
+                                        }}
                                     >
-                                        📍
+                                        🏛️
                                     </div>
                                 </Marker>
                             );
@@ -245,6 +289,8 @@ function MapViewInner({
                             highlightedRoomId={highlightedRoomId}
                             routePath={activeRoute?.path}
                             isCrossBuilding={activeRoute?.isCrossBuilding ?? false}
+                            outdoorPathLength={activeRoute?.outdoorPathLength ?? 0}
+                            pickingIndoorStart={pickingIndoorStart}
                         />
                     </>
                 )}
