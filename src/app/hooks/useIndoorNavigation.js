@@ -86,6 +86,59 @@ function haversineM2([lng1, lat1], [lng2, lat2]) {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+// Missing/wrong entries in the S3 campus graph — applied at runtime so we don't need
+// to redeploy the data file every time a building is added or corrected.
+//
+// A Block path — all coords from Mapbox walking directions:
+//   West leg:  A Block → campus avenue road heading west (ave_1 … ave_7)
+//   South leg: ave_7 → southeast along the campus road to student_services_entrance
+//              (Mapbox: ave7_to_student_services, 11 pts, 130 m)
+//   student_services_entrance already connects to main_1 in the S3 graph.
+const GRAPH_NODE_PATCHES = [
+    { id: 'a_block_entrance', lng: -6.376366,  lat: 53.406213,  type: 'entrance', name: 'A Block entrance' },
+    // West along campus avenue (Mapbox road coords)
+    { id: 'ave_1', lng: -6.376465, lat: 53.406013, type: 'junction', name: 'Campus ave 1' },
+    { id: 'ave_2', lng: -6.376743, lat: 53.406060, type: 'junction', name: 'Campus ave 2' },
+    { id: 'ave_3', lng: -6.377333, lat: 53.406073, type: 'junction', name: 'Campus ave 3' },
+    { id: 'ave_4', lng: -6.377838, lat: 53.406043, type: 'junction', name: 'Campus ave 4' },
+    { id: 'ave_5', lng: -6.378081, lat: 53.406014, type: 'junction', name: 'Campus ave 5' },
+    { id: 'ave_6', lng: -6.378286, lat: 53.405960, type: 'junction', name: 'Campus ave 6' },
+    { id: 'ave_7', lng: -6.378434, lat: 53.405914, type: 'junction', name: 'Campus ave — south turn' },
+    // South leg — exact Mapbox road coords from ave_7 to student_services_entrance
+    { id: 'ave_s1', lng: -6.378537, lat: 53.405883, type: 'junction', name: 'Campus ave south 1' },
+    { id: 'ave_s2', lng: -6.378745, lat: 53.405781, type: 'junction', name: 'Campus ave south 2' },
+    { id: 'ave_s3', lng: -6.378910, lat: 53.405698, type: 'junction', name: 'Campus ave south 3' },
+    { id: 'ave_s4', lng: -6.379008, lat: 53.405641, type: 'junction', name: 'Campus ave south 4' },
+    { id: 'ave_s5', lng: -6.379076, lat: 53.405580, type: 'junction', name: 'Campus ave south 5' },
+    { id: 'ave_s6', lng: -6.379208, lat: 53.405459, type: 'junction', name: 'Campus ave south 6' },
+    { id: 'ave_s7', lng: -6.379336, lat: 53.405343, type: 'junction', name: 'Campus ave south 7' },
+    { id: 'ave_s8', lng: -6.379622, lat: 53.405128, type: 'junction', name: 'Campus ave south 8' },
+    { id: 'ave_s9', lng: -6.379645, lat: 53.405112, type: 'junction', name: 'Campus ave south 9' },
+];
+const GRAPH_EDGE_PATCHES = [
+    { from: 'a_block_entrance', to: 'ave_1' },
+    { from: 'ave_1', to: 'ave_2' },
+    { from: 'ave_2', to: 'ave_3' },
+    { from: 'ave_3', to: 'ave_4' },
+    { from: 'ave_4', to: 'ave_5' },
+    { from: 'ave_5', to: 'ave_6' },
+    { from: 'ave_6', to: 'ave_7' },
+    { from: 'ave_7',  to: 'ave_s1' },
+    { from: 'ave_s1', to: 'ave_s2' },
+    { from: 'ave_s2', to: 'ave_s3' },
+    { from: 'ave_s3', to: 'ave_s4' },
+    { from: 'ave_s4', to: 'ave_s5' },
+    { from: 'ave_s5', to: 'ave_s6' },
+    { from: 'ave_s6', to: 'ave_s7' },
+    { from: 'ave_s7', to: 'ave_s8' },
+    { from: 'ave_s8', to: 'ave_s9' },
+    { from: 'ave_s9', to: 'student_services_entrance' },
+];
+// Overrides for wrong locationNodeMap entries in S3
+const LOCATION_NODE_OVERRIDES = {
+    'a-block': 'a_block_entrance',
+};
+
 async function buildCrossBuildingRoute(
     startFeature, destFeature, stairs, rooms,
     campusGraph, locationsArray
@@ -93,9 +146,19 @@ async function buildCrossBuildingRoute(
     const sp = startFeature.properties;
     const ep = destFeature.properties;
 
-    const nodes = campusGraph?.campusNodes ?? campusGraph?.nodes ?? [];
-    const edges = campusGraph?.campusEdges ?? campusGraph?.edges ?? [];
-    const nodeMap = campusGraph?.locationNodeMap ?? {};
+    // Merge S3 graph data with local patches
+    const nodes = [
+        ...(campusGraph?.campusNodes ?? campusGraph?.nodes ?? []),
+        ...GRAPH_NODE_PATCHES,
+    ];
+    const edges = [
+        ...(campusGraph?.campusEdges ?? campusGraph?.edges ?? []),
+        ...GRAPH_EDGE_PATCHES,
+    ];
+    const nodeMap = {
+        ...(campusGraph?.locationNodeMap ?? {}),
+        ...LOCATION_NODE_OVERRIDES,
+    };
 
     const startLoc = locationsArray.find(l =>
         String(l.buildingId) === String(sp.buildingId));

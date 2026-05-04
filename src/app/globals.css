@@ -40,6 +40,12 @@
     --loc-item-border:    rgba(255, 255, 255, 0.08);
     --loc-item-hover:     rgba(255, 255, 255, 0.08);
 
+    --glass-bg:     rgba(26, 26, 46, 0.80);
+    --glass-border: rgba(255, 255, 255, 0.10);
+    --card-shadow:  0 8px 32px rgba(0, 0, 0, 0.45);
+    --bg-card:      rgba(255, 255, 255, 0.05);
+    --border-color: rgba(255, 255, 255, 0.10);
+
     --mapbox-style: 'mapbox://styles/mapbox/dark-v11';
 }
 
@@ -79,6 +85,12 @@
     --loc-item-bg:        #FFFFFF;
     --loc-item-border:    #F1F5F9;
     --loc-item-hover:     #F8FAFC;
+
+    --glass-bg:     rgba(255, 255, 255, 0.88);
+    --glass-border: rgba(0, 0, 0, 0.08);
+    --card-shadow:  0 8px 32px rgba(0, 0, 0, 0.10);
+    --bg-card:      #F1F5F9;
+    --border-color: #E2E8F0;
 
     --mapbox-style: 'mapbox://styles/mapbox/light-v11';
 }
