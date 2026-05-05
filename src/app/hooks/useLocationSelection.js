@@ -41,7 +41,11 @@ export default function useLocationSelection({ mapRef, setSearchOpen, setQuery, 
         const lng = loc.coordinates?.[0] ?? loc.lng;
         const lat = loc.coordinates?.[1] ?? loc.lat;
         if (lng != null && lat != null && mapRef.current) {
-            mapRef.current.flyTo({ center: [lng, lat], zoom: 17.5, duration: 1200 });
+            try {
+                mapRef.current.flyTo({ center: [lng, lat], zoom: 17.5, duration: 1200 });
+            } catch (err) {
+                console.warn('flyTo location suppressed:', err?.message || err);
+            }
         }
     };
 

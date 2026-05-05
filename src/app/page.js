@@ -139,13 +139,24 @@ function Home() {
     }, []);
 
     useEffect(() => {
-        if (!navigator.geolocation) return;
-        const id = navigator.geolocation.watchPosition(
-            p => setGpsLocation({ lng: p.coords.longitude, lat: p.coords.latitude }),
-            () => {},
-            { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 },
-        );
-        return () => navigator.geolocation.clearWatch(id);
+        if (typeof navigator === 'undefined' || !navigator.geolocation) return;
+        let id = null;
+        try {
+            id = navigator.geolocation.watchPosition(
+                p => {
+                    try {
+                        if (p?.coords) setGpsLocation({ lng: p.coords.longitude, lat: p.coords.latitude });
+                    } catch {}
+                },
+                () => {},
+                { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 },
+            );
+        } catch {}
+        return () => {
+            if (id != null) {
+                try { navigator.geolocation.clearWatch(id); } catch {}
+            }
+        };
     }, []);
 
     const fetchTrails = useCallback(async () => {
@@ -268,13 +279,28 @@ function Home() {
         setSelectedLocation(null);
     };
 
+    // Tap a different building while navigating → swap destination, keep
+    // start, keep the directions panel mounted. Never resets isNavigating.
+    const handleSwapDestination = useCallback((loc) => {
+        if (!loc?.id) return;
+        if (navTarget?.id === loc.id) return;
+        const coords = loc.coordinates || (loc.lng != null && loc.lat != null ? [loc.lng, loc.lat] : null);
+        if (!coords) return;
+        setActiveNavSystem('outdoor');
+        setNavTarget({ id: loc.id, name: loc.name, coordinates: coords });
+    }, [navTarget]);
+
     const handleRoomSelect = useCallback((feature) => {
         const p = feature.properties;
         setHighlightedRoomId(p.poiId);
         setSelectedRoom(feature);
         if (p.floorName) setActiveFloorName(p.floorName);
         if (p.centerLng != null && p.centerLat != null) {
-            mapRef.current?.flyTo({ center: [p.centerLng, p.centerLat], zoom: 19.5, duration: 1200 });
+            try {
+                mapRef.current?.flyTo({ center: [p.centerLng, p.centerLat], zoom: 19.5, duration: 1200 });
+            } catch (err) {
+                console.warn('flyTo room suppressed:', err?.message || err);
+            }
         }
     }, [setActiveFloorName]);
 
@@ -296,7 +322,11 @@ function Home() {
         setNavTarget({ id: loc.id, name: loc.name, coordinates: [lng, lat] });
         setIsNavigating(true);
         if (mapRef.current) {
-            mapRef.current.flyTo({ center: [lng, lat], zoom: 17, duration: 1400 });
+            try {
+                mapRef.current.flyTo({ center: [lng, lat], zoom: 17, duration: 1400 });
+            } catch (err) {
+                console.warn('flyTo navTo suppressed:', err?.message || err);
+            }
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchParams]);
@@ -403,6 +433,7 @@ function Home() {
                         padding: '12px 16px',
                         display: 'flex', alignItems: 'center', gap: 10,
                         boxShadow: 'var(--card-shadow)',
+                        pointerEvents: 'none',
                     }}>
                         <span style={{ fontSize: 20 }}>🪜</span>
                         <div>
@@ -425,6 +456,7 @@ function Home() {
                     onTrailSaved={fetchTrails}
                     isAdmin={isAdmin}
                     onLocationSelect={handleSelectLocation}
+                    onSwapDestination={handleSwapDestination}
                     activeBuilding={activeBuilding}
                     activeFloorName={activeFloorName}
                     rooms={rooms}

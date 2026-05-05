@@ -50,7 +50,19 @@ export function useBuildingMarkers({ map, styleLoaded, onLocationSelect }) {
 
                 chip.addEventListener('mouseenter', () => { chip.style.transform = 'scale(1.15)'; });
                 chip.addEventListener('mouseleave', () => { chip.style.transform = 'scale(1)'; });
-                chip.addEventListener('click', () => onLocationSelect?.(loc));
+
+                // Use a single guarded handler — `click` fires on tap on all modern
+                // mobile browsers, but stopPropagation prevents the map's onClick
+                // from also firing and treating it as an empty-map tap.
+                const fireSelect = (e) => {
+                    try {
+                        e.stopPropagation();
+                        onLocationSelect?.(loc);
+                    } catch (err) {
+                        console.warn('building marker handler error:', err?.message || err);
+                    }
+                };
+                chip.addEventListener('click', fireSelect);
 
                 wrapper.appendChild(chip);
 

@@ -9,6 +9,7 @@ import {
     buildHybridRouteFromCoordsToCampus,
     buildHybridRouteFromCampusToCoords,
 } from '../lib/routeUtils';
+import { filterToCampus } from '../lib/campusBounds';
 
 // Populated at runtime from the campusGraph prop — avoids importing the deleted local file
 let campusNodes = [];
@@ -125,16 +126,33 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
         // building markers from appearing to drift on a full-route fitBounds.
         const loc = userLocationRef.current;
         if (loc && haversineM([loc.lng, loc.lat], [-6.3779, 53.4059]) > 2000) return;
-        const lngs = coords.map(c => c[0]);
-        const lats = coords.map(c => c[1]);
-        mapRef.current.fitBounds(
-            [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
-            { padding: 90, duration: 1000 }
-        );
+        // Strip any off-campus coordinates — Mapbox throws when fitBounds is asked
+        // to extend outside the map's maxBounds, which silently wipes the route UI.
+        const safeCoords = filterToCampus(coords);
+        if (safeCoords.length < 2) return;
+        const lngs = safeCoords.map(c => c[0]);
+        const lats = safeCoords.map(c => c[1]);
+        try {
+            mapRef.current.fitBounds(
+                [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+                { padding: 90, duration: 1000 }
+            );
+        } catch (err) {
+            console.warn('fitBounds suppressed:', err?.message || err);
+        }
     };
+
+    // Tracks whether the previous render was already navigating — lets us tell
+    // a fresh nav (idle → navigating) apart from a destination swap mid-nav.
+    const wasNavigatingRef = useRef(false);
+    const buildingARef = useRef(null);
+    useEffect(() => { buildingARef.current = buildingA; }, [buildingA]);
 
     useEffect(() => {
         if (isNavigating && navTarget) {
+            const isMidNavSwap = wasNavigatingRef.current;
+            wasNavigatingRef.current = true;
+
             setBuildingB(navTarget);
             setRouteCoords(null);
             setRouteStats(null);
@@ -145,6 +163,13 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
 
             if (navStart) {
                 setBuildingA(navStart);
+                setRouteStep('ACTIVE');
+                return;
+            }
+
+            // Mid-nav destination swap — preserve the start the user already picked
+            // so changing destination doesn't yank them back to GPS-snap or PICK_A.
+            if (isMidNavSwap && buildingARef.current) {
                 setRouteStep('ACTIVE');
                 return;
             }
@@ -167,6 +192,7 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
         }
 
         if (!isNavigating) {
+            wasNavigatingRef.current = false;
             pickARequestedRef.current = false;
             setRouteStep('IDLE');
             setBuildingA(null);
@@ -308,6 +334,12 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
 
     const pickBuildingA = useCallback((loc) => {
         pickARequestedRef.current = false;
+        // Clear the previous route stats so the panel shows "Calculating…" until
+        // the new route resolves — prevents a brief flash of the old route line
+        // and stale ETA after the user changes their start building.
+        setRouteCoords(null);
+        setRouteStats(null);
+        setRouteError(null);
         setBuildingA(loc);
         setRouteStep('ACTIVE');
     }, []);

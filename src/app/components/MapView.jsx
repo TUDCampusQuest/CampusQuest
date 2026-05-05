@@ -28,7 +28,7 @@ const CAMPUS_BOUNDS = [
 function MapViewInner({
     viewState, onMove, onMapLoad,
     navTarget, navStart, isNavigating, onTrailSaved,
-    is3D, isAdmin = false, onLocationSelect,
+    is3D, isAdmin = false, onLocationSelect, onSwapDestination,
     activeBuilding, activeFloorName,
     rooms, highlightedRoomId, campusGraph,
     activeRoute, currentStepIndex,
@@ -82,10 +82,16 @@ function MapViewInner({
         }
         if (routeStep === 'PICK_A') {
             pickBuildingA(loc);
-        } else {
-            onLocationSelect?.(loc);
+            return;
         }
-    }, [routeStep, pickBuildingA, onLocationSelect]);
+        // Navigating to somewhere else and the user taps a different building —
+        // treat that as a destination swap so the directions panel stays in place.
+        if (isNavigating && onSwapDestination && loc?.id && loc.id !== navTarget?.id) {
+            onSwapDestination(loc);
+            return;
+        }
+        onLocationSelect?.(loc);
+    }, [routeStep, pickBuildingA, onLocationSelect, isNavigating, onSwapDestination, navTarget]);
 
     useBuildingMarkers({ map: mapRef.current?.getMap?.(), styleLoaded, onLocationSelect: handleLocationSelect });
 
@@ -146,7 +152,11 @@ function MapViewInner({
     useEffect(() => {
         if (!navTarget || !mapRef.current) return;
         const [lng, lat] = navTarget.coordinates;
-        mapRef.current.flyTo({ center: [lng, lat], zoom: 17.5, duration: 1400, pitch: 45 });
+        try {
+            mapRef.current.flyTo({ center: [lng, lat], zoom: 17.5, duration: 1400, pitch: 45 });
+        } catch (err) {
+            console.warn('flyTo to navTarget suppressed:', err?.message || err);
+        }
     }, [navTarget]);
 
     const activeCursor = (captureMode || pickMode) ? 'crosshair' : 'inherit';

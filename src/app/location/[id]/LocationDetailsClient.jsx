@@ -125,19 +125,33 @@ export default function LocationDetailsClient({ id }) {
     const [openFloor, setOpenFloor] = useState('G');
     const [copied, setCopied] = useState(false);
 
-    const pageUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://campusquest.vercel.app'}/location/${id}`;
+    // Build absolute URL — prefer build-time env, fall back to runtime origin so dev
+    // environments and previews still produce a working link rather than a 404.
+    const [pageUrl, setPageUrl] = useState(
+        `${process.env.NEXT_PUBLIC_APP_URL || 'https://campusquest.vercel.app'}/location/${id}`
+    );
+    useEffect(() => {
+        const envUrl = process.env.NEXT_PUBLIC_APP_URL;
+        const origin = typeof window !== 'undefined' ? window.location.origin : '';
+        const base = envUrl || origin || 'https://campusquest.vercel.app';
+        setPageUrl(`${base.replace(/\/$/, '')}/location/${id}`);
+    }, [id]);
 
     async function handleShare() {
-        if (navigator.share) {
-            await navigator.share({
-                title: location?.name,
-                text: `View ${location?.name} on CampusQuest`,
-                url: pageUrl,
-            });
-        } else {
-            await navigator.clipboard.writeText(pageUrl);
-            setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
+        try {
+            if (navigator.share) {
+                await navigator.share({
+                    title: location?.name,
+                    text: `View ${location?.name} on CampusQuest`,
+                    url: pageUrl,
+                });
+            } else if (navigator.clipboard) {
+                await navigator.clipboard.writeText(pageUrl);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            }
+        } catch {
+            // user cancelled share dialog or clipboard blocked — silently no-op
         }
     }
 

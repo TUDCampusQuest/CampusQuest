@@ -91,7 +91,11 @@ export function useIndoorNavigation({
             const nextStep = steps[currentStepIndex + 1];
             setCurrentStepIndex(i => i + 1);
             if (nextStep?.location && mapRef?.current) {
-                mapRef.current.flyTo({ center: nextStep.location, zoom: 19, duration: 800 });
+                try {
+                    mapRef.current.flyTo({ center: nextStep.location, zoom: 19, duration: 800 });
+                } catch (err) {
+                    console.warn('flyTo indoor step suppressed:', err?.message || err);
+                }
             }
         }
     }, [gpsLocation, activeRoute, currentStepIndex, activeNavSystem]);
@@ -139,10 +143,14 @@ export function useIndoorNavigation({
                     if (mapRef?.current && crossRoute.path.length > 1) {
                         const lngs = crossRoute.path.map(c => c[0]);
                         const lats  = crossRoute.path.map(c => c[1]);
-                        mapRef.current.fitBounds(
-                            [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
-                            { padding: 80, duration: 1200 }
-                        );
+                        try {
+                            mapRef.current.fitBounds(
+                                [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+                                { padding: 80, duration: 1200 }
+                            );
+                        } catch (err) {
+                            console.warn('fitBounds cross-building suppressed:', err?.message || err);
+                        }
                     }
 
                     const destFloor = destinationFeature.properties.floorName;
@@ -162,7 +170,11 @@ export function useIndoorNavigation({
             onHighlightRoom?.(destinationFeature.properties.poiId);
             const dp = destinationFeature.properties;
             if (dp.centerLng != null && dp.centerLat != null && mapRef?.current) {
-                mapRef.current.flyTo({ center: [dp.centerLng, dp.centerLat], zoom: 19, duration: 1200 });
+                try {
+                    mapRef.current.flyTo({ center: [dp.centerLng, dp.centerLat], zoom: 19, duration: 1200 });
+                } catch (err) {
+                    console.warn('flyTo destination suppressed:', err?.message || err);
+                }
             }
 
             const destFloor = dp.floorName;

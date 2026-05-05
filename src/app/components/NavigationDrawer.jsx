@@ -11,6 +11,7 @@ import MyLocationIcon       from '@mui/icons-material/MyLocation';
 import SwapVertIcon         from '@mui/icons-material/SwapVert';
 import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
 import FmdGoodIcon          from '@mui/icons-material/FmdGood';
+import { isWithinCampus }   from '../lib/campusBounds';
 
 const TEAL = '#7C3AED';
 
@@ -24,6 +25,9 @@ export default function NavigationDrawer({
 }) {
     const [activeField, setActiveField] = useState('B');
     const [query, setQuery] = useState('');
+    const [showOffCampusWarning, setShowOffCampusWarning] = useState(false);
+
+    const gpsOnCampus = !!gpsLocation && isWithinCampus(gpsLocation.lng, gpsLocation.lat);
 
     // When the drawer opens, focus destination field if A is already set
     useEffect(() => {
@@ -220,20 +224,31 @@ export default function NavigationDrawer({
 
                 {/* Quick options for From field */}
                 {activeField === 'A' && !query && (
-                    <Stack direction="row" spacing={1} sx={{ mb: 1.5, flexShrink: 0 }}>
+                    <Stack direction="row" spacing={1} sx={{ mb: 1.5, flexShrink: 0, flexWrap: 'wrap' }}>
                         {gpsLocation && (
                             <Box
                                 onClick={() => {
+                                    if (!gpsOnCampus) {
+                                        setShowOffCampusWarning(true);
+                                        setTimeout(() => setShowOffCampusWarning(false), 4000);
+                                        return;
+                                    }
                                     onSetPointA({ type: 'gps', label: 'My Location', coords: [gpsLocation.lng, gpsLocation.lat] });
                                     setActiveField('B');
                                     setQuery('');
                                 }}
+                                title={gpsOnCampus ? 'Use my GPS as start' : 'Only available on campus'}
                                 sx={{
                                     display: 'flex', alignItems: 'center', gap: 0.75,
                                     px: 1.5, py: 0.75, borderRadius: 99,
-                                    bgcolor: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)',
-                                    cursor: 'pointer', fontSize: 13, fontWeight: 700, color: '#22c55e',
-                                    '&:hover': { bgcolor: 'rgba(34,197,94,0.18)' }, userSelect: 'none',
+                                    bgcolor: gpsOnCampus ? 'rgba(34,197,94,0.1)'   : 'rgba(148,163,184,0.08)',
+                                    border:   gpsOnCampus ? '1px solid rgba(34,197,94,0.25)' : '1px dashed rgba(148,163,184,0.35)',
+                                    cursor: gpsOnCampus ? 'pointer' : 'not-allowed',
+                                    opacity: gpsOnCampus ? 1 : 0.55,
+                                    fontSize: 13, fontWeight: 700,
+                                    color: gpsOnCampus ? '#22c55e' : 'var(--text-muted)',
+                                    '&:hover': { bgcolor: gpsOnCampus ? 'rgba(34,197,94,0.18)' : 'rgba(148,163,184,0.08)' },
+                                    userSelect: 'none',
                                 }}
                             >
                                 <MyLocationIcon sx={{ fontSize: 14 }} />
@@ -252,6 +267,17 @@ export default function NavigationDrawer({
                                 }}
                             >
                                 📌 Tap map
+                            </Box>
+                        )}
+                        {showOffCampusWarning && (
+                            <Box
+                                sx={{
+                                    width: '100%', mt: 1, px: 1.5, py: 1, borderRadius: 1.5,
+                                    bgcolor: 'rgba(234,179,8,0.12)', border: '1px solid rgba(234,179,8,0.35)',
+                                    color: '#eab308', fontSize: 12, fontWeight: 600,
+                                }}
+                            >
+                                ⚠️ You&apos;re currently off-campus. Please pick a building as your start point.
                             </Box>
                         )}
                     </Stack>
