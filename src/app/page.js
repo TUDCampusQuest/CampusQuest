@@ -93,7 +93,7 @@ function Home() {
     const [showStairsPrompt, setShowStairsPrompt] = useState(false);
 
     // Tracks which navigation system is active: null | 'outdoor' | 'indoor'
-    const activeNavSystemRef = useRef(null);
+    const [activeNavSystem, setActiveNavSystem] = useState(null);
 
     const [activeTrail,           setActiveTrail]           = useState(null);
     const [currentTrailStopIndex, setCurrentTrailStopIndex] = useState(0);
@@ -104,13 +104,13 @@ function Home() {
     } = useIndoorNavigation({
         rooms, stairs, gpsLocation, mapRef,
         campusGraph,
-        activeNavSystem: activeNavSystemRef.current,
+        activeNavSystem,
         onHighlightRoom:     setHighlightedRoomId,
         onClearSelectedRoom: () => setSelectedRoom(null),
         onOutdoorFallback: (destFeature, startFeature = null) => {
             const result = buildOutdoorFallback(destFeature, startFeature);
             if (!result) return;
-            activeNavSystemRef.current = 'outdoor';
+            setActiveNavSystem('outdoor');
             setNavTarget(result.navDest);
             setIsNavigating(true);
             if (result.navStart) setNavStartOverride(result.navStart);
@@ -164,7 +164,7 @@ function Home() {
     useEffect(() => {
         if (!isNavigating) {
             setNavStartOverride(null);
-            if (activeNavSystemRef.current === 'outdoor') activeNavSystemRef.current = null;
+            setActiveNavSystem(prev => prev === 'outdoor' ? null : prev);
         }
     }, [isNavigating]);
 
@@ -198,13 +198,13 @@ function Home() {
 
     const handleNavDrawerNavigate = useCallback((pointA, pointB) => {
         if (pointA.type === 'room' && pointB.type === 'room') {
-            activeNavSystemRef.current = 'indoor';
+            setActiveNavSystem('indoor');
             setIsNavigating(false);
             setNavTarget(null);
             handleNavigateTo(pointB.feature, pointA.feature);
         } else if (pointB.type === 'room') {
             if (pointA.type === 'gps' || pointA.type === 'room') {
-                activeNavSystemRef.current = 'indoor';
+                setActiveNavSystem('indoor');
                 setIsNavigating(false);
                 setNavTarget(null);
                 const startOverride = pointA.type === 'room' ? pointA.feature : null;
@@ -212,7 +212,7 @@ function Home() {
             } else if (pointA.type === 'location') {
                 const dp = pointB.feature?.properties;
                 if (dp?.centerLng != null && dp?.centerLat != null) {
-                    activeNavSystemRef.current = 'outdoor';
+                    setActiveNavSystem('outdoor');
                     setNavTarget({
                         id: `room-${dp.poiId}`,
                         name: dp.name || dp.roomCode || dp.buildingName || 'Destination',
@@ -223,7 +223,7 @@ function Home() {
                 }
             }
         } else if (pointB.type === 'location') {
-            activeNavSystemRef.current = 'outdoor';
+            setActiveNavSystem('outdoor');
             setNavTarget(pointB.loc);
             setIsNavigating(true);
             if (pointA.type === 'location') setNavStartOverride(pointA.loc);
@@ -240,7 +240,7 @@ function Home() {
     };
 
     const handleNavigateFromSheet = (loc) => {
-        activeNavSystemRef.current = 'outdoor';
+        setActiveNavSystem('outdoor');
         setNavTarget(loc);
         setIsNavigating(true);
         setSelectedLocation(null);
@@ -264,7 +264,7 @@ function Home() {
     }, [searchParams, rooms, handleRoomSelect]);
 
     const handleRoomNavigateTo = useCallback((roomFeature) => {
-        activeNavSystemRef.current = 'indoor';
+        setActiveNavSystem('indoor');
         setIsNavigating(false);
         setNavTarget(null);
         setSelectedRoom(null);
@@ -382,8 +382,8 @@ function Home() {
                         navTarget={navTarget}
                         activeRoute={activeRoute}
                         onExit={activeRoute
-                            ? () => { activeNavSystemRef.current = null; handleCancelNavigation(); }
-                            : () => { activeNavSystemRef.current = null; setNavTarget(null); setIsNavigating(false); }}
+                            ? () => { setActiveNavSystem(null); handleCancelNavigation(); }
+                            : () => { setActiveNavSystem(null); setNavTarget(null); setIsNavigating(false); }}
                     />
                 )}
 

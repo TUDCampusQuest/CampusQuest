@@ -102,6 +102,11 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
     useEffect(() => { userLocationRef.current = userLocation; });
 
     const routeIdRef = useRef(0);
+    const isIndoorActiveRef = useRef(isIndoorActive);
+    useEffect(() => { isIndoorActiveRef.current = isIndoorActive; }, [isIndoorActive]);
+    // Set to true when user clicks "Change Start" — suppresses GPS auto-snap until
+    // they explicitly tap a building or a new navTarget arrives.
+    const pickARequestedRef = useRef(false);
 
     const [routeStep, setRouteStep] = useState('IDLE');
     const [buildingA, setBuildingA] = useState(null);
@@ -110,16 +115,23 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
     const [routeStats, setRouteStats] = useState(null);
     const [routeError, setRouteError] = useState(null);
 
-    const fitRouteOnMap = useCallback((coords) => {
-        if (isIndoorActive) return;
+    // Stable ref-based function — never changes identity so it never re-triggers the
+    // route effect. Reads all mutable values through refs.
+    const fitRouteOnMapRef = useRef(null);
+    fitRouteOnMapRef.current = (coords) => {
+        if (isIndoorActiveRef.current) return;
         if (!mapRef.current || !coords?.length) return;
+        // Suppress zoom-out when the user is far from campus (>2 km) — prevents the
+        // building markers from appearing to drift on a full-route fitBounds.
+        const loc = userLocationRef.current;
+        if (loc && haversineM([loc.lng, loc.lat], [-6.3779, 53.4059]) > 2000) return;
         const lngs = coords.map(c => c[0]);
         const lats = coords.map(c => c[1]);
         mapRef.current.fitBounds(
             [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
             { padding: 90, duration: 1000 }
         );
-    }, [mapRef, isIndoorActive]);
+    };
 
     useEffect(() => {
         if (isNavigating && navTarget) {
@@ -128,13 +140,17 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
             setRouteStats(null);
             setRouteError(null);
 
+            // A new navTarget always clears the manual PICK_A lock.
+            pickARequestedRef.current = false;
+
             if (navStart) {
                 setBuildingA(navStart);
                 setRouteStep('ACTIVE');
                 return;
             }
 
-            if (userLocation) {
+            // Don't GPS-snap if the user explicitly asked to pick a start.
+            if (!pickARequestedRef.current && userLocation) {
                 const userCoords = [userLocation.lng, userLocation.lat];
                 const nearest = snapToNearestBuilding(userCoords, locations);
                 if (nearest && nearest.id !== navTarget.id) {
@@ -151,6 +167,7 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
         }
 
         if (!isNavigating) {
+            pickARequestedRef.current = false;
             setRouteStep('IDLE');
             setBuildingA(null);
             setBuildingB(null);
@@ -185,7 +202,7 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
                         if (cancelled || myId !== routeIdRef.current) return;
                         setRouteCoords(result.coords);
                         setRouteStats(walkingStats(result.coords));
-                        fitRouteOnMap(result.coords);
+                        fitRouteOnMapRef.current(result.coords);
                         return;
                     }
 
@@ -197,7 +214,7 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
                         if (cancelled || myId !== routeIdRef.current) return;
                         setRouteCoords(result.coords);
                         setRouteStats(walkingStats(result.coords));
-                        fitRouteOnMap(result.coords);
+                        fitRouteOnMapRef.current(result.coords);
                         return;
                     }
 
@@ -214,7 +231,7 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
                             if (cancelled || myId !== routeIdRef.current) return;
                             setRouteCoords(result.coords);
                             setRouteStats(walkingStats(result.coords));
-                            fitRouteOnMap(result.coords);
+                            fitRouteOnMapRef.current(result.coords);
                             return;
                         }
 
@@ -227,7 +244,7 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
                             if (cancelled || myId !== routeIdRef.current) return;
                             setRouteCoords(result.coords);
                             setRouteStats(walkingStats(result.coords));
-                            fitRouteOnMap(result.coords);
+                            fitRouteOnMapRef.current(result.coords);
                             return;
                         }
 
@@ -248,7 +265,7 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
                         if (cancelled || myId !== routeIdRef.current) return;
                         setRouteCoords(result.coords);
                         setRouteStats(walkingStats(result.coords));
-                        fitRouteOnMap(result.coords);
+                        fitRouteOnMapRef.current(result.coords);
                         return;
                     }
 
@@ -259,7 +276,7 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
                     if (cancelled || myId !== routeIdRef.current) return;
                     setRouteCoords(result.coords);
                     setRouteStats(walkingStats(result.coords));
-                    fitRouteOnMap(result.coords);
+                    fitRouteOnMapRef.current(result.coords);
                     return;
                 }
 
@@ -275,11 +292,13 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
 
         resolveRoute();
         return () => { cancelled = true; };
-    // userLocation intentionally excluded — read via ref to avoid re-routing on every GPS tick
+    // userLocation excluded — read via ref to avoid re-routing on every GPS tick.
+    // fitRouteOnMapRef excluded — it is a plain ref wrapper, never changes identity.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [buildingA, buildingB, routeStep, fitRouteOnMap]);
+    }, [buildingA, buildingB, routeStep]);
 
     const resetToPickA = useCallback(() => {
+        pickARequestedRef.current = true;
         setBuildingA(null);
         setRouteCoords(null);
         setRouteStats(null);
@@ -288,6 +307,7 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
     }, []);
 
     const pickBuildingA = useCallback((loc) => {
+        pickARequestedRef.current = false;
         setBuildingA(loc);
         setRouteStep('ACTIVE');
     }, []);

@@ -243,6 +243,22 @@ export default function NavInstructions({
         );
     }
 
+    // Show a compact pill while the route is still calculating — not the full panel.
+    if (!routeStats) {
+        return (
+            <div style={{
+                position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)',
+                zIndex: 20, background: 'rgba(15,23,42,0.92)', backdropFilter: 'blur(10px)',
+                borderRadius: 99, padding: '11px 24px',
+                border: '1px solid rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.7)',
+                fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap',
+                boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
+            }}>
+                ⏳ Calculating route…
+            </div>
+        );
+    }
+
     return (
         <div style={{
             position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 20,
@@ -260,16 +276,14 @@ export default function NavInstructions({
             }}>
                 <div>
                     <div style={{ fontSize: 20, fontWeight: 900, color: '#f1f5f9', lineHeight: 1.1 }}>
-                        {routeStats ? `${routeStats.minutes} min` : '…'}
+                        {routeStats.minutes} min
                     </div>
-                    {routeStats && (
-                        <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
-                            {fmtDist(routeStats.metres)}
-                            {buildingA && buildingB && (
-                                <span> · {buildingA.name} → {buildingB.name}</span>
-                            )}
-                        </div>
-                    )}
+                    <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
+                        {fmtDist(routeStats.metres)}
+                        {buildingA && buildingB && (
+                            <span> · {buildingA.name} → {buildingB.name}</span>
+                        )}
+                    </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
                     <Toggle label="Avoid stairs" checked={avoidStairs} onChange={setAvoidStairs} />
@@ -282,11 +296,7 @@ export default function NavInstructions({
                 </div>
             </div>
             <div style={{ flex: 1, overflowY: 'auto', padding: '14px 16px' }}>
-                {!routeStats ? (
-                    <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, textAlign: 'center' }}>
-                        Calculating route…
-                    </div>
-                ) : outdoorSteps.length === 0 ? (
+                {outdoorSteps.length === 0 ? (
                     <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, textAlign: 'center' }}>
                         Follow the highlighted path on the map.
                     </div>

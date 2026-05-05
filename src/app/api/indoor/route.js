@@ -1,20 +1,19 @@
-   export async function GET(request) {
+export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const file = searchParams.get('file');
 
-  const allowed = [
-  'indoor/rooms',
-  'indoor/stairs',
-  'indoor/floorplans',
-  'indoor/room-name-map',
-  'indoor/entrances',
-  'buildings/locations',
-  'routing/campusGraph',
-  'routing/buildingRoutes',
-  'data/buildings',
-];
+  const allowed = new Set([
+    'indoor/rooms',
+    'indoor/stairs',
+    'indoor/floorplans',
+    'indoor/room-name-map',
+    'buildings/locations',
+    'routing/campusGraph',
+    'routing/buildingRoutes',
+    'data/buildings',
+  ]);
 
-  if (!allowed.includes(file)) {
+  if (!allowed.has(file)) {
     return Response.json({ error: 'Not allowed' }, { status: 400 });
   }
 

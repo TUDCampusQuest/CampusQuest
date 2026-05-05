@@ -30,6 +30,8 @@ function findStartRoomForBuilding(buildingId, roomsFeatures) {
     ) ?? null;
 }
 
+const MAX_SNAP_METRES = 300;
+
 function findNearestBuildingId(gpsLng, gpsLat, locs) {
     const r = d => d * Math.PI / 180;
     let best = null, bestDist = Infinity;
@@ -44,6 +46,9 @@ function findNearestBuildingId(gpsLng, gpsLat, locs) {
         const d = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         if (d < bestDist) { bestDist = d; best = loc; }
     }
+    // Only snap if the user is actually near campus — prevents picking a random
+    // building (e.g. Horticulture) when GPS puts the user far away.
+    if (bestDist > MAX_SNAP_METRES) return null;
     return best?.buildingId ?? null;
 }
 

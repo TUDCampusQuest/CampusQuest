@@ -4,36 +4,43 @@ import { useState, useEffect } from 'react';
 
 let cache = null;
 
+async function safeFetch(file) {
+  try {
+    const r = await fetch(`/api/indoor?file=${file}`);
+    if (!r.ok) return null;
+    return await r.json();
+  } catch {
+    return null;
+  }
+}
+
 async function fetchAll() {
   if (cache) return cache;
 
-  const files = [
-    'indoor/rooms',
-    'indoor/stairs',
-    'indoor/floorplans',
-    'indoor/room-name-map',
-    'indoor/entrances',
-    'buildings/locations',
-    'routing/campusGraph',
-    'routing/buildingRoutes',
-    'data/buildings',
-  ];
-
-  const results = await Promise.all(
-    files.map(f => fetch(`/api/indoor?file=${f}`).then(r => r.json()))
-  );
+  const [
+    rooms, stairs, floorplans, roomNameMap,
+    locations, campusGraph, buildingRoutes, buildingsData,
+  ] = await Promise.all([
+    safeFetch('indoor/rooms'),
+    safeFetch('indoor/stairs'),
+    safeFetch('indoor/floorplans'),
+    safeFetch('indoor/room-name-map'),
+    safeFetch('buildings/locations'),
+    safeFetch('routing/campusGraph'),
+    safeFetch('routing/buildingRoutes'),
+    safeFetch('data/buildings'),
+  ]);
 
   cache = {
-    rooms:          results[0],
-    stairs:         results[1],
-    floorplans:     results[2],
-    roomNameMap:    results[3],
-    entrances:      results[4],
-    locations:      results[5],
-    campusGraph:    results[6],
-    buildingRoutes: results[7],
-    buildings:      results[8]?.buildings     ?? [],
-    buildingLookup: results[8]?.buildingLookup ?? {},
+    rooms,
+    stairs,
+    floorplans,
+    roomNameMap,
+    locations,
+    campusGraph,
+    buildingRoutes,
+    buildings:      buildingsData?.buildings     ?? [],
+    buildingLookup: buildingsData?.buildingLookup ?? {},
   };
 
   return cache;
