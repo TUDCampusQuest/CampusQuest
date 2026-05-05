@@ -5,6 +5,9 @@ import { useParams, useRouter } from 'next/navigation';
 import { locations } from "../../data/locations";
 import useIndoorData from "../../hooks/useIndoorData";
 import { getRoomDisplayName, getRoomTypeName } from "../../lib/roomUtils";
+import GlassCard from "../../components/ui/GlassCard";
+
+const QR_LOCATION_IDS = new Set(['A-BLOCK','AG-BLOCK','C-BLOCK','CAFE','CONNECT','D-BLOCK','E-BLOCK','F-BLOCK','S-BLOCK']);
 
 const FLOOR_LABELS = { G: 'Ground Floor', '0': 'Ground Floor', '1': 'First Floor', '2': 'Second Floor', '3': 'Third Floor' };
 const HIDDEN_TYPES = new Set(['circulation', 'plant', 'storage']);
@@ -29,12 +32,103 @@ function getRoomTypeBadgeStyle(typeName) {
     return { background: 'var(--bg-card)', color: 'var(--text-secondary)' };
 }
 
+// FIX 2 — accordion section for a single floor
+function FloorAccordion({ floor, rooms, openFloor, setOpenFloor, onRoomClick, roomNameMap }) {
+    const isOpen = openFloor === floor;
+    const label  = getFloorLabel(floor);
+
+    return (
+        <div style={{ marginBottom: 8 }}>
+            {/* Header button */}
+            <button
+                onClick={() => setOpenFloor(isOpen ? null : floor)}
+                style={{
+                    width: '100%', height: 48,
+                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                    padding: '0 16px',
+                    background: isOpen ? 'var(--accent-teal)' : 'var(--bg-card)',
+                    color: isOpen ? '#fff' : 'var(--text-primary)',
+                    border: 'none', borderRadius: 12,
+                    cursor: 'pointer', fontWeight: 600, fontSize: 14,
+                    transition: 'background 0.2s, color 0.2s',
+                }}
+            >
+                <span>{label}</span>
+                <span style={{ fontSize: 11, opacity: 0.8 }}>{isOpen ? '▲' : '▼'}</span>
+            </button>
+
+            {/* Collapsible room rows */}
+            <div style={{
+                maxHeight: isOpen ? 600 : 0,
+                overflow: 'hidden',
+                transition: 'max-height 0.3s ease',
+            }}>
+                <div style={{
+                    background: 'var(--glass-bg)',
+                    backdropFilter: 'blur(20px)',
+                    WebkitBackdropFilter: 'blur(20px)',
+                    border: '1px solid var(--glass-border)',
+                    borderTop: 'none',
+                    borderRadius: '0 0 12px 12px',
+                    overflow: 'hidden',
+                }}>
+                    {rooms.map((f, i) => {
+                        const p           = f.properties;
+                        const displayName = getRoomDisplayName(p.roomCode, roomNameMap) || p.roomCode;
+                        const typeName    = getRoomTypeName(p.roomCode, roomNameMap) || p.typeName || '';
+                        const badgeStyle  = getRoomTypeBadgeStyle(typeName);
+                        const isLast      = i === rooms.length - 1;
+                        return (
+                            <div
+                                key={p.poiId}
+                                onClick={() => onRoomClick(f)}
+                                style={{
+                                    minHeight: 44,
+                                    display: 'flex', alignItems: 'center',
+                                    justifyContent: 'space-between',
+                                    padding: '8px 16px',
+                                    borderBottom: isLast ? 'none' : '1px solid var(--border-color)',
+                                    cursor: 'pointer',
+                                    transition: 'background 0.15s',
+                                }}
+                                onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card)'}
+                                onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
+                            >
+                                <span style={{
+                                    fontSize: 14, color: 'var(--text-primary)',
+                                    flex: 1, overflow: 'hidden',
+                                    textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                    paddingRight: 8,
+                                }}>
+                                    {displayName}
+                                </span>
+                                {typeName && (
+                                    <span style={{
+                                        ...badgeStyle,
+                                        fontSize: 10, fontWeight: 600,
+                                        borderRadius: 20, padding: '2px 8px',
+                                        whiteSpace: 'nowrap', flexShrink: 0,
+                                    }}>
+                                        {typeName}
+                                    </span>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+        </div>
+    );
+}
+
 export default function LocationDetails() {
     const router = useRouter();
     const { id } = useParams();
     const [location, setLocation] = useState(null);
-    const [loading, setLoading] = useState(true);
-    const [showAllRooms, setShowAllRooms] = useState(false);
+    const [loading, setLoading]   = useState(true);
+
+    // FIX 2 — accordion state; default Ground floor open
+    const [openFloor, setOpenFloor] = useState('G');
 
     const { rooms, roomNameMap } = useIndoorData();
 
@@ -44,53 +138,52 @@ export default function LocationDetails() {
         setLoading(false);
     }, [id]);
 
+    // FIX 1 — group by floor, deduplicate by displayName per floor
     const roomsByFloor = useMemo(() => {
         if (!rooms?.features || !location?.buildingId) return {};
-        const filtered = rooms.features.filter(f => {
-            const p = f.properties;
-            if (p.buildingId !== location.buildingId) return false;
-            const t = (p.typeName || '').toLowerCase();
-            const k = (p.kind || '').toLowerCase();
-            if (HIDDEN_KINDS.has(k)) return false;
-            if (HIDDEN_TYPES.has(t) || t === 'plant room' || t === 'storage room') return false;
-            return true;
-        });
 
         const groups = {};
-        for (const f of filtered) {
-            const floor = String(f.properties.floorName ?? 'G');
+        for (const f of rooms.features) {
+            const p = f.properties;
+            if (p.buildingId !== location.buildingId) continue;
+            const t = (p.typeName || '').toLowerCase();
+            const k = (p.kind    || '').toLowerCase();
+            if (HIDDEN_KINDS.has(k)) continue;
+            if (HIDDEN_TYPES.has(t) || t === 'plant room' || t === 'storage room') continue;
+
+            const floor = String(p.floorName ?? 'G');
             if (!groups[floor]) groups[floor] = [];
             groups[floor].push(f);
         }
-        return groups;
-    }, [rooms, location]);
 
-    const allRoomsFlat = useMemo(() => Object.values(roomsByFloor).flat(), [roomsByFloor]);
-    const totalRooms = allRoomsFlat.length;
-    const LIMIT = 40;
-
-    const displayedByFloor = useMemo(() => {
-        if (showAllRooms || totalRooms <= LIMIT) return roomsByFloor;
-        let remaining = LIMIT;
-        const result = {};
-        for (const [floor, rms] of Object.entries(roomsByFloor)) {
-            if (remaining <= 0) break;
-            result[floor] = rms.slice(0, remaining);
-            remaining -= rms.length;
+        // Deduplicate each floor group by displayName
+        for (const floor of Object.keys(groups)) {
+            const seen = new Set();
+            groups[floor] = groups[floor].filter(f => {
+                const name = getRoomDisplayName(f.properties.roomCode, roomNameMap) || f.properties.roomCode;
+                if (seen.has(name)) return false;
+                seen.add(name);
+                return true;
+            });
         }
-        return result;
-    }, [roomsByFloor, showAllRooms, totalRooms]);
+
+        return groups;
+    }, [rooms, location, roomNameMap]);
+
+    // FIX 4 — navigate to map with selectedRoomId query param
+    const handleRoomClick = (feature) => {
+        router.push(`/?selectedRoomId=${feature.properties.poiId}`);
+    };
 
     const handleNavigateToBuilding = () => {
         if (!location) return;
-        // Encode the destination as a query param so page.js can trigger navigation
         const coords = location.coordinates;
         router.push(`/?navTo=${location.id}&lng=${coords[0]}&lat=${coords[1]}`);
     };
 
     if (loading) {
         return (
-            <div style={{ minHeight: '100dvh', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ height: '100dvh', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                 <span style={{ color: 'var(--text-secondary)', fontSize: 15 }}>Loading...</span>
             </div>
         );
@@ -98,7 +191,7 @@ export default function LocationDetails() {
 
     if (!location) {
         return (
-            <div style={{ minHeight: '100dvh', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
+            <div style={{ height: '100dvh', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
                 <span style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: 20 }}>Location Not Found</span>
                 <button
                     onClick={() => router.push('/')}
@@ -110,8 +203,17 @@ export default function LocationDetails() {
         );
     }
 
+    const hasRooms = Object.keys(roomsByFloor).length > 0;
+
     return (
-        <div style={{ minHeight: '100dvh', background: 'var(--bg-primary)', overflowY: 'auto' }}>
+        // FIX 3 — full-height scrollable container with bottom padding
+        <div style={{
+            height: '100dvh',
+            overflowY: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            background: 'var(--bg-primary)',
+            paddingBottom: 100,
+        }}>
 
             {/* SECTION 1 — Hero image */}
             <div style={{ position: 'relative', width: '100%', height: 220, flexShrink: 0 }}>
@@ -120,13 +222,11 @@ export default function LocationDetails() {
                     alt={location.name}
                     style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
                 />
-                {/* Bottom gradient overlay */}
                 <div style={{
                     position: 'absolute', inset: 0,
                     background: 'linear-gradient(to top, var(--bg-primary) 0%, transparent 60%)',
                     pointerEvents: 'none',
                 }} />
-                {/* Back arrow */}
                 <button
                     onClick={() => router.back()}
                     aria-label="Go back"
@@ -160,7 +260,7 @@ export default function LocationDetails() {
                     </span>
                 </div>
                 {location.description && (
-                    <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 8, lineHeight: 1.6 }}>
+                    <p style={{ fontSize: 14, color: 'var(--text-secondary)', marginTop: 8, lineHeight: 1.6, margin: '8px 0 0' }}>
                         {location.description}
                     </p>
                 )}
@@ -168,7 +268,6 @@ export default function LocationDetails() {
 
             {/* SECTION 3 — Info cards */}
             <div style={{ padding: '16px 20px 0', display: 'flex', gap: 12 }}>
-                {/* Floors card */}
                 <div style={{
                     flex: 1, padding: 14,
                     background: 'var(--glass-bg)',
@@ -185,7 +284,6 @@ export default function LocationDetails() {
                         {location.floors?.join(', ') || 'N/A'}
                     </div>
                 </div>
-                {/* Access card */}
                 <div style={{
                     flex: 1, padding: 14,
                     background: 'var(--glass-bg)',
@@ -202,93 +300,59 @@ export default function LocationDetails() {
                 </div>
             </div>
 
-            {/* SECTION 4 — Room list */}
-            {Object.keys(displayedByFloor).length > 0 && (
+            {/* SECTION 4 — Room list accordion */}
+            {hasRooms && (
                 <div style={{ padding: '20px 20px 0' }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 4 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>
                         Rooms in this building
                     </div>
-
-                    <div style={{
-                        background: 'var(--glass-bg)',
-                        backdropFilter: 'blur(20px)',
-                        WebkitBackdropFilter: 'blur(20px)',
-                        border: '1px solid var(--glass-border)',
-                        borderTop: '2px solid var(--accent-purple)',
-                        borderRadius: 16,
-                        boxShadow: 'var(--card-shadow)',
-                        overflow: 'hidden',
-                    }}>
-                        {Object.entries(displayedByFloor).map(([floor, rms]) => (
-                            <div key={floor}>
-                                {/* Floor heading */}
-                                <div style={{
-                                    fontSize: 11, fontWeight: 600,
-                                    color: 'var(--accent-teal)',
-                                    textTransform: 'uppercase', letterSpacing: '0.07em',
-                                    padding: '12px 16px 6px',
-                                }}>
-                                    {getFloorLabel(floor)}
-                                </div>
-                                {rms.map((f, i) => {
-                                    const p = f.properties;
-                                    const displayName = getRoomDisplayName(p.roomCode, roomNameMap) || p.roomCode;
-                                    const typeName = getRoomTypeName(p.roomCode, roomNameMap) || p.typeName || '';
-                                    const badgeStyle = getRoomTypeBadgeStyle(typeName);
-                                    const isLast = i === rms.length - 1;
-                                    return (
-                                        <div
-                                            key={p.poiId}
-                                            style={{
-                                                height: 44,
-                                                display: 'flex', alignItems: 'center',
-                                                justifyContent: 'space-between',
-                                                padding: '0 16px',
-                                                borderBottom: isLast ? 'none' : '1px solid var(--border-color)',
-                                                cursor: 'pointer',
-                                            }}
-                                            onClick={() => router.push(`/?roomId=${p.poiId}`)}
-                                        >
-                                            <span style={{ fontSize: 14, color: 'var(--text-primary)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: 8 }}>
-                                                {displayName}
-                                            </span>
-                                            {typeName && (
-                                                <span style={{
-                                                    ...badgeStyle,
-                                                    fontSize: 10, fontWeight: 600,
-                                                    borderRadius: 20, padding: '2px 8px',
-                                                    whiteSpace: 'nowrap', flexShrink: 0,
-                                                }}>
-                                                    {typeName}
-                                                </span>
-                                            )}
-                                        </div>
-                                    );
-                                })}
-                            </div>
-                        ))}
-
-                        {!showAllRooms && totalRooms > LIMIT && (
-                            <button
-                                onClick={() => setShowAllRooms(true)}
-                                style={{
-                                    width: '100%', padding: '12px 16px',
-                                    background: 'transparent',
-                                    borderTop: '1px solid var(--border-color)',
-                                    border: 'none', borderTop: '1px solid var(--border-color)',
-                                    color: 'var(--accent-teal)', fontWeight: 600, fontSize: 13,
-                                    cursor: 'pointer', textAlign: 'center',
-                                }}
-                            >
-                                View all {totalRooms} rooms
-                            </button>
-                        )}
-                    </div>
+                    {Object.entries(roomsByFloor).map(([floor, rms]) => (
+                        <FloorAccordion
+                            key={floor}
+                            floor={floor}
+                            rooms={rms}
+                            openFloor={openFloor}
+                            setOpenFloor={setOpenFloor}
+                            onRoomClick={handleRoomClick}
+                            roomNameMap={roomNameMap}
+                        />
+                    ))}
                 </div>
             )}
 
-            {/* SECTION 5 — Action buttons */}
-            <div style={{ padding: '20px 20px 40px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            {/* SECTION 5 — QR code */}
+            {QR_LOCATION_IDS.has(location.id) && (
+                <div style={{ padding: '0 20px', marginTop: 16 }}>
+                    <GlassCard style={{ padding: 20, marginTop: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                            <span style={{ fontSize: 18 }}>📱</span>
+                            <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-primary)' }}>Share this location</span>
+                        </div>
+                        <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 12px' }}>
+                            Scan to open on another device
+                        </p>
+                        <img
+                            src={`https://campusquesttud.s3.eu-west-1.amazonaws.com/photos/qr/${location.id}.png`}
+                            alt={`QR code for ${location.name}`}
+                            onError={e => e.currentTarget.style.display = 'none'}
+                            style={{
+                                width: 140, height: 140,
+                                borderRadius: 12,
+                                display: 'block',
+                                margin: '0 auto',
+                                background: '#fff',
+                                padding: 8,
+                            }}
+                        />
+                        <p style={{ fontSize: 11, color: 'var(--text-secondary)', textAlign: 'center', margin: '8px 0 0' }}>
+                            Point your camera at the code
+                        </p>
+                    </GlassCard>
+                </div>
+            )}
+
+            {/* SECTION 6 — Action buttons */}
+            <div style={{ padding: '20px 20px 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
                 <button
                     onClick={handleNavigateToBuilding}
                     style={{

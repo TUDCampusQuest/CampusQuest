@@ -1,7 +1,7 @@
 'use client';
 import { Source, Layer } from 'react-map-gl';
 
-export default function MapLayers({ trailGeoJSON, capturedGeoJSON, routeGeoJSON }) {
+export default function MapLayers({ trailGeoJSON, capturedGeoJSON, routeGeoJSON, activeTrailGeoJSON }) {
     return (
         <>
             {/* Selected trail */}
@@ -28,6 +28,15 @@ export default function MapLayers({ trailGeoJSON, capturedGeoJSON, routeGeoJSON 
                     <Layer id="route-fill" type="line" slot="middle"
                         layout={{ 'line-cap': 'round', 'line-join': 'round' }}
                         paint={{ 'line-color': '#1BA39C', 'line-width': 5 }} />
+                </Source>
+            )}
+
+            {/* Active trail — purple dashed polyline */}
+            {activeTrailGeoJSON && (
+                <Source id="active-trail-source" type="geojson" data={activeTrailGeoJSON}>
+                    <Layer id="active-trail-line" type="line" slot="middle"
+                        layout={{ 'line-cap': 'round', 'line-join': 'round' }}
+                        paint={{ 'line-color': '#7C3AED', 'line-width': 4, 'line-dasharray': [2, 2] }} />
                 </Source>
             )}
         </>

@@ -117,8 +117,8 @@ export default function NavigationDrawer({
                 display: 'flex', alignItems: 'center', gap: 1,
                 px: 1.5, py: 1.25,
                 borderRadius: '12px',
-                bgcolor: activeField === field ? '#f0f9ff' : '#f8fafc',
-                border: `1.5px solid ${activeField === field ? '#0ea5e9' : '#e2e8f0'}`,
+                bgcolor: activeField === field ? 'var(--bg-surface)' : 'var(--btn-ghost-bg)',
+                border: `1.5px solid ${activeField === field ? 'var(--accent-teal)' : 'var(--border-subtle)'}`,
                 cursor: 'pointer',
                 minHeight: 48,
                 transition: 'all 0.15s',
@@ -128,7 +128,7 @@ export default function NavigationDrawer({
             <Typography sx={{
                 flex: 1, fontSize: 14,
                 fontWeight: point ? 600 : 400,
-                color: point ? '#0f172a' : '#94a3b8',
+                color: point ? 'var(--text-primary)' : 'var(--text-muted)',
             }}>
                 {point ? point.label : placeholder}
             </Typography>
@@ -142,7 +142,7 @@ export default function NavigationDrawer({
                     }}
                     sx={{ p: 0.25, flexShrink: 0 }}
                 >
-                    <CloseIcon sx={{ fontSize: 14, color: '#94a3b8' }} />
+                    <CloseIcon sx={{ fontSize: 14, color: 'var(--text-secondary)' }} />
                 </IconButton>
             )}
         </Box>
@@ -159,6 +159,9 @@ export default function NavigationDrawer({
                     height: '82dvh',
                     pb: 'env(safe-area-inset-bottom)',
                     display: 'flex', flexDirection: 'column',
+                    bgcolor: 'var(--bg-secondary)',
+                    color: 'var(--text-primary)',
+                    borderTop: '1px solid var(--border-card)',
                 },
             }}
         >
@@ -166,8 +169,8 @@ export default function NavigationDrawer({
 
                 {/* Header */}
                 <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2.5, flexShrink: 0 }}>
-                    <Typography variant="h5" sx={{ fontWeight: 800 }}>Navigate</Typography>
-                    <IconButton onClick={onClose}><CloseIcon /></IconButton>
+                    <Typography variant="h5" sx={{ fontWeight: 800, color: 'var(--text-primary)' }}>Navigate</Typography>
+                    <IconButton onClick={onClose} sx={{ color: 'var(--text-secondary)' }}><CloseIcon /></IconButton>
                 </Stack>
 
                 {/* A → B selector */}
@@ -175,7 +178,7 @@ export default function NavigationDrawer({
                     {/* Timeline dots */}
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', pt: 1.75, gap: 0 }}>
                         <RadioButtonCheckedIcon sx={{ color: '#22c55e', fontSize: 18 }} />
-                        <Box sx={{ width: 2, flex: 1, bgcolor: '#e2e8f0', my: 0.5, minHeight: 16 }} />
+                        <Box sx={{ width: 2, flex: 1, bgcolor: 'var(--border-card)', my: 0.5, minHeight: 16 }} />
                         <FmdGoodIcon sx={{ color: '#ef4444', fontSize: 18 }} />
                     </Box>
 
@@ -202,9 +205,9 @@ export default function NavigationDrawer({
                         <IconButton
                             onClick={handleSwap}
                             size="small"
-                            sx={{ border: '1px solid #e2e8f0', bgcolor: '#f8fafc' }}
+                            sx={{ border: '1px solid var(--border-card)', bgcolor: 'var(--btn-ghost-bg)' }}
                         >
-                            <SwapVertIcon sx={{ fontSize: 18 }} />
+                            <SwapVertIcon sx={{ fontSize: 18, color: 'var(--text-secondary)' }} />
                         </IconButton>
                     </Box>
                 </Box>
@@ -217,7 +220,7 @@ export default function NavigationDrawer({
                     onChange={e => setQuery(e.target.value)}
                     variant="outlined"
                     size="small"
-                    sx={{ mb: 1.5, flexShrink: 0, '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: '#f1f5f9' } }}
+                    sx={{ mb: 1.5, flexShrink: 0, '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: 'var(--bg-input)', color: 'var(--text-primary)', '& .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--border-subtle)' }, '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--border-card)' }, '& input': { color: 'var(--text-primary)' }, '& input::placeholder': { color: 'var(--text-muted)', opacity: 1 } } }}
                 />
 
                 {/* Quick options for From field */}
@@ -233,9 +236,9 @@ export default function NavigationDrawer({
                                 sx={{
                                     display: 'flex', alignItems: 'center', gap: 0.75,
                                     px: 1.5, py: 0.75, borderRadius: 99,
-                                    bgcolor: '#f0fdf4', border: '1px solid #bbf7d0',
-                                    cursor: 'pointer', fontSize: 13, fontWeight: 700, color: '#15803d',
-                                    '&:hover': { bgcolor: '#dcfce7' }, userSelect: 'none',
+                                    bgcolor: 'rgba(34,197,94,0.1)', border: '1px solid rgba(34,197,94,0.25)',
+                                    cursor: 'pointer', fontSize: 13, fontWeight: 700, color: '#22c55e',
+                                    '&:hover': { bgcolor: 'rgba(34,197,94,0.18)' }, userSelect: 'none',
                                 }}
                             >
                                 <MyLocationIcon sx={{ fontSize: 14 }} />
@@ -247,9 +250,9 @@ export default function NavigationDrawer({
                             sx={{
                                 display: 'flex', alignItems: 'center', gap: 0.75,
                                 px: 1.5, py: 0.75, borderRadius: 99,
-                                bgcolor: '#eff6ff', border: '1px solid #bfdbfe',
-                                cursor: 'pointer', fontSize: 13, fontWeight: 700, color: '#1d4ed8',
-                                '&:hover': { bgcolor: '#dbeafe' }, userSelect: 'none',
+                                bgcolor: 'var(--btn-ghost-bg)', border: '1px solid var(--border-subtle)',
+                                cursor: 'pointer', fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)',
+                                '&:hover': { bgcolor: 'var(--loc-item-hover)' }, userSelect: 'none',
                             }}
                         >
                             📌 Tap map
@@ -265,15 +268,15 @@ export default function NavigationDrawer({
                             onClick={() => handleSelect(item)}
                             sx={{
                                 mb: 1, borderRadius: '14px',
-                                border: `1px solid ${item.type === 'room' ? '#e0f2fe' : '#f1f5f9'}`,
-                                bgcolor: item.type === 'room' ? '#f0f9ff' : '#f8fafc',
+                                border: `1px solid ${item.type === 'room' ? 'var(--room-item-border)' : 'var(--loc-item-border)'}`,
+                                bgcolor: item.type === 'room' ? 'var(--room-item-bg)' : 'var(--loc-item-bg)',
                                 cursor: 'pointer',
-                                '&:hover': { bgcolor: item.type === 'room' ? '#e0f2fe' : '#f1f5f9' },
+                                '&:hover': { bgcolor: item.type === 'room' ? 'var(--room-item-hover)' : 'var(--loc-item-hover)' },
                             }}
                         >
                             <ListItemText
-                                primary={<Typography sx={{ fontWeight: 700, fontSize: 14 }}>{item.label}</Typography>}
-                                secondary={<Typography sx={{ fontSize: 12, color: '#94a3b8' }}>{item.sub}</Typography>}
+                                primary={<Typography sx={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>{item.label}</Typography>}
+                                secondary={<Typography sx={{ fontSize: 12, color: 'var(--text-secondary)' }}>{item.sub}</Typography>}
                             />
                             {item.type === 'room'
                                 ? <MeetingRoomIcon sx={{ color: '#0ea5e9', fontSize: 18, flexShrink: 0 }} />
@@ -281,7 +284,7 @@ export default function NavigationDrawer({
                         </ListItem>
                     ))}
                     {query.trim() && results.length === 0 && (
-                        <Typography sx={{ textAlign: 'center', color: '#94a3b8', mt: 4, fontSize: 14 }}>
+                        <Typography sx={{ textAlign: 'center', color: 'var(--text-secondary)', mt: 4, fontSize: 14 }}>
                             No results for &quot;{query}&quot;
                         </Typography>
                     )}
@@ -297,8 +300,8 @@ export default function NavigationDrawer({
                         width: '100%', py: 1.75, borderRadius: '14px', border: 'none',
                         background: canNavigate
                             ? 'linear-gradient(135deg, #1BA39C 0%, #0e6d68 100%)'
-                            : '#e2e8f0',
-                        color: canNavigate ? '#fff' : '#94a3b8',
+                            : 'var(--btn-ghost-bg)',
+                        color: canNavigate ? '#fff' : 'var(--text-muted)',
                         fontWeight: 800, fontSize: 15,
                         cursor: canNavigate ? 'pointer' : 'not-allowed',
                         transition: 'all 0.2s',

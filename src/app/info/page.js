@@ -44,7 +44,7 @@ export default function InfoPage() {
     if (!mounted) return null;
 
     return (
-        <Box sx={{ minHeight: "100dvh", bgcolor: "var(--bg-primary)", p: 3, pb: 10 }}>
+        <Box sx={{ height: "100dvh", overflowY: "auto", bgcolor: "var(--bg-primary)", p: 3, pb: 22 }}>
 
             {/* Back Button */}
             <IconButton onClick={() => router.back()} sx={{ mb: 2, color: "var(--text-primary)" }}>

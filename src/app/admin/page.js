@@ -16,7 +16,6 @@ import ViewInArIcon      from "@mui/icons-material/ViewInAr";
 
 import { locations } from "../data/locations";
 import NavHUD from "../components/NavHUD";
-import NavBottomCard from "../components/NavBottomCard";
 import SearchDrawer from "../components/SearchDrawer";
 
 const MapView = dynamic(() => import("../components/MapView"), {
@@ -231,9 +230,6 @@ export default function Home() {
 
                 {isNavigating && navTarget && (
                     <NavHUD navTarget={navTarget} onExit={() => { setNavTarget(null); setIsNavigating(false); }} />
-                )}
-                {navTarget && !isNavigating && (
-                    <NavBottomCard navTarget={navTarget} onNavigate={() => setIsNavigating(true)} onDismiss={() => setNavTarget(null)} />
                 )}
             </Box>
 

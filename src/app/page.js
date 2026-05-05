@@ -5,8 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { Box } from "@mui/material";
 import dynamic from "next/dynamic";
 
-import { locations }                   from "./data/locations";
-import { BUILDINGS, BUILDING_LOOKUP }  from "./data/mazemap-buildings";
+import { locations }  from "./data/locations";
 import AppHeader        from "./components/AppHeader";
 import MapSidebar       from "./components/MapSidebar";
 import BottomBar        from "./components/BottomBar";
@@ -19,29 +18,91 @@ import OnboardingTour  from "./components/OnboardingTour";
 import NavigationDrawer from "./components/NavigationDrawer";
 import GeofenceBanner   from "./components/GeofenceBanner";
 import QRModal          from "./components/QRModal";
+import TrailStopCard    from "./components/TrailStopCard";
 import useIndoorData    from "./hooks/useIndoorData";
 import useGeofence      from "./hooks/useGeofence";
 import { useIndoorNavigation } from "./hooks/useIndoorNavigation";
+import useMapControls        from "./hooks/useMapControls";
+import useLocationSelection  from "./hooks/useLocationSelection";
+import { haversineM }        from "./lib/routeUtils";
 
 const MapView = dynamic(() => import("./components/MapView"), {
     ssr: false,
     loading: () => <Box sx={{ height: "100dvh", width: "100vw", bgcolor: "#f1f5f9" }} />,
 });
 
-const CAMPUS_CENTER = { longitude: -6.37824, latitude: 53.405292 };
+function ArrivedToast({ show }) {
+    if (!show) return null;
+    return (
+        <Box sx={{
+            position: "absolute", top: 16, left: "50%",
+            transform: "translateX(-50%)", zIndex: 30,
+            background: "#00B4B4", color: "#fff", fontWeight: 700,
+            fontSize: 14, px: 3, py: 1.5, borderRadius: 99,
+            boxShadow: "0 4px 20px rgba(0,0,0,0.2)", whiteSpace: "nowrap",
+        }}>
+            ✅ You have arrived!
+        </Box>
+    );
+}
 
-function haversineLocal([lng1, lat1], [lng2, lat2]) {
-    const R = 6371000, r = d => d * Math.PI / 180;
-    const dLat = r(lat2 - lat1), dLng = r(lng2 - lng1);
-    const a = Math.sin(dLat / 2) ** 2 + Math.cos(r(lat1)) * Math.cos(r(lat2)) * Math.sin(dLng / 2) ** 2;
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+function findNearestTapTarget(lngLat, rooms, locs) {
+    let best = null, bestDist = Infinity;
+
+    if (rooms?.features) {
+        for (const f of rooms.features) {
+            const p = f.properties;
+            if (p.centerLng == null || p.centerLat == null) continue;
+            const d = haversineM([lngLat.lng, lngLat.lat], [p.centerLng, p.centerLat]);
+            if (d < bestDist) { bestDist = d; best = { type: 'room', label: p.name || p.roomCode, feature: f }; }
+        }
+    }
+
+    if (bestDist > 50) {
+        best = null;
+        let locDist = Infinity;
+        for (const loc of (Array.isArray(locs) ? locs : [])) {
+            const c = loc.coordinates || [loc.lng, loc.lat];
+            if (!c) continue;
+            const d = haversineM([lngLat.lng, lngLat.lat], c);
+            if (d < locDist) { locDist = d; best = { type: 'location', label: loc.name, loc }; }
+        }
+    }
+
+    return best;
+}
+
+function buildOutdoorFallback(destFeature, startFeature = null) {
+    const dp = destFeature?.properties;
+    if (!dp || dp.centerLng == null || dp.centerLat == null) return null;
+
+    const navDest = {
+        id:          `room-${dp.poiId}`,
+        name:        dp.name || dp.roomCode || dp.buildingName || 'Destination',
+        coordinates: [dp.centerLng, dp.centerLat],
+    };
+
+    let navStart = null;
+    if (startFeature) {
+        const sp = startFeature.properties;
+        if (sp?.centerLng != null && sp?.centerLat != null) {
+            navStart = {
+                id:          `room-${sp.poiId}`,
+                name:        sp.name || sp.roomCode || sp.buildingName || 'Start',
+                coordinates: [sp.centerLng, sp.centerLat],
+            };
+        }
+    }
+
+    return { navDest, navStart };
 }
 
 function Home() {
     const mapRef = useRef(null);
     const searchParams = useSearchParams();
 
-    const { rooms, stairs, floorplans, campusGraph, roomNameMap, entrances, loading, error } = useIndoorData();
+    const { rooms, stairs, floorplans, campusGraph, roomNameMap, entrances,
+            buildings, buildingLookup, loading, error } = useIndoorData();
 
     const [isMounted,    setIsMounted]    = useState(false);
     const [searchOpen,   setSearchOpen]   = useState(false);
@@ -52,9 +113,6 @@ function Home() {
     const [navTarget,         setNavTarget]         = useState(null);
     const [isNavigating,      setIsNavigating]      = useState(false);
     const [gpsLocation,       setGpsLocation]       = useState(null);
-    const [selectedLocation,  setSelectedLocation]  = useState(null);
-    const [activeBuilding,    setActiveBuilding]     = useState(null);
-    const [activeFloorName,   setActiveFloorName]   = useState(null);
     const [highlightedRoomId, setHighlightedRoomId] = useState(null);
     const [selectedRoom,      setSelectedRoom]      = useState(null);
 
@@ -63,10 +121,6 @@ function Home() {
     const [navPointB,        setNavPointB]        = useState(null);
     const [navStartOverride, setNavStartOverride] = useState(null);
     const [pickingNavPoint,  setPickingNavPoint]  = useState(null);
-
-    const [viewState, setViewState] = useState({
-        ...CAMPUS_CENTER, zoom: 16, pitch: 0, bearing: 0,
-    });
 
     const [pickingIndoorStart, setPickingIndoorStart] = useState(false);
     const [pickingRoomStart,   setPickingRoomStart]   = useState(false);
@@ -86,7 +140,6 @@ function Home() {
         dismissTimerRef.current = setTimeout(() => setBannerDismissed(false), 60000);
     };
 
-    // ── Indoor navigation hook ──────────────────────────────────────────────
     const {
         activeRoute, currentStepIndex, arrivedMessage,
         activeDestination,
@@ -94,39 +147,27 @@ function Home() {
     } = useIndoorNavigation({
         rooms, stairs, gpsLocation, mapRef,
         campusGraph,
-        onHighlightRoom:      setHighlightedRoomId,
-        onClearSelectedRoom:  () => setSelectedRoom(null),
-        // Called when rooms are in different buildings — route outdoors between room centroids.
-        // We prefer room centroid coordinates (no pin lookup) so Mapbox routes between the
-        // actual room locations rather than the nearest pre-defined building marker.
+        onHighlightRoom:     setHighlightedRoomId,
+        onClearSelectedRoom: () => setSelectedRoom(null),
         onOutdoorFallback: (destFeature, startFeature = null) => {
-            const dp = destFeature?.properties;
-            if (!dp || dp.centerLng == null || dp.centerLat == null) return;
-
-            // Synthetic location objects whose IDs are not in locationNodeMap, which forces
-            // useNavigation to use Mapbox walking directions between the exact coordinates.
-            const navDest = {
-                id:          `room-${dp.poiId}`,
-                name:        dp.name || dp.roomCode || dp.buildingName || 'Destination',
-                coordinates: [dp.centerLng, dp.centerLat],
-            };
-            setNavTarget(navDest);
+            const result = buildOutdoorFallback(destFeature, startFeature);
+            if (!result) return;
+            setNavTarget(result.navDest);
             setIsNavigating(true);
-
-            if (startFeature) {
-                const sp = startFeature.properties;
-                if (sp?.centerLng != null && sp?.centerLat != null) {
-                    setNavStartOverride({
-                        id:          `room-${sp.poiId}`,
-                        name:        sp.name || sp.roomCode || sp.buildingName || 'Start',
-                        coordinates: [sp.centerLng, sp.centerLat],
-                    });
-                }
-            }
+            if (result.navStart) setNavStartOverride(result.navStart);
         },
     });
 
-    // ── Lifecycle ───────────────────────────────────────────────────────────
+    const { viewState, setViewState, handleZoomIn, handleZoomOut, handleToggle3D, handleRecenter } =
+        useMapControls({ gpsLocation });
+
+    const {
+        selectedLocation, setSelectedLocation,
+        activeBuilding,
+        activeFloorName,  setActiveFloorName,
+        handleSelectLocation,
+    } = useLocationSelection({ mapRef, setSearchOpen, setQuery, buildings, buildingLookup });
+
     useEffect(() => { setIsMounted(true); }, []);
 
     useEffect(() => {
@@ -157,7 +198,6 @@ function Home() {
         return () => window.removeEventListener("focus", fetchTrails);
     }, [fetchTrails]);
 
-    // Clear outdoor nav override when outdoor navigation session ends
     useEffect(() => {
         if (!isNavigating) setNavStartOverride(null);
     }, [isNavigating]);
@@ -166,7 +206,6 @@ function Home() {
         return () => { if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current); };
     }, []);
 
-    // Read activeTrail / startTrail placed in localStorage by the trails page
     useEffect(() => {
         const storedView  = localStorage.getItem('activeTrail');
         const storedStart = localStorage.getItem('startTrail');
@@ -175,9 +214,7 @@ function Home() {
             localStorage.removeItem('activeTrail');
             try {
                 const trail = JSON.parse(storedView);
-                if (trail?.computedPath?.length) {
-                    setActiveTrail(trail);
-                }
+                if (trail?.computedPath?.length) setActiveTrail(trail);
             } catch {}
         } else if (storedStart) {
             localStorage.removeItem('startTrail');
@@ -191,31 +228,9 @@ function Home() {
         }
     }, []);
 
-    // ── Map-pick mode ────────────────────────────────────────────────────────
     const handleNavPick = useCallback((lngLat) => {
         if (!pickingNavPoint) return;
-        let best = null, bestDist = Infinity;
-
-        if (rooms?.features) {
-            for (const f of rooms.features) {
-                const p = f.properties;
-                if (p.centerLng == null || p.centerLat == null) continue;
-                const d = haversineLocal([lngLat.lng, lngLat.lat], [p.centerLng, p.centerLat]);
-                if (d < bestDist) { bestDist = d; best = { type: 'room', label: p.name || p.roomCode, feature: f }; }
-            }
-        }
-
-        if (bestDist > 50) {
-            best = null;
-            let locDist = Infinity;
-            for (const loc of (Array.isArray(locations) ? locations : [])) {
-                const c = loc.coordinates || [loc.lng, loc.lat];
-                if (!c) continue;
-                const d = haversineLocal([lngLat.lng, lngLat.lat], c);
-                if (d < locDist) { locDist = d; best = { type: 'location', label: loc.name, loc }; }
-            }
-        }
-
+        const best = findNearestTapTarget(lngLat, rooms, locations);
         if (!best) return;
         if (pickingNavPoint === 'A') setNavPointA(best);
         else setNavPointB(best);
@@ -223,18 +238,14 @@ function Home() {
         setNavDrawerOpen(true);
     }, [pickingNavPoint, rooms]);
 
-    // ── NavigationDrawer routing ─────────────────────────────────────────────
     const handleNavDrawerNavigate = useCallback((pointA, pointB) => {
         if (pointA.type === 'room' && pointB.type === 'room') {
-            // Both rooms — handleNavigateTo handles same-building indoor route and
-            // cross-building outdoor fallback (via onOutdoorFallback, which also sets start)
             handleNavigateTo(pointB.feature, pointA.feature);
         } else if (pointB.type === 'room') {
             if (pointA.type === 'gps' || pointA.type === 'room') {
                 const startOverride = pointA.type === 'room' ? pointA.feature : null;
                 handleNavigateTo(pointB.feature, startOverride);
             } else if (pointA.type === 'location') {
-                // Outdoor location → room: route to room centroid via Mapbox
                 const dp = pointB.feature?.properties;
                 if (dp?.centerLng != null && dp?.centerLat != null) {
                     setNavTarget({
@@ -257,60 +268,9 @@ function Home() {
         setNavPointB(null);
     }, [handleNavigateTo]);
 
-    // ── Map controls ─────────────────────────────────────────────────────────
-    const handleZoomIn   = () => setViewState(v => ({ ...v, zoom: Math.min(v.zoom + 1, 20) }));
-    const handleZoomOut  = () => setViewState(v => ({ ...v, zoom: Math.max(v.zoom - 1, 0) }));
-    const handleToggle3D = () => setViewState(p => ({ ...p, pitch: p.pitch === 0 ? 60 : 0, duration: 900 }));
-    const handleRecenter = () => {
-        const target = gpsLocation
-            ? { longitude: gpsLocation.lng, latitude: gpsLocation.lat, zoom: 18 }
-            : { ...CAMPUS_CENTER, zoom: 16 };
-        setViewState(p => ({ ...p, ...target, pitch: 0, duration: 1200 }));
-    };
-
     const handleStaffClick = () => {
         if (isAdmin) { sessionStorage.removeItem("cq_staff"); setIsAdmin(false); }
         else setAuthOpen(true);
-    };
-
-    // ── Location / building helpers ──────────────────────────────────────────
-    const matchBuildingFromLocation = (loc) => {
-        if (!loc) return null;
-        if (loc.buildingId && BUILDING_LOOKUP[loc.buildingId]) return BUILDING_LOOKUP[loc.buildingId];
-        const text = ((loc.name || "") + " " + (loc.id || "")).toLowerCase().trim();
-        if (!text) return null;
-        const blockMatch = text.match(/block\s+([a-z])\b/);
-        if (blockMatch) {
-            const letter = blockMatch[1];
-            const byBlock = BUILDINGS.find(b => new RegExp(`block\\s*${letter}\\b`, "i").test(b.name));
-            if (byBlock) return byBlock;
-        }
-        return BUILDINGS.find(b => {
-            const bname = b.name.toLowerCase();
-            if (text.includes(bname) || bname.includes(text)) return true;
-            const tokens = bname.split(/[\s\-()]+/).filter(t => t.length > 3);
-            return tokens.some(tok => text.includes(tok));
-        }) || null;
-    };
-
-    const handleSelectLocation = (loc) => {
-        setSelectedLocation(loc);
-        setSearchOpen(false);
-        setQuery("");
-        const matched = matchBuildingFromLocation(loc);
-        if (matched) {
-            setActiveBuilding(matched);
-            const ground = matched.floors.find(f => f.z === 1) || matched.floors[0];
-            setActiveFloorName(ground ? ground.name : null);
-        } else {
-            setActiveBuilding(null);
-            setActiveFloorName(null);
-        }
-        const lng = loc.coordinates?.[0] ?? loc.lng;
-        const lat = loc.coordinates?.[1] ?? loc.lat;
-        if (lng != null && lat != null && mapRef.current) {
-            mapRef.current.flyTo({ center: [lng, lat], zoom: 17.5, duration: 1200 });
-        }
     };
 
     const handleNavigateFromSheet = (loc) => {
@@ -335,7 +295,6 @@ function Home() {
         }
     }, [pickingRoomStart, destinationRoom]);
 
-    // FIX 4 — open a room passed back from the building detail page
     useEffect(() => {
         const roomId = searchParams.get("selectedRoomId");
         if (!roomId || !rooms?.features) return;
@@ -343,18 +302,13 @@ function Home() {
         if (feature) handleRoomSelect(feature);
     }, [searchParams, rooms, handleRoomSelect]);
 
-    // ── Indoor "Change Start" pick mode ──────────────────────────────────────
-    // Mirrors the outdoor PICK_A flow: user taps Change Start → banner appears →
-    // tapping any room on the map re-runs the route with that room as the new start.
     const handleIndoorChangeStart = useCallback(() => {
         setPickingIndoorStart(true);
     }, []);
 
     const handleIndoorRoomPick = useCallback((feature) => {
         setPickingIndoorStart(false);
-        if (activeDestination) {
-            handleNavigateTo(activeDestination, feature);
-        }
+        if (activeDestination) handleNavigateTo(activeDestination, feature);
     }, [activeDestination, handleNavigateTo]);
 
     const handleNavigateFromRoom = useCallback((roomFeature) => {
@@ -368,7 +322,6 @@ function Home() {
         l.id?.toLowerCase().includes(query.toLowerCase()),
     );
 
-    // ── Guards ───────────────────────────────────────────────────────────────
     if (!isMounted) return null;
 
     if (loading) return (
@@ -383,7 +336,6 @@ function Home() {
         </div>
     );
 
-    // ── Render ───────────────────────────────────────────────────────────────
     return (
         <Box sx={{ height: "100dvh", width: "100vw", display: "flex", flexDirection: "column", overflow: "hidden" }}>
 
@@ -473,93 +425,16 @@ function Home() {
                     />
                 )}
 
-                {arrivedMessage && (
-                    <Box sx={{
-                        position: "absolute", top: 16, left: "50%", transform: "translateX(-50%)",
-                        zIndex: 30, background: "#00B4B4", color: "#fff",
-                        fontWeight: 700, fontSize: 14, px: 3, py: 1.5,
-                        borderRadius: 99, boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
-                        whiteSpace: "nowrap",
-                    }}>
-                        ✅ You have arrived!
-                    </Box>
-                )}
+                <ArrivedToast show={arrivedMessage} />
             </Box>
 
-            {/* Trail next-stop card — shown when startTrail is active */}
-            {activeTrail && !isNavigating && !activeRoute && (
-                <Box sx={{
-                    position: "fixed", bottom: "calc(72px + env(safe-area-inset-bottom, 0px))",
-                    left: 0, right: 0, zIndex: 40,
-                    px: 2, pb: 1,
-                }}>
-                    <Box sx={{
-                        background: "var(--bg-secondary)",
-                        border: "1px solid var(--border-color)",
-                        borderRadius: "16px",
-                        p: 2,
-                        boxShadow: "0 -4px 24px rgba(0,0,0,0.3)",
-                    }}>
-                        {currentTrailStopIndex < (activeTrail.stops?.length ?? 0) ? (
-                            <>
-                                <Box sx={{ fontSize: 12, color: "var(--text-secondary)", mb: 0.5 }}>
-                                    Stop {currentTrailStopIndex + 1} of {activeTrail.stops.length}
-                                </Box>
-                                <Box sx={{ fontWeight: 700, fontSize: 15, color: "var(--text-primary)", mb: 0.5 }}>
-                                    Next stop: {activeTrail.stops[currentTrailStopIndex]?.name}
-                                </Box>
-                                <Box sx={{ fontSize: 13, color: "var(--text-secondary)", mb: 1.5 }}>
-                                    {activeTrail.stops[currentTrailStopIndex]?.description}
-                                </Box>
-                                <Box sx={{ display: "flex", gap: 1 }}>
-                                    <Box
-                                        onClick={() => setCurrentTrailStopIndex(i => i + 1)}
-                                        sx={{
-                                            flex: 1, height: 38, borderRadius: "10px",
-                                            background: "var(--accent-purple)", color: "#fff",
-                                            display: "flex", alignItems: "center", justifyContent: "center",
-                                            fontWeight: 700, fontSize: 13, cursor: "pointer",
-                                        }}
-                                    >
-                                        I'm Here ✓
-                                    </Box>
-                                    <Box
-                                        onClick={() => { setActiveTrail(null); setCurrentTrailStopIndex(0); }}
-                                        sx={{
-                                            px: 2, height: 38, borderRadius: "10px",
-                                            border: "1px solid var(--border-color)",
-                                            color: "var(--text-secondary)",
-                                            display: "flex", alignItems: "center", justifyContent: "center",
-                                            fontSize: 13, cursor: "pointer",
-                                        }}
-                                    >
-                                        Exit
-                                    </Box>
-                                </Box>
-                            </>
-                        ) : (
-                            <>
-                                <Box sx={{ fontWeight: 700, fontSize: 16, color: "var(--text-primary)", mb: 0.5 }}>
-                                    Trail Complete! 🎉
-                                </Box>
-                                <Box sx={{ fontSize: 13, color: "var(--text-secondary)", mb: 1.5 }}>
-                                    You visited all {activeTrail.stops?.length} stops on {activeTrail.name}.
-                                </Box>
-                                <Box
-                                    onClick={() => { setActiveTrail(null); setCurrentTrailStopIndex(0); }}
-                                    sx={{
-                                        height: 38, borderRadius: "10px",
-                                        background: "var(--accent-teal)", color: "#fff",
-                                        display: "flex", alignItems: "center", justifyContent: "center",
-                                        fontWeight: 700, fontSize: 13, cursor: "pointer",
-                                    }}
-                                >
-                                    Done
-                                </Box>
-                            </>
-                        )}
-                    </Box>
-                </Box>
+            {!isNavigating && !activeRoute && (
+                <TrailStopCard
+                    activeTrail={activeTrail}
+                    currentTrailStopIndex={currentTrailStopIndex}
+                    onAdvance={() => setCurrentTrailStopIndex(i => i + 1)}
+                    onClose={() => { setActiveTrail(null); setCurrentTrailStopIndex(0); }}
+                />
             )}
 
             {!isNavigating && !activeRoute && (

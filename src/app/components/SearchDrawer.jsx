@@ -1,7 +1,7 @@
 'use client';
 import { useMemo, useState } from 'react';
 import {
-    Box, Chip, Drawer, List, ListItem, ListItemText,
+    Box, Drawer, List, ListItem, ListItemText,
     TextField, Typography, Stack, IconButton,
 } from '@mui/material';
 import NavigationIcon  from '@mui/icons-material/Navigation';
@@ -86,6 +86,7 @@ export default function SearchDrawer({
                 pb: 'env(safe-area-inset-bottom)',
                 bgcolor: 'var(--bg-secondary)',
                 color: 'var(--text-primary)',
+                borderTop: '1px solid var(--border-color)',
             }}}
         >
             <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', height: '100%' }}>
@@ -107,13 +108,20 @@ export default function SearchDrawer({
                         mb: 2,
                         '& .MuiOutlinedInput-root': {
                             borderRadius: '12px',
-                            bgcolor: 'var(--bg-input)',
+                            bgcolor: 'var(--bg-card)',
                             color: 'var(--text-primary)',
                         },
                         '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'var(--border-card)',
+                            borderColor: 'var(--border-color)',
                         },
-                        '& input::placeholder': { color: 'var(--text-muted)', opacity: 1 },
+                        '& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'var(--accent-purple)',
+                        },
+                        '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                            borderColor: 'var(--accent-purple)',
+                        },
+                        '& input': { color: 'var(--text-primary)' },
+                        '& input::placeholder': { color: 'var(--text-secondary)', opacity: 1 },
                     }}
                 />
 
@@ -121,21 +129,24 @@ export default function SearchDrawer({
                 {showFilterTabs && (
                     <Stack direction="row" spacing={1} sx={{ mb: 2, overflowX: 'auto', flexShrink: 0, pb: 0.5 }}>
                         {FILTER_TABS.map(tab => (
-                            <Chip
+                            <button
                                 key={tab}
-                                label={tab}
-                                size="small"
                                 onClick={() => setActiveFilter(tab)}
-                                color={activeFilter === tab ? 'primary' : 'default'}
-                                variant={activeFilter === tab ? 'filled' : 'outlined'}
-                                sx={{
-                                    flexShrink: 0, cursor: 'pointer', fontWeight: 600,
-                                    ...(activeFilter !== tab && {
-                                        borderColor: 'var(--border-card)',
-                                        color: 'var(--text-secondary)',
-                                    }),
+                                style={{
+                                    flexShrink: 0,
+                                    cursor: 'pointer',
+                                    fontWeight: 600,
+                                    fontSize: 13,
+                                    borderRadius: 20,
+                                    padding: '5px 14px',
+                                    border: 'none',
+                                    background: activeFilter === tab ? 'var(--accent-purple)' : 'var(--bg-card)',
+                                    color: activeFilter === tab ? '#fff' : 'var(--text-secondary)',
+                                    transition: 'background 0.15s, color 0.15s',
                                 }}
-                            />
+                            >
+                                {tab}
+                            </button>
                         ))}
                     </Stack>
                 )}
@@ -148,7 +159,7 @@ export default function SearchDrawer({
                         <>
                             {showSectionLabels && (
                                 <Typography sx={{
-                                    fontSize: 10, fontWeight: 700, color: 'var(--text-muted)',
+                                    fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)',
                                     letterSpacing: '0.09em', textTransform: 'uppercase',
                                     mb: 1, px: 1,
                                 }}>
@@ -160,18 +171,19 @@ export default function SearchDrawer({
                                     key={loc.id}
                                     onClick={() => onSelect(loc)}
                                     sx={{
-                                        mb: 1.5, borderRadius: '16px',
-                                        border: '1px solid var(--loc-item-border)',
-                                        bgcolor: 'var(--loc-item-bg)',
+                                        mb: 1, borderRadius: '12px',
+                                        borderBottom: '1px solid var(--border-color)',
+                                        bgcolor: 'transparent',
                                         cursor: 'pointer',
-                                        '&:hover': { bgcolor: 'var(--loc-item-hover)' },
+                                        px: 1,
+                                        '&:hover': { bgcolor: 'var(--bg-card)' },
                                     }}
                                 >
                                     <ListItemText
-                                        primary={<Typography sx={{ fontWeight: 700, color: 'var(--text-primary)' }}>{loc.name}</Typography>}
-                                        secondary={<Typography sx={{ fontSize: 12, color: 'var(--text-muted)' }}>{loc.id}</Typography>}
+                                        primary={<Typography sx={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>{loc.name}</Typography>}
+                                        secondary={<Typography sx={{ fontSize: 12, color: 'var(--text-secondary)' }}>{loc.id}</Typography>}
                                     />
-                                    <NavigationIcon sx={{ color: 'var(--accent-teal)' }} />
+                                    <NavigationIcon sx={{ color: 'var(--accent-teal)', fontSize: 20 }} />
                                 </ListItem>
                             ))}
                         </>
@@ -181,7 +193,7 @@ export default function SearchDrawer({
                     {filteredRooms.length > 0 && (
                         <>
                             <Typography sx={{
-                                fontSize: 10, fontWeight: 700, color: 'var(--text-muted)',
+                                fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)',
                                 letterSpacing: '0.09em', textTransform: 'uppercase',
                                 mb: 1, px: 1, mt: showSectionLabels ? 2 : 0,
                             }}>
@@ -197,7 +209,7 @@ export default function SearchDrawer({
                                         )}
                                         {room.buildingName}
                                         {room.floorName ? (
-                                            <span style={{ color: 'var(--text-muted)' }}> · Floor {room.floorName}</span>
+                                            <span style={{ color: 'var(--text-secondary)' }}> · Floor {room.floorName}</span>
                                         ) : null}
                                     </span>
                                 );
@@ -206,15 +218,16 @@ export default function SearchDrawer({
                                         key={room.poiId}
                                         onClick={() => handleRoomClick(room)}
                                         sx={{
-                                            mb: 1.5, borderRadius: '16px',
-                                            border: '1px solid var(--room-item-border)',
-                                            bgcolor: 'var(--room-item-bg)',
+                                            mb: 0, borderRadius: 0,
+                                            borderBottom: '1px solid var(--border-color)',
+                                            bgcolor: 'transparent',
                                             cursor: 'pointer',
-                                            '&:hover': { bgcolor: 'var(--room-item-hover)' },
+                                            px: 1,
+                                            '&:hover': { bgcolor: 'var(--bg-card)' },
                                         }}
                                     >
                                         <ListItemText
-                                            primary={<Typography sx={{ fontWeight: 700, color: 'var(--text-primary)' }}>{primary}</Typography>}
+                                            primary={<Typography sx={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>{primary}</Typography>}
                                             secondary={secondary}
                                         />
                                         <MeetingRoomIcon sx={{ color: 'var(--accent-purple)', fontSize: 20, flexShrink: 0 }} />
@@ -226,7 +239,7 @@ export default function SearchDrawer({
 
                     {/* Empty state */}
                     {query.trim() && results.length === 0 && filteredRooms.length === 0 && (
-                        <Typography sx={{ textAlign: 'center', color: 'var(--text-muted)', mt: 4, fontSize: 14 }}>
+                        <Typography sx={{ textAlign: 'center', color: 'var(--text-secondary)', mt: 4, fontSize: 14 }}>
                             No results for &quot;{query}&quot;
                         </Typography>
                     )}

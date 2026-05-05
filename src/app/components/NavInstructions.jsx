@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import { getRoomDisplayName } from '../lib/roomUtils';
+import { deriveSteps, fmtDist } from '../lib/routeUtils';
 
 const ROOM_CODE_RE = /[A-Z]{2}-\d{3}[A-Z]?$/;
 
@@ -17,66 +18,6 @@ function resolveStepDesc(description, roomNameMap) {
 
 const TEAL = '#1BA39C';
 const INDOOR_TEAL = '#00B4B4';
-
-// ─── shared utils ────────────────────────────────────────────────────────────
-
-function fmtDist(m) {
-    if (m == null || m <= 0) return null;
-    return m >= 1000 ? `${(m / 1000).toFixed(1)} km` : `${Math.round(m)} m`;
-}
-
-// ─── outdoor helpers (unchanged) ─────────────────────────────────────────────
-
-function haversineM(a, b) {
-    const R = 6371000;
-    const r = d => d * Math.PI / 180;
-    const dLat = r(b[1] - a[1]);
-    const dLng = r(b[0] - a[0]);
-    const s = Math.sin(dLat / 2) ** 2 + Math.cos(r(a[1])) * Math.cos(r(b[1])) * Math.sin(dLng / 2) ** 2;
-    return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
-}
-
-function getBearing(a, b) {
-    const r = d => d * Math.PI / 180;
-    const dLng = r(b[0] - a[0]);
-    const y = Math.sin(dLng) * Math.cos(r(b[1]));
-    const x = Math.cos(r(a[1])) * Math.sin(r(b[1])) - Math.sin(r(a[1])) * Math.cos(r(b[1])) * Math.cos(dLng);
-    return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
-}
-
-function bearingToLabel(deg) {
-    const dirs = ['north', 'northeast', 'east', 'southeast', 'south', 'southwest', 'west', 'northwest'];
-    return dirs[Math.round(deg / 45) % 8];
-}
-
-function deriveSteps(coords) {
-    if (!coords || coords.length < 2) return [];
-    const steps = [];
-    let accumulated = 0;
-    let groupBearing = getBearing(coords[0], coords[1]);
-
-    for (let i = 1; i < coords.length; i++) {
-        const dist = haversineM(coords[i - 1], coords[i]);
-        const bearing = i < coords.length - 1
-            ? getBearing(coords[i - 1], coords[i])
-            : groupBearing;
-
-        const diff = Math.abs(bearing - groupBearing);
-        const turn = diff > 180 ? 360 - diff : diff;
-
-        if (turn > 28 && accumulated > 8) {
-            steps.push({ metres: Math.round(accumulated), dir: bearingToLabel(groupBearing) });
-            accumulated = dist;
-            groupBearing = bearing;
-        } else {
-            accumulated += dist;
-        }
-    }
-    if (accumulated > 1) {
-        steps.push({ metres: Math.round(accumulated), dir: bearingToLabel(groupBearing) });
-    }
-    return steps;
-}
 
 function Toggle({ label, checked, onChange }) {
     return (
@@ -187,11 +128,9 @@ function IndoorStepRow({ step, isActive, isLast }) {
 // ─── main export ─────────────────────────────────────────────────────────────
 
 export default function NavInstructions({
-    // outdoor props (unchanged)
     routeStep, routeStats, routeCoords,
     buildingA, buildingB, routeError,
     onChangeStart,
-    // indoor props
     activeRoute, currentStepIndex,
     onIndoorChangeStart,
     roomNameMap,
@@ -200,7 +139,7 @@ export default function NavInstructions({
     const outdoorSteps = useMemo(() => deriveSteps(routeCoords), [routeCoords]);
 
     // ── indoor panel — takes priority ──────────────────────────────────────
-    if (activeRoute) {
+    if (activeRoute?.steps?.length > 0) {
         return (
             <div style={{
                 position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 20,
@@ -262,12 +201,10 @@ export default function NavInstructions({
         );
     }
 
-    // ── outdoor panel (existing, unchanged) ───────────────────────────────
     if (routeStep === 'IDLE') return null;
 
-    const isPickA  = routeStep === 'PICK_A';
-    const isActive = routeStep === 'ACTIVE';
-    const isError  = routeStep === 'ERROR';
+    const isPickA = routeStep === 'PICK_A';
+    const isError = routeStep === 'ERROR';
 
     if (isPickA) {
         return (

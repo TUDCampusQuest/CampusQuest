@@ -1,17 +1,11 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { locations } from '../data/locations';
 import { buildIndoorRoute } from '../lib/indoorRouter';
+import { haversineM } from '../lib/routeUtils';
+import { buildCrossBuildingRoute } from '../lib/crossBuildingRoute';
 
 const R = 6371000;
-function haversineM([lng1, lat1], [lng2, lat2]) {
-    const r = d => d * Math.PI / 180;
-    const dLat = r(lat2 - lat1), dLng = r(lng2 - lng1);
-    const a = Math.sin(dLat / 2) ** 2 + Math.cos(r(lat1)) * Math.cos(r(lat2)) * Math.sin(dLng / 2) ** 2;
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-// FIX 1 helpers — building-based start detection
 
 function findStartRoomForBuilding(buildingId, roomsFeatures) {
     const candidates = roomsFeatures.filter(f => {
@@ -52,213 +46,6 @@ function findNearestBuildingId(gpsLng, gpsLat, locs) {
     return best?.buildingId ?? null;
 }
 
-// FIX 2 helpers — BFS cross-building routing
-
-function findPathBFS(startId, endId, edges) {
-    const adj = {};
-    for (const e of edges) {
-        if (!adj[e.from]) adj[e.from] = [];
-        if (!adj[e.to])   adj[e.to]   = [];
-        adj[e.from].push(e.to);
-        adj[e.to].push(e.from);
-    }
-    const queue = [[startId]];
-    const visited = new Set([startId]);
-    while (queue.length) {
-        const path = queue.shift();
-        const cur = path[path.length - 1];
-        if (cur === endId) return path;
-        for (const nb of adj[cur] ?? []) {
-            if (!visited.has(nb)) {
-                visited.add(nb);
-                queue.push([...path, nb]);
-            }
-        }
-    }
-    return null;
-}
-
-function haversineM2([lng1, lat1], [lng2, lat2]) {
-    const r = d => d * Math.PI / 180;
-    const dLat = r(lat2 - lat1), dLng = r(lng2 - lng1);
-    const a = Math.sin(dLat / 2) ** 2 +
-        Math.cos(r(lat1)) * Math.cos(r(lat2)) * Math.sin(dLng / 2) ** 2;
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-}
-
-// Missing/wrong entries in the S3 campus graph — applied at runtime so we don't need
-// to redeploy the data file every time a building is added or corrected.
-//
-// A Block path — all coords from Mapbox walking directions:
-//   West leg:  A Block → campus avenue road heading west (ave_1 … ave_7)
-//   South leg: ave_7 → southeast along the campus road to student_services_entrance
-//              (Mapbox: ave7_to_student_services, 11 pts, 130 m)
-//   student_services_entrance already connects to main_1 in the S3 graph.
-const GRAPH_NODE_PATCHES = [
-    { id: 'a_block_entrance', lng: -6.376366,  lat: 53.406213,  type: 'entrance', name: 'A Block entrance' },
-    // West along campus avenue (Mapbox road coords)
-    { id: 'ave_1', lng: -6.376465, lat: 53.406013, type: 'junction', name: 'Campus ave 1' },
-    { id: 'ave_2', lng: -6.376743, lat: 53.406060, type: 'junction', name: 'Campus ave 2' },
-    { id: 'ave_3', lng: -6.377333, lat: 53.406073, type: 'junction', name: 'Campus ave 3' },
-    { id: 'ave_4', lng: -6.377838, lat: 53.406043, type: 'junction', name: 'Campus ave 4' },
-    { id: 'ave_5', lng: -6.378081, lat: 53.406014, type: 'junction', name: 'Campus ave 5' },
-    { id: 'ave_6', lng: -6.378286, lat: 53.405960, type: 'junction', name: 'Campus ave 6' },
-    { id: 'ave_7', lng: -6.378434, lat: 53.405914, type: 'junction', name: 'Campus ave — south turn' },
-    // South leg — exact Mapbox road coords from ave_7 to student_services_entrance
-    { id: 'ave_s1', lng: -6.378537, lat: 53.405883, type: 'junction', name: 'Campus ave south 1' },
-    { id: 'ave_s2', lng: -6.378745, lat: 53.405781, type: 'junction', name: 'Campus ave south 2' },
-    { id: 'ave_s3', lng: -6.378910, lat: 53.405698, type: 'junction', name: 'Campus ave south 3' },
-    { id: 'ave_s4', lng: -6.379008, lat: 53.405641, type: 'junction', name: 'Campus ave south 4' },
-    { id: 'ave_s5', lng: -6.379076, lat: 53.405580, type: 'junction', name: 'Campus ave south 5' },
-    { id: 'ave_s6', lng: -6.379208, lat: 53.405459, type: 'junction', name: 'Campus ave south 6' },
-    { id: 'ave_s7', lng: -6.379336, lat: 53.405343, type: 'junction', name: 'Campus ave south 7' },
-    { id: 'ave_s8', lng: -6.379622, lat: 53.405128, type: 'junction', name: 'Campus ave south 8' },
-    { id: 'ave_s9', lng: -6.379645, lat: 53.405112, type: 'junction', name: 'Campus ave south 9' },
-];
-const GRAPH_EDGE_PATCHES = [
-    { from: 'a_block_entrance', to: 'ave_1' },
-    { from: 'ave_1', to: 'ave_2' },
-    { from: 'ave_2', to: 'ave_3' },
-    { from: 'ave_3', to: 'ave_4' },
-    { from: 'ave_4', to: 'ave_5' },
-    { from: 'ave_5', to: 'ave_6' },
-    { from: 'ave_6', to: 'ave_7' },
-    { from: 'ave_7',  to: 'ave_s1' },
-    { from: 'ave_s1', to: 'ave_s2' },
-    { from: 'ave_s2', to: 'ave_s3' },
-    { from: 'ave_s3', to: 'ave_s4' },
-    { from: 'ave_s4', to: 'ave_s5' },
-    { from: 'ave_s5', to: 'ave_s6' },
-    { from: 'ave_s6', to: 'ave_s7' },
-    { from: 'ave_s7', to: 'ave_s8' },
-    { from: 'ave_s8', to: 'ave_s9' },
-    { from: 'ave_s9', to: 'student_services_entrance' },
-];
-// Overrides for wrong locationNodeMap entries in S3
-const LOCATION_NODE_OVERRIDES = {
-    'a-block': 'a_block_entrance',
-};
-
-async function buildCrossBuildingRoute(
-    startFeature, destFeature, stairs, rooms,
-    campusGraph, locationsArray
-) {
-    const sp = startFeature.properties;
-    const ep = destFeature.properties;
-
-    // Merge S3 graph data with local patches
-    const nodes = [
-        ...(campusGraph?.campusNodes ?? campusGraph?.nodes ?? []),
-        ...GRAPH_NODE_PATCHES,
-    ];
-    const edges = [
-        ...(campusGraph?.campusEdges ?? campusGraph?.edges ?? []),
-        ...GRAPH_EDGE_PATCHES,
-    ];
-    const nodeMap = {
-        ...(campusGraph?.locationNodeMap ?? {}),
-        ...LOCATION_NODE_OVERRIDES,
-    };
-
-    const startLoc = locationsArray.find(l =>
-        String(l.buildingId) === String(sp.buildingId));
-    const endLoc = locationsArray.find(l =>
-        String(l.buildingId) === String(ep.buildingId));
-
-    if (!startLoc || !endLoc) return null;
-
-    const startKey = startLoc.id?.toLowerCase();
-    const endKey   = endLoc.id?.toLowerCase();
-    const startNodeId = nodeMap[startKey];
-    const endNodeId   = nodeMap[endKey];
-
-    if (!startNodeId || !endNodeId) return null;
-
-    const pathIds = findPathBFS(startNodeId, endNodeId, edges);
-    if (!pathIds) return null;
-
-    const nodeById = Object.fromEntries(nodes.map(n => [n.id, n]));
-    const outdoorCoords = pathIds
-        .map(id => nodeById[id])
-        .filter(Boolean)
-        .map(n => [n.lng, n.lat]);
-
-    if (outdoorCoords.length < 2) return null;
-
-    const destEntryRoom = findStartRoomForBuilding(ep.buildingId, rooms.features);
-    const indoorLeg = destEntryRoom
-        ? buildIndoorRoute(destEntryRoom, destFeature, stairs)
-        : null;
-
-    // outdoorCoords runs from the start-building campus node to the end-building campus node.
-    // These are already on the physical path network so they connect smoothly.
-    // The indoor leg (if found) starts at destEntryRoom centroid and ends at destFeature centroid;
-    // we bridge from the last outdoor node to the first indoor coord with a short straight segment.
-    const indoorPath = indoorLeg?.path ?? [[ep.centerLng, ep.centerLat]];
-    const fullPath = [...outdoorCoords, ...indoorPath];
-
-    const outdoorDist = outdoorCoords.reduce((sum, c, i) => {
-        if (i === 0) return sum;
-        return sum + haversineM2(outdoorCoords[i - 1], c);
-    }, 0);
-
-    const exitLocation = outdoorCoords[0];
-    const entryLocation = outdoorCoords[outdoorCoords.length - 1];
-
-    const steps = [
-        {
-            type: 'exit_building',
-            description: `Exit ${startLoc.name}`,
-            metres: 0,
-            location: exitLocation,
-            stairRoomCode: null,
-        },
-        {
-            type: 'walk',
-            description: `Walk to ${endLoc.name}`,
-            metres: Math.round(outdoorDist),
-            location: entryLocation,
-            stairRoomCode: null,
-        },
-        {
-            type: 'enter_building',
-            description: `Enter ${endLoc.name}`,
-            metres: 0,
-            location: entryLocation,
-            stairRoomCode: null,
-        },
-        ...(indoorLeg?.steps ?? [
-            {
-                type: 'walk',
-                description: `Walk to ${ep.name || ep.roomCode}`,
-                metres: 20,
-                location: [ep.centerLng, ep.centerLat],
-                stairRoomCode: null,
-            },
-            {
-                type: 'arrived',
-                description: `You have arrived at ${ep.name || ep.roomCode}`,
-                metres: 0,
-                location: [ep.centerLng, ep.centerLat],
-                stairRoomCode: null,
-            },
-        ]),
-    ];
-
-    const totalMetres = steps.reduce((s, x) => s + (x.metres ?? 0), 0);
-
-    return {
-        steps,
-        path: fullPath,
-        // Index where the outdoor section ends so IndoorOverlay can split the line
-        outdoorPathLength: outdoorCoords.length,
-        totalMetres,
-        totalMinutes: Math.ceil(totalMetres / 80),
-        requiresStairs: indoorLeg?.requiresStairs ?? false,
-        isCrossBuilding: true,
-    };
-}
-
 function findOutdoorLocForRoom(feature) {
     const bid = feature?.properties?.buildingId;
     if (bid == null) return null;
@@ -266,18 +53,7 @@ function findOutdoorLocForRoom(feature) {
         .find(loc => String(loc.buildingId) === String(bid)) ?? null;
 }
 
-/**
- * Manages indoor route state and navigation logic.
- *
- * @param {object} rooms            GeoJSON FeatureCollection of all rooms
- * @param {object} stairs           GeoJSON FeatureCollection of stair features
- * @param {object|null} gpsLocation { lng, lat } from GPS or null
- * @param {object} mapRef           ref whose .current is the Mapbox map instance
- * @param {object} campusGraph      campus graph data (nodes, edges, locationNodeMap)
- * @param {Function} onHighlightRoom   (poiId|null) => void
- * @param {Function} onClearSelectedRoom () => void
- * @param {Function} onOutdoorFallback  (destFeature, startFeature?) => void
- */
+// Manages indoor routing state and GPS-based step advancement.
 export function useIndoorNavigation({
     rooms, stairs, gpsLocation, mapRef,
     campusGraph,
@@ -289,10 +65,14 @@ export function useIndoorNavigation({
     const [currentStepIndex,   setCurrentStepIndex]   = useState(0);
     const [arrivedMessage,     setArrivedMessage]     = useState(false);
     const [activeDestination,  setActiveDestination]  = useState(null);
+    const isBuildingRouteRef = useRef(false);
 
-    // Advance navigation step when user approaches the next waypoint
+    // Cross-building routes skip GPS-based step advancement — their steps span
+    // outdoor graph nodes that may be right next to the user's GPS at route start,
+    // which previously caused the route to vanish within seconds of being set.
     useEffect(() => {
         if (!activeRoute || !gpsLocation) return;
+        if (activeRoute.isCrossBuilding) return;
         const { path, steps } = activeRoute;
         if (!path || path.length < 2) return;
         const stepFraction = (currentStepIndex + 1) / steps.length;
@@ -308,83 +88,76 @@ export function useIndoorNavigation({
         }
     }, [gpsLocation, activeRoute, currentStepIndex]);
 
-    // Auto-dismiss arrived banner after 3 s
     useEffect(() => {
         if (!arrivedMessage) return;
         const t = setTimeout(() => setArrivedMessage(false), 3000);
         return () => clearTimeout(t);
     }, [arrivedMessage]);
 
-    /** Navigate from GPS location (or a specific start room) to a destination room feature. */
     const handleNavigateTo = useCallback(async (destinationFeature, startFeatureOverride = null) => {
         if (!rooms?.features) return;
+        if (isBuildingRouteRef.current) return;
+        isBuildingRouteRef.current = true;
 
-        let startFeature = startFeatureOverride;
+        try {
+            let startFeature = startFeatureOverride;
 
-        // FIX 1: use nearest building → ground-floor entry room instead of raw GPS centroid snap
-        if (!startFeature && gpsLocation) {
-            const nearestBuildingId = findNearestBuildingId(
-                gpsLocation.lng, gpsLocation.lat,
-                Array.isArray(locations) ? locations : []
-            );
-            if (nearestBuildingId != null) {
-                startFeature = findStartRoomForBuilding(nearestBuildingId, rooms.features);
-            }
-        }
-
-        if (!startFeature) {
-            // No GPS and no explicit start — fall back to outdoor routing for the destination building
-            onOutdoorFallback?.(destinationFeature);
-            return;
-        }
-
-        const route = buildIndoorRoute(startFeature, destinationFeature, stairs);
-        if (!route) {
-            // FIX 3: try campus-graph cross-building route before falling back to Mapbox
-            const crossRoute = await buildCrossBuildingRoute(
-                startFeature,
-                destinationFeature,
-                stairs,
-                rooms,
-                campusGraph,
-                Array.isArray(locations) ? locations : []
-            );
-
-            if (crossRoute) {
-                setActiveRoute(crossRoute);
-                setActiveDestination(destinationFeature);
-                setCurrentStepIndex(0);
-                setArrivedMessage(false);
-                onClearSelectedRoom?.();
-                onHighlightRoom?.(destinationFeature.properties.poiId);
-                if (mapRef?.current && crossRoute.path.length > 1) {
-                    const lngs = crossRoute.path.map(c => c[0]);
-                    const lats  = crossRoute.path.map(c => c[1]);
-                    mapRef.current.fitBounds(
-                        [
-                            [Math.min(...lngs), Math.min(...lats)],
-                            [Math.max(...lngs), Math.max(...lats)],
-                        ],
-                        { padding: 80, duration: 1200 }
-                    );
+            if (!startFeature && gpsLocation) {
+                const nearestBuildingId = findNearestBuildingId(
+                    gpsLocation.lng, gpsLocation.lat,
+                    Array.isArray(locations) ? locations : []
+                );
+                if (nearestBuildingId != null) {
+                    startFeature = findStartRoomForBuilding(nearestBuildingId, rooms.features);
                 }
+            }
+
+            if (!startFeature) {
+                onOutdoorFallback?.(destinationFeature);
                 return;
             }
 
-            // Campus graph unavailable or buildings not mapped — fall back to outdoor Mapbox routing
-            onOutdoorFallback?.(destinationFeature, startFeature);
-            return;
-        }
+            const route = buildIndoorRoute(startFeature, destinationFeature, stairs);
+            if (!route) {
+                const crossRoute = await buildCrossBuildingRoute(
+                    startFeature, destinationFeature, stairs, rooms, campusGraph
+                );
 
-        setActiveRoute(route);
-        setActiveDestination(destinationFeature);
-        setCurrentStepIndex(0);
-        setArrivedMessage(false);
-        onClearSelectedRoom?.();
-        onHighlightRoom?.(destinationFeature.properties.poiId);
-        const dp = destinationFeature.properties;
-        if (dp.centerLng != null && dp.centerLat != null && mapRef?.current) {
-            mapRef.current.flyTo({ center: [dp.centerLng, dp.centerLat], zoom: 19, duration: 1200 });
+                if (crossRoute) {
+                    setActiveRoute(crossRoute);
+                    setActiveDestination(destinationFeature);
+                    setCurrentStepIndex(0);
+                    setArrivedMessage(false);
+                    onClearSelectedRoom?.();
+                    onHighlightRoom?.(destinationFeature.properties.poiId);
+                    if (mapRef?.current && crossRoute.path.length > 1) {
+                        const lngs = crossRoute.path.map(c => c[0]);
+                        const lats  = crossRoute.path.map(c => c[1]);
+                        mapRef.current.fitBounds(
+                            [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
+                            { padding: 80, duration: 1200 }
+                        );
+                    }
+                    return;
+                }
+
+                onOutdoorFallback?.(destinationFeature, startFeature);
+                return;
+            }
+
+            setActiveRoute(route);
+            setActiveDestination(destinationFeature);
+            setCurrentStepIndex(0);
+            setArrivedMessage(false);
+            onClearSelectedRoom?.();
+            onHighlightRoom?.(destinationFeature.properties.poiId);
+            const dp = destinationFeature.properties;
+            if (dp.centerLng != null && dp.centerLat != null && mapRef?.current) {
+                mapRef.current.flyTo({ center: [dp.centerLng, dp.centerLat], zoom: 19, duration: 1200 });
+            }
+        } catch (err) {
+        } finally {
+            isBuildingRouteRef.current = false;
         }
     }, [gpsLocation, rooms, stairs, campusGraph, mapRef, onHighlightRoom, onClearSelectedRoom, onOutdoorFallback]);
 

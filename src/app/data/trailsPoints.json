@@ -3,6 +3,8 @@
     "id": "sports-trail",
     "name": "Sports Trail",
     "description": "A walking trail around the sports facilities on campus.",
+    "category": "fitness",
+    "estimatedMinutes": 8,
     "points": [
       [-6.3783082575413355, 53.40558115741799],
       [-6.37895, 53.40572],
@@ -15,12 +17,19 @@
       [-6.38060, 53.40640],
       [-6.3798825101578585, 53.40640498223236]
     ],
+    "stops": [
+      { "id": "sport-1", "name": "Main Building (Block C)", "description": "Start at the canteen side of the main building", "lng": -6.37831, "lat": 53.40558, "roomCode": null },
+      { "id": "sport-2", "name": "Sports Building (S Block)", "description": "Gym and training facilities", "lng": -6.38137, "lat": 53.40581, "roomCode": null },
+      { "id": "sport-3", "name": "Student Services", "description": "Student Union and end point", "lng": -6.37988, "lat": 53.40640, "roomCode": null }
+    ],
     "createdAt": "2026-03-11T00:00:00.000Z"
   },
   {
     "id": "technology-trail",
     "name": "Technology Trail",
     "description": "A walking trail through the technology and engineering buildings.",
+    "category": "tech",
+    "estimatedMinutes": 7,
     "points": [
       [-6.379100157185581, 53.404609889004455],
       [-6.37870, 53.40490],
@@ -29,6 +38,119 @@
       [-6.37760, 53.40545],
       [-6.377475952861498, 53.40569081959447]
     ],
+    "stops": [
+      { "id": "tech-old-1", "name": "Aras Geal (Block G)", "description": "Modern teaching building start point", "lng": -6.37910, "lat": 53.40461, "roomCode": null },
+      { "id": "tech-old-2", "name": "Aras Eolas (Block E)", "description": "Networking labs and computer science", "lng": -6.37762, "lat": 53.40528, "roomCode": null },
+      { "id": "tech-old-3", "name": "D Block", "description": "Engineering and childcare building", "lng": -6.37748, "lat": 53.40569, "roomCode": null }
+    ],
     "createdAt": "2026-03-11T00:00:00.000Z"
+  },
+  {
+    "id": "ag-to-c",
+    "name": "AG TO C Block",
+    "description": "Walk from Aras Geal through Connect to the Main Building.",
+    "category": "academic",
+    "estimatedMinutes": 3,
+    "points": [
+      [-6.37905, 53.40458],
+      [-6.37939, 53.40479],
+      [-6.37856, 53.40550]
+    ],
+    "stops": [
+      { "id": "ag-c-1", "name": "Aras Geal (Block G)", "description": "Main teaching building with lecture theatres", "lng": -6.37905, "lat": 53.40458, "roomCode": null },
+      { "id": "ag-c-2", "name": "Connect Building", "description": "Student services and support hub", "lng": -6.37939, "lat": 53.40479, "roomCode": null },
+      { "id": "ag-c-3", "name": "Aras Croi (Block C)", "description": "Sports hall, canteen and health services", "lng": -6.37856, "lat": 53.40550, "roomCode": null }
+    ],
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "ssb-to-b",
+    "name": "SSB To B Block",
+    "description": "Quick route from Student Services to the LINC innovation hub.",
+    "category": "social",
+    "estimatedMinutes": 4,
+    "points": [
+      [-6.38006, 53.40644],
+      [-6.37991, 53.40636]
+    ],
+    "stops": [
+      { "id": "ssb-b-1", "name": "Student Services", "description": "Student Union and support services", "lng": -6.38006, "lat": 53.40644, "roomCode": null },
+      { "id": "ssb-b-2", "name": "Linc Building (Block B)", "description": "Innovation and enterprise hub", "lng": -6.37991, "lat": 53.40636, "roomCode": null }
+    ],
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "ssb-to-e",
+    "name": "SSB TO E Block",
+    "description": "Walk from Student Services across campus to the networking labs.",
+    "category": "tech",
+    "estimatedMinutes": 5,
+    "points": [
+      [-6.38006, 53.40644],
+      [-6.37762, 53.40528]
+    ],
+    "stops": [
+      { "id": "ssb-e-1", "name": "Student Services", "description": "Start point — Student Union building", "lng": -6.38006, "lat": 53.40644, "roomCode": null },
+      { "id": "ssb-e-2", "name": "Aras Eolas (Block E)", "description": "Networking labs and computer science", "lng": -6.37762, "lat": 53.40528, "roomCode": null }
+    ],
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "ssb-to-f",
+    "name": "TEst Trail SSB To F Block",
+    "description": "Walk from Student Services to the campus library.",
+    "category": "academic",
+    "estimatedMinutes": 3,
+    "points": [
+      [-6.38006, 53.40644],
+      [-6.37829, 53.40474]
+    ],
+    "stops": [
+      { "id": "ssb-f-1", "name": "Student Services", "description": "Start point", "lng": -6.38006, "lat": 53.40644, "roomCode": null },
+      { "id": "ssb-f-2", "name": "Campus Library (Block F)", "description": "Main campus library and study spaces", "lng": -6.37829, "lat": 53.40474, "roomCode": null }
+    ],
+    "createdAt": "2026-04-01T00:00:00.000Z"
+  },
+  {
+    "id": "nature-trail-1",
+    "name": "Campus Nature Walk",
+    "description": "Explore the green spaces around TUD Blanchardstown",
+    "category": "nature",
+    "estimatedMinutes": 12,
+    "distance": 650,
+    "points": [
+      [-6.37950, 53.40650],
+      [-6.37800, 53.40700],
+      [-6.37900, 53.40550],
+      [-6.38100, 53.40580]
+    ],
+    "stops": [
+      { "id": "nat-1", "name": "Main Campus Entrance", "description": "Start at the main campus gate", "lng": -6.37950, "lat": 53.40650, "roomCode": null },
+      { "id": "nat-2", "name": "Community Garden", "description": "GLAS at TU Dublin student-run garden", "lng": -6.37800, "lat": 53.40700, "roomCode": null },
+      { "id": "nat-3", "name": "Green Courtyard", "description": "Outdoor seating area between blocks", "lng": -6.37900, "lat": 53.40550, "roomCode": null },
+      { "id": "nat-4", "name": "Sports Pitches", "description": "Outdoor sports and recreation area", "lng": -6.38100, "lat": 53.40580, "roomCode": null }
+    ],
+    "createdAt": "2026-05-01T00:00:00.000Z"
+  },
+  {
+    "id": "tech-trail-1",
+    "name": "Tech and Innovation Trail",
+    "description": "Visit the key technology buildings across campus",
+    "category": "tech",
+    "estimatedMinutes": 15,
+    "distance": 820,
+    "points": [
+      [-6.37762, 53.40528],
+      [-6.37829, 53.40474],
+      [-6.37905, 53.40458],
+      [-6.37991, 53.40636]
+    ],
+    "stops": [
+      { "id": "tech-1", "name": "Aras Eolas (Block E)", "description": "Networking and computer science labs", "lng": -6.37762, "lat": 53.40528, "roomCode": null },
+      { "id": "tech-2", "name": "Aras Fios (Block F)", "description": "Campus library and IT facilities", "lng": -6.37829, "lat": 53.40474, "roomCode": null },
+      { "id": "tech-3", "name": "Aras Geal (Block G)", "description": "Modern teaching building", "lng": -6.37905, "lat": 53.40458, "roomCode": null },
+      { "id": "tech-4", "name": "Linc Building", "description": "Innovation and enterprise centre", "lng": -6.37991, "lat": 53.40636, "roomCode": null }
+    ],
+    "createdAt": "2026-05-01T00:00:00.000Z"
   }
 ]

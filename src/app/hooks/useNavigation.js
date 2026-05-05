@@ -1,6 +1,10 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { locations } from '../data/locations';
+import {
+    haversineM, walkingStats, snapToNearestBuilding,
+    buildAdjacency, findPathDijkstra, toLocationMapKey,
+} from '../lib/routeUtils';
 
 // Populated at runtime from the campusGraph prop — avoids importing the deleted local file
 let campusNodes = [];
@@ -18,15 +22,12 @@ const PATCHED_NODES = [
     { id: 'ave_5',  lng: -6.378081, lat: 53.406014, type: 'junction', name: 'Campus ave 5' },
     { id: 'ave_6',  lng: -6.378286, lat: 53.405960, type: 'junction', name: 'Campus ave 6' },
     { id: 'ave_7',  lng: -6.378434, lat: 53.405914, type: 'junction', name: 'Campus ave — south turn' },
-    { id: 'ave_s1', lng: -6.378537, lat: 53.405883, type: 'junction', name: 'Campus ave south 1' },
-    { id: 'ave_s2', lng: -6.378745, lat: 53.405781, type: 'junction', name: 'Campus ave south 2' },
-    { id: 'ave_s3', lng: -6.378910, lat: 53.405698, type: 'junction', name: 'Campus ave south 3' },
-    { id: 'ave_s4', lng: -6.379008, lat: 53.405641, type: 'junction', name: 'Campus ave south 4' },
-    { id: 'ave_s5', lng: -6.379076, lat: 53.405580, type: 'junction', name: 'Campus ave south 5' },
-    { id: 'ave_s6', lng: -6.379208, lat: 53.405459, type: 'junction', name: 'Campus ave south 6' },
-    { id: 'ave_s7', lng: -6.379336, lat: 53.405343, type: 'junction', name: 'Campus ave south 7' },
-    { id: 'ave_s8', lng: -6.379622, lat: 53.405128, type: 'junction', name: 'Campus ave south 8' },
-    { id: 'ave_s9', lng: -6.379645, lat: 53.405112, type: 'junction', name: 'Campus ave south 9' },
+    { id: 'ave_s1', lng: -6.377900, lat: 53.405870, type: 'junction', name: 'Campus ave south 1 — jog east of BC' },
+    { id: 'ave_s2', lng: -6.377700, lat: 53.405700, type: 'junction', name: 'Campus ave south 2 — east of BC' },
+    { id: 'ave_s3', lng: -6.377700, lat: 53.405450, type: 'junction', name: 'Campus ave south 3 — clear BC south' },
+    { id: 'ave_s4', lng: -6.377900, lat: 53.405200, type: 'junction', name: 'Campus ave south 4' },
+    { id: 'ave_s5', lng: -6.378300, lat: 53.405000, type: 'junction', name: 'Campus ave south 5' },
+    { id: 'ave_s6', lng: -6.378700, lat: 53.404800, type: 'junction', name: 'Campus ave south 6' },
 ];
 const PATCHED_EDGES = [
     { from: 'a_block_entrance', to: 'ave_1' },
@@ -42,10 +43,7 @@ const PATCHED_EDGES = [
     { from: 'ave_s3', to: 'ave_s4' },
     { from: 'ave_s4', to: 'ave_s5' },
     { from: 'ave_s5', to: 'ave_s6' },
-    { from: 'ave_s6', to: 'ave_s7' },
-    { from: 'ave_s7', to: 'ave_s8' },
-    { from: 'ave_s8', to: 'ave_s9' },
-    { from: 'ave_s9', to: 'student_services_entrance' },
+    { from: 'ave_s6', to: 'main_1' },
 ];
 const PATCHED_NODE_MAP = {
     'a-block': 'a_block_entrance',
@@ -58,86 +56,6 @@ const campusEntryNodeIds = [
     'd_block_approach',
     'a_block_entrance',
 ];
-
-function haversineMetres(a, b) {
-    const R = 6371000;
-    const toRad = d => d * Math.PI / 180;
-    const dLat = toRad(b[1] - a[1]);
-    const dLng = toRad(b[0] - a[0]);
-    const s =
-        Math.sin(dLat / 2) ** 2 +
-        Math.cos(toRad(a[1])) * Math.cos(toRad(b[1])) * Math.sin(dLng / 2) ** 2;
-    return R * 2 * Math.atan2(Math.sqrt(s), Math.sqrt(1 - s));
-}
-
-function walkingStats(coords) {
-    let dist = 0;
-    for (let i = 1; i < coords.length; i++) {
-        dist += haversineMetres(coords[i - 1], coords[i]);
-    }
-    return { metres: Math.round(dist), minutes: Math.ceil(dist / 80) };
-}
-
-function snapToNearestBuilding(userCoords, buildings) {
-    if (!userCoords || !buildings?.length) return null;
-
-    let nearest = null;
-    let best = Infinity;
-
-    for (const b of buildings) {
-        const coords = b.coordinates || [b.lng, b.lat];
-        if (!coords || coords.length < 2) continue;
-
-        const d = haversineMetres(userCoords, coords);
-        if (d < best) {
-            best = d;
-            nearest = b;
-        }
-    }
-
-    return nearest;
-}
-
-function buildAdjacency(edges) {
-    const graph = {};
-
-    for (const edge of edges) {
-        if (!graph[edge.from]) graph[edge.from] = [];
-        if (!graph[edge.to]) graph[edge.to] = [];
-
-        graph[edge.from].push(edge.to);
-        graph[edge.to].push(edge.from);
-    }
-
-    return graph;
-}
-
-function findPathBFS(startId, endId, edges) {
-    const graph = buildAdjacency(edges);
-    const queue = [[startId]];
-    const visited = new Set([startId]);
-
-    while (queue.length > 0) {
-        const path = queue.shift();
-        const current = path[path.length - 1];
-
-        if (current === endId) return path;
-
-        for (const neighbor of graph[current] || []) {
-            if (!visited.has(neighbor)) {
-                visited.add(neighbor);
-                queue.push([...path, neighbor]);
-            }
-        }
-    }
-
-    return null;
-}
-
-function toLocationMapKey(id) {
-    if (!id) return '';
-    return String(id).trim().toLowerCase();
-}
 
 function isCampusLocation(loc) {
     if (!loc?.id) return false;
@@ -160,7 +78,7 @@ function getNodeCoords(nodeId) {
 }
 
 function routeBetweenNodeIds(startNodeId, endNodeId) {
-    const pathIds = findPathBFS(startNodeId, endNodeId, campusEdges);
+    const pathIds = findPathDijkstra(startNodeId, endNodeId, campusEdges, campusNodes);
 
     if (!pathIds) {
         console.error('No graph path found between node ids', { startNodeId, endNodeId });
@@ -389,7 +307,7 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
 
                 if (nearest && nearest.id !== navTarget.id) {
                     const nearestCoords = nearest.coordinates || [nearest.lng, nearest.lat];
-                    const distToNearest = haversineMetres(userCoords, nearestCoords);
+                    const distToNearest = haversineM(userCoords, nearestCoords);
                     if (distToNearest <= 150) {
                         setBuildingA(nearest);
                     }

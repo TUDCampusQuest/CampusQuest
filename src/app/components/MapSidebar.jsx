@@ -114,6 +114,7 @@ export default function MapSidebar({
     const colStyle = {
         position: "absolute",
         right: 12,
+        top: 16,
         display: "flex",
         flexDirection: "column",
         gap: 8,
@@ -122,8 +123,8 @@ export default function MapSidebar({
 
     return (
         <>
-            {/* Map controls column — 3D/Me hidden on mobile (bottom nav handles them) */}
-            <div style={{ ...colStyle, top: 12 }}>
+            {/* Map controls column */}
+            <div style={colStyle}>
                 <Box sx={{ display: { xs: "none", sm: "block" } }}>
                     <SqBtn
                         icon={<ViewInArIcon sx={{ fontSize: 18 }} />}
@@ -157,7 +158,7 @@ export default function MapSidebar({
             </div>
 
             {/* Floor switcher column — always visible, z-index 22 keeps it above LocationSheet (19) */}
-            <div style={{ ...colStyle, bottom: 90, zIndex: 22 }}>
+            <div style={{ position: "absolute", right: 12, bottom: 160, display: "flex", flexDirection: "column", gap: 8, zIndex: 22 }}>
                 {FLOOR_NAMES.map(name => (
                     <FloorSqBtn
                         key={name}

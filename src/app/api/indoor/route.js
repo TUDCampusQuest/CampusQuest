@@ -6,11 +6,12 @@
   'indoor/rooms',
   'indoor/stairs',
   'indoor/floorplans',
-  'indoor/room-name-map',    // ← already added
-  'indoor/entrances',        // ← add this for geofencing
+  'indoor/room-name-map',
+  'indoor/entrances',
   'buildings/locations',
   'routing/campusGraph',
   'routing/buildingRoutes',
+  'data/buildings',
 ];
 
   if (!allowed.includes(file)) {
