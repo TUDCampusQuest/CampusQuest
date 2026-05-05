@@ -86,7 +86,7 @@ export const locations = [
         "id": "T-BLOCK",
         "name": "Horticulture Building",
         "buildingId": 1004446,
-        "image": `${S3}/tud.jpeg`,
+        "image": `${S3}/horiculture.png`,
         "coordinates": [-6.382226, 53.404683],
         "description": "Horticulture workshops, offices.",
         "floors": ["Ground"]
@@ -94,7 +94,7 @@ export const locations = [
     {
         "id": "PARKING",
         "name": "Car Park",
-        "image": `${S3}/tud.jpeg`,
+        "image": `${S3}/carpark.png`,
         "coordinates": [-6.380530, 53.404767],
         "description": "Main visitor and staff campus parking.",
         "floors": ["N/A"]
