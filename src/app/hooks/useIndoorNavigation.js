@@ -1,5 +1,6 @@
+// Hook managing indoor route state — builds room-to-room paths, advances steps via GPS proximity, and falls back to outdoor routing when rooms span buildings.
 'use client';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { locations } from '../data/locations';
 import { buildIndoorRoute } from '../lib/indoorRouter';
 import { haversineM } from '../lib/routeUtils';
@@ -53,25 +54,23 @@ function findOutdoorLocForRoom(feature) {
         .find(loc => String(loc.buildingId) === String(bid)) ?? null;
 }
 
-// Manages indoor routing state and GPS-based step advancement.
 export function useIndoorNavigation({
     rooms, stairs, gpsLocation, mapRef,
     campusGraph,
     onHighlightRoom,
     onClearSelectedRoom,
     onOutdoorFallback,
+    onFloorChange,
+    activeNavSystem,
 }) {
     const [activeRoute,        setActiveRoute]        = useState(null);
     const [currentStepIndex,   setCurrentStepIndex]   = useState(0);
     const [arrivedMessage,     setArrivedMessage]     = useState(false);
     const [activeDestination,  setActiveDestination]  = useState(null);
-    const isBuildingRouteRef = useRef(false);
 
-    // Cross-building routes skip GPS-based step advancement — their steps span
-    // outdoor graph nodes that may be right next to the user's GPS at route start,
-    // which previously caused the route to vanish within seconds of being set.
     useEffect(() => {
         if (!activeRoute || !gpsLocation) return;
+        if (activeNavSystem !== 'indoor') return;
         if (activeRoute.isCrossBuilding) return;
         const { path, steps } = activeRoute;
         if (!path || path.length < 2) return;
@@ -87,14 +86,10 @@ export function useIndoorNavigation({
             const nextStep = steps[currentStepIndex + 1];
             setCurrentStepIndex(i => i + 1);
             if (nextStep?.location && mapRef?.current) {
-                mapRef.current.flyTo({
-                    center: nextStep.location,
-                    zoom: 19,
-                    duration: 800,
-                });
+                mapRef.current.flyTo({ center: nextStep.location, zoom: 19, duration: 800 });
             }
         }
-    }, [gpsLocation, activeRoute, currentStepIndex]);
+    }, [gpsLocation, activeRoute, currentStepIndex, activeNavSystem]);
 
     useEffect(() => {
         if (!arrivedMessage) return;
@@ -104,27 +99,25 @@ export function useIndoorNavigation({
 
     const handleNavigateTo = useCallback(async (destinationFeature, startFeatureOverride = null) => {
         if (!rooms?.features) return;
-        if (isBuildingRouteRef.current) return;
-        isBuildingRouteRef.current = true;
+
+        let startFeature = startFeatureOverride;
+
+        if (!startFeature && gpsLocation) {
+            const nearestBuildingId = findNearestBuildingId(
+                gpsLocation.lng, gpsLocation.lat,
+                Array.isArray(locations) ? locations : []
+            );
+            if (nearestBuildingId != null) {
+                startFeature = findStartRoomForBuilding(nearestBuildingId, rooms.features);
+            }
+        }
+
+        if (!startFeature) {
+            onOutdoorFallback?.(destinationFeature);
+            return;
+        }
 
         try {
-            let startFeature = startFeatureOverride;
-
-            if (!startFeature && gpsLocation) {
-                const nearestBuildingId = findNearestBuildingId(
-                    gpsLocation.lng, gpsLocation.lat,
-                    Array.isArray(locations) ? locations : []
-                );
-                if (nearestBuildingId != null) {
-                    startFeature = findStartRoomForBuilding(nearestBuildingId, rooms.features);
-                }
-            }
-
-            if (!startFeature) {
-                onOutdoorFallback?.(destinationFeature);
-                return;
-            }
-
             const route = buildIndoorRoute(startFeature, destinationFeature, stairs);
             if (!route) {
                 const crossRoute = await buildCrossBuildingRoute(
@@ -146,6 +139,9 @@ export function useIndoorNavigation({
                             { padding: 80, duration: 1200 }
                         );
                     }
+
+                    const destFloor = destinationFeature.properties.floorName;
+                    if (destFloor && destFloor !== 'G') onFloorChange?.(destFloor, true);
                     return;
                 }
 
@@ -163,11 +159,13 @@ export function useIndoorNavigation({
             if (dp.centerLng != null && dp.centerLat != null && mapRef?.current) {
                 mapRef.current.flyTo({ center: [dp.centerLng, dp.centerLat], zoom: 19, duration: 1200 });
             }
+
+            const destFloor = dp.floorName;
+            if (destFloor && destFloor !== 'G') onFloorChange?.(destFloor, true);
         } catch (err) {
-        } finally {
-            isBuildingRouteRef.current = false;
+            console.error('handleNavigateTo error:', err);
         }
-    }, [gpsLocation, rooms, stairs, campusGraph, mapRef, onHighlightRoom, onClearSelectedRoom, onOutdoorFallback]);
+    }, [gpsLocation, rooms, stairs, campusGraph, mapRef, onHighlightRoom, onClearSelectedRoom, onOutdoorFallback, onFloorChange]);
 
     const handleCancelNavigation = useCallback(() => {
         setActiveRoute(null);

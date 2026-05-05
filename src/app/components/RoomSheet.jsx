@@ -1,3 +1,4 @@
+// Bottom slide-up card showing room details with Navigate Here and Set as Start actions.
 'use client';
 import { IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
@@ -34,57 +35,61 @@ export default function RoomSheet({ selectedRoom, gpsLocation, onClose, onNaviga
                 position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 20,
                 borderRadius: '20px 20px 0 0',
                 borderTop: '2px solid var(--accent-purple)',
-                padding: '0 20px 20px',
+                padding: '0 16px 24px',
             }}
         >
-            {/* Drag handle */}
-            <div style={{ display: 'flex', justifyContent: 'center', paddingTop: 10, paddingBottom: 4 }}>
+            {/* Drag handle row with X button */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, paddingBottom: 4 }}>
+                <div style={{ width: 32 }} />
                 <div style={{ width: 40, height: 4, borderRadius: 4, background: 'var(--border-color)' }} />
-            </div>
-
-            {/* Header row */}
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginTop: 8 }}>
-                <div style={{ flex: 1, paddingRight: 8 }}>
-                    {/* Room name + code pill */}
-                    <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8 }}>
-                        <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-                            {displayName}
-                        </span>
-                        {showCode && (
-                            <span style={{
-                                background: 'var(--accent-purple)', color: '#fff',
-                                fontSize: 12, fontWeight: 600, borderRadius: 20,
-                                padding: '3px 10px',
-                            }}>
-                                {p.roomCode}
-                            </span>
-                        )}
-                    </div>
-
-                    {/* Building / floor / type */}
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-                            {p.buildingName}
-                            {p.floorName ? ` · Floor ${p.floorName}` : ''}
-                        </span>
-                        {typeName && (
-                            <span style={{
-                                ...badgeStyle,
-                                fontSize: 11, fontWeight: 600,
-                                borderRadius: 20, padding: '2px 8px',
-                            }}>
-                                {typeName}
-                            </span>
-                        )}
-                    </div>
-                </div>
-
-                <IconButton size="small" onClick={onClose} sx={{ color: 'var(--text-secondary)', mt: '-4px' }}>
-                    <CloseIcon fontSize="small" />
+                <IconButton
+                    size="small"
+                    onClick={onClose}
+                    sx={{
+                        color: 'var(--text-secondary)',
+                        background: 'var(--bg-card)',
+                        border: '1px solid var(--border-color)',
+                        width: 32, height: 32,
+                        '&:hover': { background: 'var(--bg-secondary)', color: 'var(--text-primary)' },
+                    }}
+                >
+                    <CloseIcon sx={{ fontSize: 16 }} />
                 </IconButton>
             </div>
 
-            {/* Divider */}
+            {/* Room name + code pill */}
+            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
+                <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                    {displayName}
+                </span>
+                {showCode && (
+                    <span style={{
+                        background: 'var(--accent-purple)', color: '#fff',
+                        fontSize: 12, fontWeight: 600, borderRadius: 20,
+                        padding: '3px 10px',
+                    }}>
+                        {p.roomCode}
+                    </span>
+                )}
+            </div>
+
+            {/* Building / floor / type */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
+                <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
+                    {p.buildingName}
+                    {p.floorName ? ` · Floor ${p.floorName}` : ''}
+                </span>
+                {typeName && (
+                    <span style={{
+                        ...badgeStyle,
+                        fontSize: 11, fontWeight: 600,
+                        borderRadius: 20, padding: '2px 8px',
+                    }}>
+                        {typeName}
+                    </span>
+                )}
+            </div>
+
             <div style={{ height: 1, background: 'var(--border-color)', margin: '14px 0' }} />
 
             {/* Navigation buttons */}
@@ -93,26 +98,21 @@ export default function RoomSheet({ selectedRoom, gpsLocation, onClose, onNaviga
                     onClick={() => onNavigateTo(selectedRoom)}
                     style={{
                         width: '100%', height: 48, borderRadius: 12, border: 'none',
-                        background: '#7C3AED',
-                        color: '#fff',
+                        background: '#7C3AED', color: '#fff',
                         fontWeight: 700, fontSize: 13,
-                        cursor: 'pointer',
-                        transition: 'background 0.2s',
+                        cursor: 'pointer', transition: 'background 0.2s',
                     }}
                 >
                     Navigate Here
                 </button>
-
                 <button
                     onClick={() => onSetAsStart(selectedRoom)}
                     style={{
                         width: '100%', height: 48, borderRadius: 12,
                         border: '1.5px solid var(--border-color)',
-                        background: 'transparent',
-                        color: 'var(--text-primary)',
+                        background: 'transparent', color: 'var(--text-primary)',
                         fontWeight: 700, fontSize: 13,
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
+                        cursor: 'pointer', transition: 'all 0.2s',
                     }}
                 >
                     Set as Start

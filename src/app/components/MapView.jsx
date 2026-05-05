@@ -1,3 +1,4 @@
+// Main Mapbox map component — renders outdoor/indoor layers, building markers, navigation overlays, and handles room double-click and map tap events.
 'use client';
 
 import Map, { Marker, Popup } from 'react-map-gl';
@@ -46,8 +47,7 @@ function MapViewInner({
     const [styleLoaded,    setStyleLoaded]    = useState(false);
     const [prevIs3D,       setPrevIs3D]       = useState(is3D);
 
-    // Reset styleLoaded synchronously when is3D changes to prevent appendChild errors
-    // during the style-transition frame.
+    // Synchronously clear styleLoaded on 3D toggle to prevent appendChild errors during style transition.
     if (prevIs3D !== is3D) {
         setPrevIs3D(is3D);
         setStyleLoaded(false);
@@ -62,7 +62,7 @@ function MapViewInner({
         routeStep, buildingA, buildingB,
         routeCoords, routeStats, routeError,
         resetToPickA, pickBuildingA,
-    } = useNavigation({ isNavigating, navTarget, navStart, userLocation, mapRef, campusGraph });
+    } = useNavigation({ isNavigating, navTarget, navStart, userLocation, mapRef, campusGraph, isIndoorActive: !!activeRoute });
 
     const {
         selectedTrailName, setTrailInUrl,
@@ -88,7 +88,7 @@ function MapViewInner({
         if (!isAdmin) { setShowCaptureUI(false); setCaptureMode(false); }
     }, [isAdmin]);
 
-    const lastClickTimeRef = useRef(0);
+    const lastClickTimeRef    = useRef(0);
     const lastClickFeatureRef = useRef(null);
 
     const handleClick = useCallback((e) => {
@@ -103,17 +103,14 @@ function MapViewInner({
         const clickedFeatureId = features?.[0]?.properties?.poiId ?? null;
 
         if (features?.length > 0 && delta < 400 && lastClickFeatureRef.current === clickedFeatureId) {
-            // Double-click on a room
             const roomFeature = rooms?.features?.find(f => f.properties.poiId === features[0].properties.poiId);
             if (roomFeature && onRoomSelect) onRoomSelect(roomFeature);
             lastClickTimeRef.current = 0;
             lastClickFeatureRef.current = null;
         } else if (features?.length > 0) {
-            // First click on a room — record it, wait for potential double-click
             lastClickTimeRef.current = now;
             lastClickFeatureRef.current = clickedFeatureId;
         } else {
-            // Clicked empty map area — dismiss selected room
             lastClickTimeRef.current = 0;
             lastClickFeatureRef.current = null;
             onMapTap?.();
@@ -227,8 +224,6 @@ function MapViewInner({
                 maxZoom={20}
                 antialias={false}
             >
-                {/* Guard everything behind styleLoaded to prevent appendChild errors
-                    during initial mount and map style transitions */}
                 {styleLoaded && (
                     <>
                         <MapLayers

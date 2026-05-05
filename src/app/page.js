@@ -90,6 +90,10 @@ function Home() {
     const [navPointA,        setNavPointA]        = useState(null);
     const [navPointB,        setNavPointB]        = useState(null);
     const [navStartOverride, setNavStartOverride] = useState(null);
+    const [showStairsPrompt, setShowStairsPrompt] = useState(false);
+
+    // Tracks which navigation system is active: null | 'outdoor' | 'indoor'
+    const activeNavSystemRef = useRef(null);
 
     const [activeTrail,           setActiveTrail]           = useState(null);
     const [currentTrailStopIndex, setCurrentTrailStopIndex] = useState(0);
@@ -100,14 +104,20 @@ function Home() {
     } = useIndoorNavigation({
         rooms, stairs, gpsLocation, mapRef,
         campusGraph,
+        activeNavSystem: activeNavSystemRef.current,
         onHighlightRoom:     setHighlightedRoomId,
         onClearSelectedRoom: () => setSelectedRoom(null),
         onOutdoorFallback: (destFeature, startFeature = null) => {
             const result = buildOutdoorFallback(destFeature, startFeature);
             if (!result) return;
+            activeNavSystemRef.current = 'outdoor';
             setNavTarget(result.navDest);
             setIsNavigating(true);
             if (result.navStart) setNavStartOverride(result.navStart);
+        },
+        onFloorChange: (floor, showPrompt) => {
+            setActiveFloorName(floor);
+            if (showPrompt) setShowStairsPrompt(true);
         },
     });
 
@@ -152,8 +162,17 @@ function Home() {
     }, [fetchTrails]);
 
     useEffect(() => {
-        if (!isNavigating) setNavStartOverride(null);
+        if (!isNavigating) {
+            setNavStartOverride(null);
+            if (activeNavSystemRef.current === 'outdoor') activeNavSystemRef.current = null;
+        }
     }, [isNavigating]);
+
+    useEffect(() => {
+        if (!showStairsPrompt) return;
+        const t = setTimeout(() => setShowStairsPrompt(false), 4000);
+        return () => clearTimeout(t);
+    }, [showStairsPrompt]);
 
     useEffect(() => {
         const storedView  = localStorage.getItem('activeTrail');
@@ -179,14 +198,21 @@ function Home() {
 
     const handleNavDrawerNavigate = useCallback((pointA, pointB) => {
         if (pointA.type === 'room' && pointB.type === 'room') {
+            activeNavSystemRef.current = 'indoor';
+            setIsNavigating(false);
+            setNavTarget(null);
             handleNavigateTo(pointB.feature, pointA.feature);
         } else if (pointB.type === 'room') {
             if (pointA.type === 'gps' || pointA.type === 'room') {
+                activeNavSystemRef.current = 'indoor';
+                setIsNavigating(false);
+                setNavTarget(null);
                 const startOverride = pointA.type === 'room' ? pointA.feature : null;
                 handleNavigateTo(pointB.feature, startOverride);
             } else if (pointA.type === 'location') {
                 const dp = pointB.feature?.properties;
                 if (dp?.centerLng != null && dp?.centerLat != null) {
+                    activeNavSystemRef.current = 'outdoor';
                     setNavTarget({
                         id: `room-${dp.poiId}`,
                         name: dp.name || dp.roomCode || dp.buildingName || 'Destination',
@@ -197,6 +223,7 @@ function Home() {
                 }
             }
         } else if (pointB.type === 'location') {
+            activeNavSystemRef.current = 'outdoor';
             setNavTarget(pointB.loc);
             setIsNavigating(true);
             if (pointA.type === 'location') setNavStartOverride(pointA.loc);
@@ -213,6 +240,7 @@ function Home() {
     };
 
     const handleNavigateFromSheet = (loc) => {
+        activeNavSystemRef.current = 'outdoor';
         setNavTarget(loc);
         setIsNavigating(true);
         setSelectedLocation(null);
@@ -236,6 +264,9 @@ function Home() {
     }, [searchParams, rooms, handleRoomSelect]);
 
     const handleRoomNavigateTo = useCallback((roomFeature) => {
+        activeNavSystemRef.current = 'indoor';
+        setIsNavigating(false);
+        setNavTarget(null);
         setSelectedRoom(null);
         setHighlightedRoomId(null);
         handleNavigateTo(roomFeature);
@@ -283,6 +314,32 @@ function Home() {
             />
 
             <Box sx={{ flex: 1, position: "relative", minHeight: 0 }}>
+
+                {showStairsPrompt && (
+                    <div style={{
+                        position: 'absolute', top: 60, left: 8, right: 8,
+                        zIndex: 1050,
+                        background: 'var(--glass-bg)',
+                        backdropFilter: 'blur(16px)',
+                        border: '1px solid var(--glass-border)',
+                        borderLeft: '4px solid #7C3AED',
+                        borderRadius: 14,
+                        padding: '12px 16px',
+                        display: 'flex', alignItems: 'center', gap: 10,
+                        boxShadow: 'var(--card-shadow)',
+                    }}>
+                        <span style={{ fontSize: 20 }}>🪜</span>
+                        <div>
+                            <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>
+                                Head to the stairs
+                            </div>
+                            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                                Your destination is on floor {activeFloorName} — map updated
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 <MapView
                     viewState={viewState}
                     onMove={evt => setViewState(evt.viewState)}
@@ -325,8 +382,8 @@ function Home() {
                         navTarget={navTarget}
                         activeRoute={activeRoute}
                         onExit={activeRoute
-                            ? handleCancelNavigation
-                            : () => { setNavTarget(null); setIsNavigating(false); }}
+                            ? () => { activeNavSystemRef.current = null; handleCancelNavigation(); }
+                            : () => { activeNavSystemRef.current = null; setNavTarget(null); setIsNavigating(false); }}
                     />
                 )}
 

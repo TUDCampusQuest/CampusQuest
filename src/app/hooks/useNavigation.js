@@ -3,7 +3,11 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { locations } from '../data/locations';
 import {
     haversineM, walkingStats, snapToNearestBuilding,
-    buildAdjacency, findPathDijkstra, toLocationMapKey,
+    toLocationMapKey,
+    routeBetweenNodeIds,
+    fetchMapboxRoute,
+    buildHybridRouteFromCoordsToCampus,
+    buildHybridRouteFromCampusToCoords,
 } from '../lib/routeUtils';
 
 // Populated at runtime from the campusGraph prop — avoids importing the deleted local file
@@ -65,196 +69,28 @@ function isCampusLocation(loc) {
 function getRoutingMode(start, end) {
     const startOnCampus = isCampusLocation(start);
     const endOnCampus = isCampusLocation(end);
-
     if (startOnCampus && endOnCampus) return 'campus';
     if (!startOnCampus && !endOnCampus) return 'mapbox';
     return 'hybrid';
 }
 
-function getNodeCoords(nodeId) {
-    const node = campusNodes.find(n => n.id === nodeId);
-    if (!node) return null;
-    return [node.lng, node.lat];
-}
-
-function routeBetweenNodeIds(startNodeId, endNodeId) {
-    const pathIds = findPathDijkstra(startNodeId, endNodeId, campusEdges, campusNodes);
-
-    if (!pathIds) {
-        console.error('No graph path found between node ids', { startNodeId, endNodeId });
-        return { error: 'No graph path found between node ids.' };
-    }
-
-    const nodeMap = Object.fromEntries(campusNodes.map(n => [n.id, n]));
-
-    const coords = pathIds.map(id => {
-        const node = nodeMap[id];
-        if (!node) {
-            throw new Error(`Node "${id}" was referenced but not found in campusNodes.`);
-        }
-        return [node.lng, node.lat];
-    });
-
-    return { coords, pathIds };
-}
-
 function routeFromGraph(startLocation, endLocation) {
     const startKey = toLocationMapKey(startLocation.id);
     const endKey = toLocationMapKey(endLocation.id);
-
     const startNodeId = locationNodeMap[startKey];
     const endNodeId = locationNodeMap[endKey];
 
     if (!startNodeId || !endNodeId) {
-        console.error('Missing locationNodeMap entry', {
-            startLocationId: startLocation.id,
-            endLocationId: endLocation.id,
-            startKey,
-            endKey,
-        });
+        console.error('Missing locationNodeMap entry', { startLocationId: startLocation.id, endLocationId: endLocation.id, startKey, endKey });
         return { error: 'Missing node mapping for one or both buildings.' };
     }
 
-    const result = routeBetweenNodeIds(startNodeId, endNodeId);
+    const result = routeBetweenNodeIds(startNodeId, endNodeId, campusNodes, campusEdges);
     if (result.error) return result;
-
     return { coords: result.coords, pathIds: result.pathIds };
 }
 
-async function fetchMapboxRoute(startCoords, endCoords) {
-    const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
-    if (!token) {
-        return { error: 'Missing Mapbox access token.' };
-    }
-
-    const url =
-        `https://api.mapbox.com/directions/v5/mapbox/walking/` +
-        `${startCoords[0]},${startCoords[1]};${endCoords[0]},${endCoords[1]}` +
-        `?geometries=geojson&overview=full&access_token=${token}`;
-
-    try {
-        const res = await fetch(url);
-        const data = await res.json();
-
-        if (!data?.routes?.length) {
-            console.error('No Mapbox route found:', data);
-            return { error: 'No Mapbox route found.' };
-        }
-
-        const coords = data.routes[0].geometry.coordinates;
-        return { coords };
-    } catch (err) {
-        console.error('Mapbox route fetch failed:', err);
-        return { error: 'Failed to fetch Mapbox route.' };
-    }
-}
-
-async function buildHybridRouteFromCoordsToCampus(startCoords, endLocation) {
-    const endKey = toLocationMapKey(endLocation.id);
-    const endNodeId = locationNodeMap[endKey];
-
-    if (!endNodeId) {
-        console.error('Missing campus node mapping for hybrid destination', {
-            endLocationId: endLocation.id,
-            endKey,
-        });
-        return { error: 'Missing campus node mapping for destination.' };
-    }
-
-    let bestOption = null;
-
-    for (const entryNodeId of campusEntryNodeIds) {
-        const entryCoords = getNodeCoords(entryNodeId);
-        if (!entryCoords) continue;
-
-        const mapboxPart = await fetchMapboxRoute(startCoords, entryCoords);
-        if (mapboxPart.error) continue;
-
-        const campusPart = routeBetweenNodeIds(entryNodeId, endNodeId);
-        if (campusPart.error) continue;
-
-        const mergedCoords = [
-            ...mapboxPart.coords,
-            ...campusPart.coords.slice(1),
-        ];
-
-        const totalMetres = walkingStats(mergedCoords).metres;
-
-        if (!bestOption || totalMetres < bestOption.totalMetres) {
-            bestOption = {
-                coords: mergedCoords,
-                totalMetres,
-                entryNodeId,
-                campusPathIds: campusPart.pathIds,
-            };
-        }
-    }
-
-    if (!bestOption) {
-        return { error: 'No hybrid route could be built.' };
-    }
-
-    return {
-        coords: bestOption.coords,
-        entryNodeId: bestOption.entryNodeId,
-        campusPathIds: bestOption.campusPathIds,
-    };
-}
-
-async function buildHybridRouteFromCampusToCoords(startLocation, endCoords) {
-    const startKey = toLocationMapKey(startLocation.id);
-    const startNodeId = locationNodeMap[startKey];
-
-    if (!startNodeId) {
-        console.error('Missing campus node mapping for hybrid start', {
-            startLocationId: startLocation.id,
-            startKey,
-        });
-        return { error: 'Missing campus node mapping for start location.' };
-    }
-
-    let bestOption = null;
-
-    for (const entryNodeId of campusEntryNodeIds) {
-        const entryCoords = getNodeCoords(entryNodeId);
-        if (!entryCoords) continue;
-
-        const campusPart = routeBetweenNodeIds(startNodeId, entryNodeId);
-        if (campusPart.error) continue;
-
-        const mapboxPart = await fetchMapboxRoute(entryCoords, endCoords);
-        if (mapboxPart.error) continue;
-
-        const mergedCoords = [
-            ...campusPart.coords,
-            ...mapboxPart.coords.slice(1),
-        ];
-
-        const totalMetres = walkingStats(mergedCoords).metres;
-
-        if (!bestOption || totalMetres < bestOption.totalMetres) {
-            bestOption = {
-                coords: mergedCoords,
-                totalMetres,
-                entryNodeId,
-                campusPathIds: campusPart.pathIds,
-            };
-        }
-    }
-
-    if (!bestOption) {
-        return { error: 'No hybrid route could be built.' };
-    }
-
-    return {
-        coords: bestOption.coords,
-        entryNodeId: bestOption.entryNodeId,
-        campusPathIds: bestOption.campusPathIds,
-    };
-}
-export function useNavigation({ isNavigating, navTarget, navStart, userLocation, mapRef, campusGraph }) {
-    // Sync S3-fetched graph data into module-level vars so all helper functions pick it up.
-    // Merge with local patches to fix missing/wrong S3 entries.
+export function useNavigation({ isNavigating, navTarget, navStart, userLocation, mapRef, campusGraph, isIndoorActive }) {
     useEffect(() => {
         if (!campusGraph) return;
         campusNodes     = [...(campusGraph.campusNodes || campusGraph.nodes || []), ...PATCHED_NODES];
@@ -262,30 +98,28 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
         locationNodeMap = { ...(campusGraph.locationNodeMap || {}), ...PATCHED_NODE_MAP };
     }, [campusGraph]);
 
-    // Capture latest userLocation in a ref so the route-calculation effect can read it
-    // without re-running on every GPS update (which caused repeated fitRouteOnMap calls).
     const userLocationRef = useRef(userLocation);
     useEffect(() => { userLocationRef.current = userLocation; });
+
+    const routeIdRef = useRef(0);
+
     const [routeStep, setRouteStep] = useState('IDLE');
     const [buildingA, setBuildingA] = useState(null);
     const [buildingB, setBuildingB] = useState(null);
     const [routeCoords, setRouteCoords] = useState(null);
     const [routeStats, setRouteStats] = useState(null);
     const [routeError, setRouteError] = useState(null);
-    const fitRouteOnMap = useCallback((coords) => {
-        if (!mapRef.current || !coords?.length) return;
 
+    const fitRouteOnMap = useCallback((coords) => {
+        if (isIndoorActive) return;
+        if (!mapRef.current || !coords?.length) return;
         const lngs = coords.map(c => c[0]);
         const lats = coords.map(c => c[1]);
-
         mapRef.current.fitBounds(
-            [
-                [Math.min(...lngs), Math.min(...lats)],
-                [Math.max(...lngs), Math.max(...lats)],
-            ],
+            [[Math.min(...lngs), Math.min(...lats)], [Math.max(...lngs), Math.max(...lats)]],
             { padding: 90, duration: 1000 }
         );
-    }, [mapRef]);
+    }, [mapRef, isIndoorActive]);
 
     useEffect(() => {
         if (isNavigating && navTarget) {
@@ -294,7 +128,6 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
             setRouteStats(null);
             setRouteError(null);
 
-            // Explicit start override from NavigationDrawer — skip GPS/snap logic
             if (navStart) {
                 setBuildingA(navStart);
                 setRouteStep('ACTIVE');
@@ -304,15 +137,11 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
             if (userLocation) {
                 const userCoords = [userLocation.lng, userLocation.lat];
                 const nearest = snapToNearestBuilding(userCoords, locations);
-
                 if (nearest && nearest.id !== navTarget.id) {
                     const nearestCoords = nearest.coordinates || [nearest.lng, nearest.lat];
                     const distToNearest = haversineM(userCoords, nearestCoords);
-                    if (distToNearest <= 150) {
-                        setBuildingA(nearest);
-                    }
+                    if (distToNearest <= 150) setBuildingA(nearest);
                 }
-
                 setRouteStep('ACTIVE');
                 return;
             }
@@ -335,6 +164,7 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
         if (!buildingB || routeStep !== 'ACTIVE') return;
 
         let cancelled = false;
+        const myId = ++routeIdRef.current;
 
         async function resolveRoute() {
             setRouteError(null);
@@ -351,14 +181,8 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
 
                     if (routingMode === 'campus') {
                         const result = routeFromGraph(buildingA, buildingB);
-
-                        if (result.error) {
-                            setRouteError(result.error);
-                            setRouteStep('ERROR');
-                            return;
-                        }
-
-                        if (cancelled) return;
+                        if (result.error) { setRouteError(result.error); setRouteStep('ERROR'); return; }
+                        if (cancelled || myId !== routeIdRef.current) return;
                         setRouteCoords(result.coords);
                         setRouteStats(walkingStats(result.coords));
                         fitRouteOnMap(result.coords);
@@ -369,14 +193,8 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
                         const startCoords = buildingA.coordinates || [buildingA.lng, buildingA.lat];
                         const endCoords = buildingB.coordinates || [buildingB.lng, buildingB.lat];
                         const result = await fetchMapboxRoute(startCoords, endCoords);
-
-                        if (result.error) {
-                            setRouteError(result.error);
-                            setRouteStep('ERROR');
-                            return;
-                        }
-
-                        if (cancelled) return;
+                        if (result.error) { setRouteError(result.error); setRouteStep('ERROR'); return; }
+                        if (cancelled || myId !== routeIdRef.current) return;
                         setRouteCoords(result.coords);
                         setRouteStats(walkingStats(result.coords));
                         fitRouteOnMap(result.coords);
@@ -389,15 +207,11 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
 
                         if (!startOnCampus && endOnCampus) {
                             const startCoords = buildingA.coordinates || [buildingA.lng, buildingA.lat];
-                            const result = await buildHybridRouteFromCoordsToCampus(startCoords, buildingB);
-
-                            if (result.error) {
-                                setRouteError(result.error);
-                                setRouteStep('ERROR');
-                                return;
-                            }
-
-                            if (cancelled) return;
+                            const result = await buildHybridRouteFromCoordsToCampus(
+                                startCoords, buildingB, campusNodes, campusEdges, locationNodeMap, campusEntryNodeIds
+                            );
+                            if (result.error) { setRouteError(result.error); setRouteStep('ERROR'); return; }
+                            if (cancelled || myId !== routeIdRef.current) return;
                             setRouteCoords(result.coords);
                             setRouteStats(walkingStats(result.coords));
                             fitRouteOnMap(result.coords);
@@ -406,15 +220,11 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
 
                         if (startOnCampus && !endOnCampus) {
                             const endCoords = buildingB.coordinates || [buildingB.lng, buildingB.lat];
-                            const result = await buildHybridRouteFromCampusToCoords(buildingA, endCoords);
-
-                            if (result.error) {
-                                setRouteError(result.error);
-                                setRouteStep('ERROR');
-                                return;
-                            }
-
-                            if (cancelled) return;
+                            const result = await buildHybridRouteFromCampusToCoords(
+                                buildingA, endCoords, campusNodes, campusEdges, locationNodeMap, campusEntryNodeIds
+                            );
+                            if (result.error) { setRouteError(result.error); setRouteStep('ERROR'); return; }
+                            if (cancelled || myId !== routeIdRef.current) return;
                             setRouteCoords(result.coords);
                             setRouteStats(walkingStats(result.coords));
                             fitRouteOnMap(result.coords);
@@ -431,28 +241,22 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
                 if (!buildingA && currentUserLocation) {
                     const startCoords = [currentUserLocation.lng, currentUserLocation.lat];
 
-                    // Destination is a synthetic room object (not in the campus graph) —
-                    // use direct Mapbox routing rather than the campus hybrid system.
                     if (!isCampusLocation(buildingB)) {
                         const endCoords = buildingB.coordinates || [buildingB.lng, buildingB.lat];
                         const result = await fetchMapboxRoute(startCoords, endCoords);
                         if (result.error) { setRouteError(result.error); setRouteStep('ERROR'); return; }
-                        if (cancelled) return;
+                        if (cancelled || myId !== routeIdRef.current) return;
                         setRouteCoords(result.coords);
                         setRouteStats(walkingStats(result.coords));
                         fitRouteOnMap(result.coords);
                         return;
                     }
 
-                    const result = await buildHybridRouteFromCoordsToCampus(startCoords, buildingB);
-
-                    if (result.error) {
-                        setRouteError(result.error);
-                        setRouteStep('ERROR');
-                        return;
-                    }
-
-                    if (cancelled) return;
+                    const result = await buildHybridRouteFromCoordsToCampus(
+                        startCoords, buildingB, campusNodes, campusEdges, locationNodeMap, campusEntryNodeIds
+                    );
+                    if (result.error) { setRouteError(result.error); setRouteStep('ERROR'); return; }
+                    if (cancelled || myId !== routeIdRef.current) return;
                     setRouteCoords(result.coords);
                     setRouteStats(walkingStats(result.coords));
                     fitRouteOnMap(result.coords);
@@ -462,7 +266,7 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
                 setRouteError('Could not determine a route.');
                 setRouteStep('ERROR');
             } catch (err) {
-                if (!cancelled) {
+                if (!cancelled && myId === routeIdRef.current) {
                     setRouteError('Failed to build route.');
                     setRouteStep('ERROR');
                 }
@@ -470,10 +274,7 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
         }
 
         resolveRoute();
-
-        return () => {
-            cancelled = true;
-        };
+        return () => { cancelled = true; };
     // userLocation intentionally excluded — read via ref to avoid re-routing on every GPS tick
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [buildingA, buildingB, routeStep, fitRouteOnMap]);

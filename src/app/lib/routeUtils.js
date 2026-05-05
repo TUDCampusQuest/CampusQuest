@@ -141,3 +141,127 @@ export function toLocationMapKey(id) {
     if (!id) return '';
     return String(id).trim().toLowerCase();
 }
+
+// ─── functions moved from useNavigation.js ────────────────────────────────────
+
+export function routeBetweenNodeIds(startNodeId, endNodeId, campusNodes, campusEdges) {
+    const pathIds = findPathDijkstra(startNodeId, endNodeId, campusEdges, campusNodes);
+
+    if (!pathIds) {
+        console.error('No graph path found between node ids', { startNodeId, endNodeId });
+        return { error: 'No graph path found between node ids.' };
+    }
+
+    const nodeMap = Object.fromEntries(campusNodes.map(n => [n.id, n]));
+
+    const coords = pathIds.map(id => {
+        const node = nodeMap[id];
+        if (!node) throw new Error(`Node "${id}" was referenced but not found in campusNodes.`);
+        return [node.lng, node.lat];
+    });
+
+    return { coords, pathIds };
+}
+
+export async function fetchMapboxRoute(startCoords, endCoords) {
+    const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
+    if (!token) return { error: 'Missing Mapbox access token.' };
+
+    const url =
+        `https://api.mapbox.com/directions/v5/mapbox/walking/` +
+        `${startCoords[0]},${startCoords[1]};${endCoords[0]},${endCoords[1]}` +
+        `?geometries=geojson&overview=full&access_token=${token}`;
+
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+        if (!data?.routes?.length) {
+            console.error('No Mapbox route found:', data);
+            return { error: 'No Mapbox route found.' };
+        }
+        return { coords: data.routes[0].geometry.coordinates };
+    } catch (err) {
+        console.error('Mapbox route fetch failed:', err);
+        return { error: 'Failed to fetch Mapbox route.' };
+    }
+}
+
+export async function buildHybridRouteFromCoordsToCampus(
+    startCoords, endLocation,
+    campusNodes, campusEdges, locationNodeMap, campusEntryNodeIds,
+) {
+    const endKey = toLocationMapKey(endLocation.id);
+    const endNodeId = locationNodeMap[endKey];
+
+    if (!endNodeId) {
+        console.error('Missing campus node mapping for hybrid destination', {
+            endLocationId: endLocation.id, endKey,
+        });
+        return { error: 'Missing campus node mapping for destination.' };
+    }
+
+    let bestOption = null;
+
+    for (const entryNodeId of campusEntryNodeIds) {
+        const entryNode = campusNodes.find(n => n.id === entryNodeId);
+        if (!entryNode) continue;
+        const entryCoords = [entryNode.lng, entryNode.lat];
+
+        const mapboxPart = await fetchMapboxRoute(startCoords, entryCoords);
+        if (mapboxPart.error) continue;
+
+        const campusPart = routeBetweenNodeIds(entryNodeId, endNodeId, campusNodes, campusEdges);
+        if (campusPart.error) continue;
+
+        const mergedCoords = [...mapboxPart.coords, ...campusPart.coords.slice(1)];
+        const totalMetres = walkingStats(mergedCoords).metres;
+
+        if (!bestOption || totalMetres < bestOption.totalMetres) {
+            bestOption = { coords: mergedCoords, totalMetres, entryNodeId, campusPathIds: campusPart.pathIds };
+        }
+    }
+
+    if (!bestOption) return { error: 'No hybrid route could be built.' };
+
+    return { coords: bestOption.coords, entryNodeId: bestOption.entryNodeId, campusPathIds: bestOption.campusPathIds };
+}
+
+export async function buildHybridRouteFromCampusToCoords(
+    startLocation, endCoords,
+    campusNodes, campusEdges, locationNodeMap, campusEntryNodeIds,
+) {
+    const startKey = toLocationMapKey(startLocation.id);
+    const startNodeId = locationNodeMap[startKey];
+
+    if (!startNodeId) {
+        console.error('Missing campus node mapping for hybrid start', {
+            startLocationId: startLocation.id, startKey,
+        });
+        return { error: 'Missing campus node mapping for start location.' };
+    }
+
+    let bestOption = null;
+
+    for (const entryNodeId of campusEntryNodeIds) {
+        const entryNode = campusNodes.find(n => n.id === entryNodeId);
+        if (!entryNode) continue;
+        const entryCoords = [entryNode.lng, entryNode.lat];
+
+        const campusPart = routeBetweenNodeIds(startNodeId, entryNodeId, campusNodes, campusEdges);
+        if (campusPart.error) continue;
+
+        const mapboxPart = await fetchMapboxRoute(entryCoords, endCoords);
+        if (mapboxPart.error) continue;
+
+        const mergedCoords = [...campusPart.coords, ...mapboxPart.coords.slice(1)];
+        const totalMetres = walkingStats(mergedCoords).metres;
+
+        if (!bestOption || totalMetres < bestOption.totalMetres) {
+            bestOption = { coords: mergedCoords, totalMetres, entryNodeId, campusPathIds: campusPart.pathIds };
+        }
+    }
+
+    if (!bestOption) return { error: 'No hybrid route could be built.' };
+
+    return { coords: bestOption.coords, entryNodeId: bestOption.entryNodeId, campusPathIds: bestOption.campusPathIds };
+}

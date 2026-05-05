@@ -1,3 +1,4 @@
+// Renders Mapbox GL layers for indoor room fills, outlines, labels, highlighted room, floor outline, and active route path.
 'use client';
 
 import { useMemo } from 'react';
@@ -5,7 +6,6 @@ import { Source, Layer } from 'react-map-gl';
 
 const EMPTY_GEOJSON = { type: 'FeatureCollection', features: [] };
 
-// Color rooms by kind first, then by typeName for semantic differentiation
 const FILL_COLOR = [
     'case',
     ['==', ['get', 'kind'], 'stairs'],           '#FFE0A0',
@@ -47,43 +47,28 @@ export default function IndoorOverlay({
         return { type: 'Feature', geometry: { type: 'LineString', coordinates: routePath }, properties: {} };
     }, [routePath]);
 
-    const floorFilter = activeFloorName
-        ? ['==', ['get', 'floorName'], activeFloorName]
-        : ['literal', true];
-
-    // -1 sentinel → matches nothing when no room is selected
+    const floorFilter    = activeFloorName ? ['==', ['get', 'floorName'], activeFloorName] : ['literal', true];
     const highlightFilter = ['==', ['get', 'poiId'], highlightedRoomId ?? -1];
 
     return (
         <>
             <Source id="indoor-rooms" type="geojson" data={rooms ?? EMPTY_GEOJSON}>
-                {/* Room fills */}
                 <Layer
                     id="indoor-rooms-fill"
                     type="fill"
                     minzoom={16}
                     maxzoom={22}
                     filter={floorFilter}
-                    paint={{
-                        'fill-color': FILL_COLOR,
-                        'fill-opacity': 0.92,
-                    }}
+                    paint={{ 'fill-color': FILL_COLOR, 'fill-opacity': 0.92 }}
                 />
-
-                {/* Room outlines */}
                 <Layer
                     id="indoor-rooms-outline"
                     type="line"
                     minzoom={16}
                     maxzoom={22}
                     filter={floorFilter}
-                    paint={{
-                        'line-color': '#aaaaaa',
-                        'line-width': 1.0,
-                    }}
+                    paint={{ 'line-color': '#aaaaaa', 'line-width': 1.0 }}
                 />
-
-                {/* Room labels */}
                 <Layer
                     id="indoor-room-labels"
                     type="symbol"
@@ -103,19 +88,12 @@ export default function IndoorOverlay({
                         'text-halo-width': 2,
                     }}
                 />
-
-                {/* Highlighted room — outline only so label stays readable */}
                 <Layer
                     id="indoor-rooms-highlighted-outline"
                     type="line"
                     filter={highlightFilter}
-                    paint={{
-                        'line-color': '#FF6600',
-                        'line-width': 4,
-                        'line-opacity': 1,
-                    }}
+                    paint={{ 'line-color': '#FF6600', 'line-width': 4, 'line-opacity': 1 }}
                 />
-
             </Source>
 
             {floorOutlineGeoJSON && (
@@ -123,10 +101,7 @@ export default function IndoorOverlay({
                     <Layer
                         id="indoor-floor-outline-fill"
                         type="fill"
-                        paint={{
-                            'fill-opacity': 0,
-                            'fill-outline-color': '#555555',
-                        }}
+                        paint={{ 'fill-opacity': 0, 'fill-outline-color': '#555555' }}
                     />
                 </Source>
             )}
