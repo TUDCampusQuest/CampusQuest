@@ -305,6 +305,8 @@ function Home() {
                     roomNameMap={roomNameMap}
                     activeTrail={activeTrail}
                     onCloseTrail={() => { setActiveTrail(null); setCurrentTrailStopIndex(0); }}
+                    onRoomSelect={handleRoomSelect}
+                    onMapTap={() => { setSelectedRoom(null); setHighlightedRoomId(null); }}
                 />
 
                 <MapSidebar
@@ -341,8 +343,8 @@ function Home() {
                         selectedRoom={selectedRoom}
                         gpsLocation={gpsLocation}
                         onClose={() => { setSelectedRoom(null); setHighlightedRoomId(null); }}
-                        onNavigate={handleNavigateTo}
-                        onNavigateFrom={handleRoomNavigateTo}
+                        onNavigateTo={handleRoomNavigateTo}
+                        onSetAsStart={handleRoomSetAsStart}
                         roomNameMap={roomNameMap}
                     />
                 )}

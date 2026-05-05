@@ -245,18 +245,20 @@ export default function NavigationDrawer({
                                 My Location
                             </Box>
                         )}
-                        <Box
-                            onClick={() => { onPickFromMap('A'); }}
-                            sx={{
-                                display: 'flex', alignItems: 'center', gap: 0.75,
-                                px: 1.5, py: 0.75, borderRadius: 99,
-                                bgcolor: 'var(--btn-ghost-bg)', border: '1px solid var(--border-subtle)',
-                                cursor: 'pointer', fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)',
-                                '&:hover': { bgcolor: 'var(--loc-item-hover)' }, userSelect: 'none',
-                            }}
-                        >
-                            📌 Tap map
-                        </Box>
+                        {onPickFromMap && (
+                            <Box
+                                onClick={() => { onPickFromMap('A'); }}
+                                sx={{
+                                    display: 'flex', alignItems: 'center', gap: 0.75,
+                                    px: 1.5, py: 0.75, borderRadius: 99,
+                                    bgcolor: 'var(--btn-ghost-bg)', border: '1px solid var(--border-subtle)',
+                                    cursor: 'pointer', fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)',
+                                    '&:hover': { bgcolor: 'var(--loc-item-hover)' }, userSelect: 'none',
+                                }}
+                            >
+                                📌 Tap map
+                            </Box>
+                        )}
                     </Stack>
                 )}
 

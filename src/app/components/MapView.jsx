@@ -33,6 +33,7 @@ function MapViewInner({
     activeRoute, currentStepIndex,
     roomNameMap,
     activeTrail, onCloseTrail,
+    onRoomSelect, onMapTap,
 }) {
     const mapRef = useRef(null);
     const { isDark } = useTheme();
@@ -60,7 +61,7 @@ function MapViewInner({
     const {
         routeStep, buildingA, buildingB,
         routeCoords, routeStats, routeError,
-        resetToPickA,
+        resetToPickA, pickBuildingA,
     } = useNavigation({ isNavigating, navTarget, navStart, userLocation, mapRef, campusGraph });
 
     const {
@@ -68,7 +69,15 @@ function MapViewInner({
         onMapClick, trailGeoJSON, routeGeoJSON, capturedGeoJSON, trailPaths,
     } = useTrailSelector({ captureMode, setCapturedPoints, mapRef });
 
-    useBuildingMarkers({ map: mapRef.current?.getMap?.(), styleLoaded, onLocationSelect });
+    const handleLocationSelect = useCallback((loc) => {
+        if (routeStep === 'PICK_A') {
+            pickBuildingA(loc);
+        } else {
+            onLocationSelect?.(loc);
+        }
+    }, [routeStep, pickBuildingA, onLocationSelect]);
+
+    useBuildingMarkers({ map: mapRef.current?.getMap?.(), styleLoaded, onLocationSelect: handleLocationSelect });
 
     const handleMapLoad = useCallback((e) => {
         setStyleLoaded(true);
@@ -79,9 +88,37 @@ function MapViewInner({
         if (!isAdmin) { setShowCaptureUI(false); setCaptureMode(false); }
     }, [isAdmin]);
 
+    const lastClickTimeRef = useRef(0);
+    const lastClickFeatureRef = useRef(null);
+
     const handleClick = useCallback((e) => {
         onMapClick(e);
-    }, [onMapClick]);
+
+        const map = mapRef.current?.getMap ? mapRef.current.getMap() : mapRef.current;
+        if (!map) { onMapTap?.(); return; }
+
+        const features = map.queryRenderedFeatures(e.point, { layers: ['indoor-rooms-fill'] });
+        const now = Date.now();
+        const delta = now - lastClickTimeRef.current;
+        const clickedFeatureId = features?.[0]?.properties?.poiId ?? null;
+
+        if (features?.length > 0 && delta < 400 && lastClickFeatureRef.current === clickedFeatureId) {
+            // Double-click on a room
+            const roomFeature = rooms?.features?.find(f => f.properties.poiId === features[0].properties.poiId);
+            if (roomFeature && onRoomSelect) onRoomSelect(roomFeature);
+            lastClickTimeRef.current = 0;
+            lastClickFeatureRef.current = null;
+        } else if (features?.length > 0) {
+            // First click on a room — record it, wait for potential double-click
+            lastClickTimeRef.current = now;
+            lastClickFeatureRef.current = clickedFeatureId;
+        } else {
+            // Clicked empty map area — dismiss selected room
+            lastClickTimeRef.current = 0;
+            lastClickFeatureRef.current = null;
+            onMapTap?.();
+        }
+    }, [onMapClick, onRoomSelect, onMapTap, rooms]);
 
     useEffect(() => {
         if (!navTarget || !mapRef.current) return;
@@ -197,7 +234,7 @@ function MapViewInner({
                         <MapLayers
                             trailGeoJSON={trailGeoJSON}
                             capturedGeoJSON={capturedGeoJSON(capturedPoints)}
-                            routeGeoJSON={routeGeoJSON(routeCoords)}
+                            routeGeoJSON={activeRoute ? null : routeGeoJSON(routeCoords)}
                             activeTrailGeoJSON={trailPathGeoJSON}
                         />
 
@@ -218,12 +255,12 @@ function MapViewInner({
                         ))}
 
                         {buildingA?.coordinates && (
-                            <Marker longitude={buildingA.coordinates[0]} latitude={buildingA.coordinates[1]} anchor="top">
+                            <Marker longitude={buildingA.coordinates[0]} latitude={buildingA.coordinates[1]} anchor="center">
                                 <div style={{ background: '#22c55e', color: '#fff', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 11, border: '2px solid #fff', boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}>A</div>
                             </Marker>
                         )}
                         {buildingB?.coordinates && isNavigating && (
-                            <Marker longitude={buildingB.coordinates[0]} latitude={buildingB.coordinates[1]} anchor="top">
+                            <Marker longitude={buildingB.coordinates[0]} latitude={buildingB.coordinates[1]} anchor="center">
                                 <div style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 11, border: '2px solid #fff', boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}>B</div>
                             </Marker>
                         )}
