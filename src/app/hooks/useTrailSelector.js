@@ -20,6 +20,7 @@ export function useTrailSelector({ captureMode, setCapturedPoints, mapRef }) {
 
     // ── Fetch S3 trails once on mount ────────────────────────────────────────
     const [s3Trails, setS3Trails] = useState([]);
+    const [readyToShow, setReadyToShow] = useState(false);
 
     useEffect(() => {
         fetch('/api/trails', { cache: 'no-store' })
@@ -27,6 +28,12 @@ export function useTrailSelector({ captureMode, setCapturedPoints, mapRef }) {
             .then(data => { if (Array.isArray(data)) setS3Trails(data); })
             .catch(() => {});
     }, []);
+
+    useEffect(() => {
+        if (s3Trails.length > 0) { setReadyToShow(true); return; }
+        const t = setTimeout(() => setReadyToShow(true), 800);
+        return () => clearTimeout(t);
+    }, [s3Trails]);
 
     // ── Merge: build a lookup map of id → coords covering both sources ───────
     // S3 trails take priority; local trailPaths fills in anything not in S3.
@@ -80,14 +87,19 @@ export function useTrailSelector({ captureMode, setCapturedPoints, mapRef }) {
     }, [captureMode, setCapturedPoints]);
 
     // GeoJSON builders
-    const trailGeoJSON = useMemo(() => ({
-        type: 'FeatureCollection',
-        features: selectedTrailCoords ? [{
-            type: 'Feature',
-            geometry: { type: 'LineString', coordinates: selectedTrailCoords },
-            properties: {}
-        }] : []
-    }), [selectedTrailCoords]);
+    const trailGeoJSON = useMemo(() => {
+        if (!readyToShow) {
+            return { type: 'FeatureCollection', features: [] };
+        }
+        return {
+            type: 'FeatureCollection',
+            features: selectedTrailCoords ? [{
+                type: 'Feature',
+                geometry: { type: 'LineString', coordinates: selectedTrailCoords },
+                properties: {}
+            }] : []
+        };
+    }, [selectedTrailCoords, readyToShow]);
 
     const routeGeoJSON = useCallback((routeCoords) => {
         if (!routeCoords) return null;

@@ -19,7 +19,7 @@ function getRoomTypeBadgeStyle(typeName) {
     return { background: 'var(--bg-card)', color: 'var(--text-secondary)' };
 }
 
-export default function RoomSheet({ selectedRoom, gpsLocation, onClose, onNavigate, onNavigateFrom, roomNameMap }) {
+export default function RoomSheet({ selectedRoom, gpsLocation, onClose, onNavigateTo, onSetAsStart, roomNameMap }) {
     if (!selectedRoom) return null;
     const p = selectedRoom.properties;
 
@@ -88,38 +88,34 @@ export default function RoomSheet({ selectedRoom, gpsLocation, onClose, onNaviga
             <div style={{ height: 1, background: 'var(--border-color)', margin: '14px 0' }} />
 
             {/* Navigation buttons */}
-            <div style={{ display: 'flex', gap: 8 }}>
-                {/* Navigate from GPS */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                 <button
-                    disabled={!gpsLocation}
-                    onClick={() => onNavigate(selectedRoom)}
+                    onClick={() => onNavigateTo(selectedRoom)}
                     style={{
-                        flex: 1, height: 48, borderRadius: 12, border: 'none',
-                        background: gpsLocation ? 'var(--accent-teal)' : 'var(--bg-card)',
-                        color: gpsLocation ? '#fff' : 'var(--text-secondary)',
+                        width: '100%', height: 48, borderRadius: 12, border: 'none',
+                        background: '#7C3AED',
+                        color: '#fff',
                         fontWeight: 700, fontSize: 13,
-                        cursor: gpsLocation ? 'pointer' : 'not-allowed',
+                        cursor: 'pointer',
                         transition: 'background 0.2s',
                     }}
-                    title="Navigate from your current location"
                 >
                     Navigate Here
                 </button>
 
-                {/* Navigate from custom location */}
                 <button
-                    onClick={() => onNavigateFrom(selectedRoom)}
+                    onClick={() => onSetAsStart(selectedRoom)}
                     style={{
-                        flex: 1, height: 48, borderRadius: 12, border: '1px solid var(--accent-teal)',
+                        width: '100%', height: 48, borderRadius: 12,
+                        border: '1.5px solid var(--border-color)',
                         background: 'transparent',
-                        color: 'var(--accent-teal)',
+                        color: 'var(--text-primary)',
                         fontWeight: 700, fontSize: 13,
                         cursor: 'pointer',
                         transition: 'all 0.2s',
                     }}
-                    title="Pick a starting location on the map"
                 >
-                    Navigate from...
+                    Set as Start
                 </button>
             </div>
         </GlassCard>

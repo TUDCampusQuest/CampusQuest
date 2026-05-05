@@ -129,6 +129,23 @@ export default function LocationDetails() {
 
     // FIX 2 — accordion state; default Ground floor open
     const [openFloor, setOpenFloor] = useState('G');
+    const [copied, setCopied] = useState(false);
+
+    const pageUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://campusquest.vercel.app'}/location/${id}`;
+
+    async function handleShare() {
+        if (navigator.share) {
+            await navigator.share({
+                title: location?.name,
+                text: `View ${location?.name} on CampusQuest`,
+                url: pageUrl,
+            });
+        } else {
+            await navigator.clipboard.writeText(pageUrl);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        }
+    }
 
     const { rooms, roomNameMap } = useIndoorData();
 
@@ -320,7 +337,7 @@ export default function LocationDetails() {
                 </div>
             )}
 
-            {/* SECTION 5 — QR code */}
+            {/* SECTION 5 — QR code + share */}
             {QR_LOCATION_IDS.has(location.id) && (
                 <div style={{ padding: '0 20px', marginTop: 16 }}>
                     <GlassCard style={{ padding: 20, marginTop: 0 }}>
@@ -329,7 +346,7 @@ export default function LocationDetails() {
                             <span style={{ fontWeight: 700, fontSize: 15, color: 'var(--text-primary)' }}>Share this location</span>
                         </div>
                         <p style={{ fontSize: 12, color: 'var(--text-secondary)', margin: '0 0 12px' }}>
-                            Scan to open on another device
+                            Scan the QR code or tap share
                         </p>
                         <img
                             src={`https://campusquesttud.s3.eu-west-1.amazonaws.com/photos/qr/${location.id}.png`}
@@ -344,9 +361,16 @@ export default function LocationDetails() {
                                 padding: 8,
                             }}
                         />
-                        <p style={{ fontSize: 11, color: 'var(--text-secondary)', textAlign: 'center', margin: '8px 0 0' }}>
-                            Point your camera at the code
-                        </p>
+                        <button
+                            onClick={handleShare}
+                            style={{
+                                width: '100%', height: 44, marginTop: 12, borderRadius: 10,
+                                background: '#7C3AED', color: '#fff', border: 'none',
+                                fontWeight: 700, fontSize: 14, cursor: 'pointer',
+                            }}
+                        >
+                            {copied ? '✓ Copied!' : '↑ Share Location'}
+                        </button>
                     </GlassCard>
                 </div>
             )}

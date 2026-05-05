@@ -25,7 +25,7 @@ export default function ScanPage() {
                 scannerRef.current = null;
             }
             // Open the slide-up sheet on the map instead of a full page redirect
-            router.push(`/?location=${destination}`);
+            router.push(destination);
         };
 
         stopAndNavigate();
@@ -54,7 +54,13 @@ export default function ScanPage() {
                     (decoded) => {
                         if (hasScannedRef.current) return;
                         hasScannedRef.current = true;
-                        pendingNavRef.current = decoded.trim().toUpperCase();
+                        const text = decoded.trim();
+                        try {
+                            const url = new URL(text);
+                            pendingNavRef.current = url.pathname;
+                        } catch {
+                            pendingNavRef.current = `/location/${text.toUpperCase()}`;
+                        }
                         setStatus("success");
                     },
                     () => {}

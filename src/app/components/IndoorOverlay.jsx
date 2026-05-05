@@ -27,9 +27,6 @@ export default function IndoorOverlay({
     rooms,
     highlightedRoomId,
     routePath,
-    isCrossBuilding,
-    outdoorPathLength,
-    pickingIndoorStart,
 }) {
     const floorOutlineGeoJSON = useMemo(() => {
         if (!activeBuilding || !activeFloorName) return null;
@@ -45,25 +42,10 @@ export default function IndoorOverlay({
         };
     }, [activeBuilding, activeFloorName]);
 
-    // For cross-building routes split into outdoor (blue dashed) and indoor (teal solid) segments.
-    // For same-building routes use a single teal line.
-    const outdoorRouteGeoJSON = useMemo(() => {
-        if (!isCrossBuilding || !routePath || outdoorPathLength < 2) return null;
-        const coords = routePath.slice(0, outdoorPathLength);
-        if (coords.length < 2) return null;
-        return { type: 'Feature', geometry: { type: 'LineString', coordinates: coords }, properties: {} };
-    }, [routePath, isCrossBuilding, outdoorPathLength]);
-
-    const indoorRouteGeoJSON = useMemo(() => {
+    const routeGeoJSON = useMemo(() => {
         if (!routePath || routePath.length < 2) return null;
-        if (isCrossBuilding) {
-            // Overlap by one point so the two lines meet without a gap
-            const coords = routePath.slice(Math.max(0, outdoorPathLength - 1));
-            if (coords.length < 2) return null;
-            return { type: 'Feature', geometry: { type: 'LineString', coordinates: coords }, properties: {} };
-        }
         return { type: 'Feature', geometry: { type: 'LineString', coordinates: routePath }, properties: {} };
-    }, [routePath, isCrossBuilding, outdoorPathLength]);
+    }, [routePath]);
 
     const floorFilter = activeFloorName
         ? ['==', ['get', 'floorName'], activeFloorName]
@@ -79,7 +61,7 @@ export default function IndoorOverlay({
                 <Layer
                     id="indoor-rooms-fill"
                     type="fill"
-                    minzoom={17}
+                    minzoom={16}
                     maxzoom={22}
                     filter={floorFilter}
                     paint={{
@@ -92,7 +74,7 @@ export default function IndoorOverlay({
                 <Layer
                     id="indoor-rooms-outline"
                     type="line"
-                    minzoom={17}
+                    minzoom={16}
                     maxzoom={22}
                     filter={floorFilter}
                     paint={{
@@ -134,20 +116,6 @@ export default function IndoorOverlay({
                     }}
                 />
 
-                {/* Pick-start mode — teal tint on all rooms so user knows they're tappable */}
-                {pickingIndoorStart && (
-                    <Layer
-                        id="indoor-rooms-pick-overlay"
-                        type="fill"
-                        minzoom={17}
-                        maxzoom={22}
-                        filter={floorFilter}
-                        paint={{
-                            'fill-color': '#00B4B4',
-                            'fill-opacity': 0.22,
-                        }}
-                    />
-                )}
             </Source>
 
             {floorOutlineGeoJSON && (
@@ -163,45 +131,19 @@ export default function IndoorOverlay({
                 </Source>
             )}
 
-            {/* Outdoor leg of cross-building route — blue dashed */}
-            {outdoorRouteGeoJSON && (
-                <Source id="indoor-route-outdoor" type="geojson" data={outdoorRouteGeoJSON}>
+            {routeGeoJSON && (
+                <Source id="indoor-route" type="geojson" data={routeGeoJSON}>
                     <Layer
-                        id="indoor-route-outdoor-casing"
+                        id="indoor-route-casing"
                         type="line"
                         paint={{ 'line-color': 'rgba(0,0,0,0.15)', 'line-width': 6, 'line-opacity': 0.6 }}
                         layout={{ 'line-cap': 'round', 'line-join': 'round' }}
                     />
                     <Layer
-                        id="indoor-route-outdoor-line"
-                        type="line"
-                        paint={{
-                            'line-color': '#1E90FF',
-                            'line-width': 4,
-                            'line-opacity': 0.9,
-                            'line-dasharray': [4, 3],
-                        }}
-                        layout={{ 'line-cap': 'round', 'line-join': 'round' }}
-                        beforeId="indoor-route-outdoor-casing"
-                    />
-                </Source>
-            )}
-
-            {/* Indoor leg (same-building route, or indoor portion of cross-building) — teal solid */}
-            {indoorRouteGeoJSON && (
-                <Source id="indoor-route-indoor" type="geojson" data={indoorRouteGeoJSON}>
-                    <Layer
-                        id="indoor-route-indoor-casing"
-                        type="line"
-                        paint={{ 'line-color': 'rgba(0,0,0,0.15)', 'line-width': 6, 'line-opacity': 0.6 }}
-                        layout={{ 'line-cap': 'round', 'line-join': 'round' }}
-                    />
-                    <Layer
-                        id="indoor-route-indoor-line"
+                        id="indoor-route-line"
                         type="line"
                         paint={{ 'line-color': '#00B4B4', 'line-width': 4, 'line-opacity': 0.9 }}
                         layout={{ 'line-cap': 'round', 'line-join': 'round' }}
-                        beforeId="indoor-route-indoor-casing"
                     />
                 </Source>
             )}

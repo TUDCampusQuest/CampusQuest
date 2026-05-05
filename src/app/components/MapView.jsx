@@ -2,7 +2,7 @@
 
 import Map, { Marker, Popup } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
-import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from 'react';
 
 import { useGPS }             from '../hooks/useGPS';
 import { useNavigation }      from '../hooks/useNavigation';
@@ -24,22 +24,6 @@ const CAMPUS_BOUNDS = [
     [-6.360, 53.415],
 ];
 
-function PickBanner({ message }) {
-    if (!message) return null;
-    return (
-        <div style={{
-            position: 'absolute', top: 16, left: '50%',
-            transform: 'translateX(-50%)', zIndex: 25,
-            background: 'rgba(0,0,0,0.75)', color: '#fff',
-            fontWeight: 700, fontSize: 13, padding: '10px 20px',
-            borderRadius: 99, whiteSpace: 'nowrap', pointerEvents: 'none',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
-        }}>
-            {message}
-        </div>
-    );
-}
-
 function MapViewInner({
     viewState, onMove, onMapLoad,
     navTarget, navStart, isNavigating, onTrailSaved,
@@ -47,11 +31,8 @@ function MapViewInner({
     activeBuilding, activeFloorName,
     rooms, highlightedRoomId, campusGraph,
     activeRoute, currentStepIndex,
-    pickingNavPoint, onNavPick,
     roomNameMap,
-    pickingIndoorStart, onIndoorRoomPick, onIndoorChangeStart,
     activeTrail, onCloseTrail,
-    pickingRoomStart,
 }) {
     const mapRef = useRef(null);
     const { isDark } = useTheme();
@@ -72,6 +53,9 @@ function MapViewInner({
     }
 
     const userLocation = useGPS();
+    const lastUserLocationRef = useRef(null);
+    if (userLocation) lastUserLocationRef.current = userLocation;
+    const displayLocation = userLocation ?? lastUserLocationRef.current;
 
     const {
         routeStep, buildingA, buildingB,
@@ -96,28 +80,8 @@ function MapViewInner({
     }, [isAdmin]);
 
     const handleClick = useCallback((e) => {
-        if (pickingIndoorStart && onIndoorRoomPick) {
-            const features = mapRef.current?.queryRenderedFeatures(e.point, { layers: ['indoor-rooms-fill'] });
-            if (features?.length) {
-                const f = features[0];
-                onIndoorRoomPick({ type: 'Feature', geometry: f.geometry, properties: f.properties });
-            }
-            return;
-        }
-        if (pickingRoomStart && onIndoorRoomPick) {
-            const features = mapRef.current?.queryRenderedFeatures(e.point, { layers: ['indoor-rooms-fill'] });
-            if (features?.length) {
-                const f = features[0];
-                onIndoorRoomPick({ type: 'Feature', geometry: f.geometry, properties: f.properties });
-            }
-            return;
-        }
-        if (pickingNavPoint) {
-            onNavPick?.(e.lngLat);
-            return;
-        }
         onMapClick(e);
-    }, [pickingIndoorStart, onIndoorRoomPick, pickingRoomStart, pickingNavPoint, onNavPick, onMapClick]);
+    }, [onMapClick]);
 
     useEffect(() => {
         if (!navTarget || !mapRef.current) return;
@@ -125,26 +89,19 @@ function MapViewInner({
         mapRef.current.flyTo({ center: [lng, lat], zoom: 17.5, duration: 1400, pitch: 45 });
     }, [navTarget]);
 
-    const activeCursor = pickingNavPoint || pickingIndoorStart || pickingRoomStart ? 'crosshair' : captureMode ? 'crosshair' : 'inherit';
+    const activeCursor = captureMode ? 'crosshair' : 'inherit';
 
-    const trailPathGeoJSON = activeTrail?.computedPath?.length
-        ? {
+    const trailPathGeoJSON = useMemo(() => {
+        if (!activeTrail?.computedPath?.length) return null;
+        return {
             type: 'FeatureCollection',
             features: [{
                 type: 'Feature',
                 geometry: { type: 'LineString', coordinates: activeTrail.computedPath },
                 properties: {},
             }],
-          }
-        : null;
-
-    const pickMessage = pickingIndoorStart
-        ? '📌 Tap a room to set as your new start'
-        : pickingRoomStart
-        ? '📌 Tap a room to navigate from'
-        : pickingNavPoint
-        ? `📌 Tap to set as ${pickingNavPoint === 'A' ? 'start' : 'destination'}`
-        : null;
+        };
+    }, [activeTrail?.computedPath]);
 
     return (
         <div style={{ width: '100%', height: '100%', position: 'relative', cursor: activeCursor }}>
@@ -179,8 +136,6 @@ function MapViewInner({
                     </button>
                 </div>
             )}
-
-            <PickBanner message={pickMessage} />
 
             <div style={{ position: 'absolute', top: 16, left: 16, zIndex: 10, width: 230, display: 'flex', flexDirection: 'column', gap: 8 }}>
                 {isAdmin && (
@@ -217,7 +172,6 @@ function MapViewInner({
                     onChangeStart={resetToPickA}
                     activeRoute={activeRoute}
                     currentStepIndex={currentStepIndex}
-                    onIndoorChangeStart={onIndoorChangeStart}
                     roomNameMap={roomNameMap}
                 />
             )}
@@ -274,8 +228,8 @@ function MapViewInner({
                             </Marker>
                         )}
 
-                        {userLocation?.lng != null && userLocation?.lat != null && (
-                            <Marker longitude={userLocation.lng} latitude={userLocation.lat} anchor="center">
+                        {displayLocation?.lng != null && displayLocation?.lat != null && (
+                            <Marker longitude={displayLocation.lng} latitude={displayLocation.lat} anchor="center">
                                 <div className="user-location-pulse" onClick={e => e.stopPropagation()} />
                             </Marker>
                         )}
@@ -298,9 +252,6 @@ function MapViewInner({
                             rooms={rooms}
                             highlightedRoomId={highlightedRoomId}
                             routePath={activeRoute?.path}
-                            isCrossBuilding={activeRoute?.isCrossBuilding ?? false}
-                            outdoorPathLength={activeRoute?.outdoorPathLength ?? 0}
-                            pickingIndoorStart={pickingIndoorStart}
                         />
                     </>
                 )}

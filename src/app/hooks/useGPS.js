@@ -14,12 +14,23 @@ export function useGPS() {
     useEffect(() => {
         if (!navigator.geolocation) return;
 
+        // getCurrentPosition first — triggers the permission prompt on mobile
+        // browsers where watchPosition alone does not show the dialog.
+        navigator.geolocation.getCurrentPosition(
+            pos => setUserLocation({
+                lng: pos.coords.longitude,
+                lat: pos.coords.latitude,
+            }),
+            () => {},
+            { enableHighAccuracy: true, timeout: 10000 }
+        );
+
         const id = navigator.geolocation.watchPosition(
             pos => setUserLocation({
                 lng: pos.coords.longitude,
                 lat: pos.coords.latitude,
             }),
-            err => console.warn('Geolocation error:', err.message),
+            () => {},
             { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 }
         );
 

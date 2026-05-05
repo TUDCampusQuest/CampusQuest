@@ -12,7 +12,7 @@ import SwapVertIcon         from '@mui/icons-material/SwapVert';
 import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
 import FmdGoodIcon          from '@mui/icons-material/FmdGood';
 
-const TEAL = '#1BA39C';
+const TEAL = '#7C3AED';
 
 export default function NavigationDrawer({
     open, onClose,
@@ -118,7 +118,7 @@ export default function NavigationDrawer({
                 px: 1.5, py: 1.25,
                 borderRadius: '12px',
                 bgcolor: activeField === field ? 'var(--bg-surface)' : 'var(--btn-ghost-bg)',
-                border: `1.5px solid ${activeField === field ? 'var(--accent-teal)' : 'var(--border-subtle)'}`,
+                border: `1.5px solid ${activeField === field ? '#7C3AED' : 'var(--border-subtle)'}`,
                 cursor: 'pointer',
                 minHeight: 48,
                 transition: 'all 0.15s',
@@ -299,13 +299,13 @@ export default function NavigationDrawer({
                         mt: 1.5, flexShrink: 0,
                         width: '100%', py: 1.75, borderRadius: '14px', border: 'none',
                         background: canNavigate
-                            ? 'linear-gradient(135deg, #1BA39C 0%, #0e6d68 100%)'
+                            ? 'linear-gradient(135deg, #7C3AED 0%, #5b21b6 100%)'
                             : 'var(--btn-ghost-bg)',
                         color: canNavigate ? '#fff' : 'var(--text-muted)',
                         fontWeight: 800, fontSize: 15,
                         cursor: canNavigate ? 'pointer' : 'not-allowed',
                         transition: 'all 0.2s',
-                        boxShadow: canNavigate ? '0 4px 20px rgba(27,163,156,0.35)' : 'none',
+                        boxShadow: canNavigate ? '0 4px 20px rgba(124,58,237,0.35)' : 'none',
                     }}
                 >
                     {canNavigate ? '🧭  Start Navigation' : 'Select start & destination'}

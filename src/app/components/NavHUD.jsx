@@ -29,10 +29,10 @@ export default function NavHUD({ navTarget, activeRoute, onExit }) {
             <Stack direction="row" alignItems="center" spacing={1.5}>
                 <Box sx={{
                     width: 10, height: 10, borderRadius: '50%',
-                    bgcolor: isIndoor ? '#00B4B4' : '#1BA39C',
+                    bgcolor: isIndoor ? '#00B4B4' : '#7C3AED',
                     boxShadow: isIndoor
                         ? '0 0 0 3px rgba(0,180,180,0.3)'
-                        : '0 0 0 3px rgba(27,163,156,0.3)',
+                        : '0 0 0 3px rgba(124,58,237,0.3)',
                     animation: 'hudPulse 1.6s ease-in-out infinite',
                     flexShrink: 0,
                 }} />

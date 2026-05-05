@@ -112,7 +112,7 @@ export default function OnboardingTour() {
                     {STEPS.map((_, i) => (
                         <div key={i} style={{
                             width: 8, height: 8, borderRadius: '50%',
-                            background: i === step ? '#1BA39C' : inactiveDot,
+                            background: i === step ? '#7C3AED' : inactiveDot,
                         }} />
                     ))}
                 </div>
@@ -122,7 +122,7 @@ export default function OnboardingTour() {
                     onClick={handleNext}
                     style={{
                         width: '100%', height: 48, borderRadius: 12,
-                        border: 'none', background: '#1BA39C',
+                        border: 'none', background: '#7C3AED',
                         color: '#fff', fontWeight: 700, fontSize: 15,
                         cursor: 'pointer',
                     }}

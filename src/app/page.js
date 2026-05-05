@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
@@ -16,15 +16,11 @@ import SearchDrawer     from "./components/SearchDrawer";
 import StaffAuthModal   from "./components/StaffAuthModal";
 import OnboardingTour  from "./components/OnboardingTour";
 import NavigationDrawer from "./components/NavigationDrawer";
-import GeofenceBanner   from "./components/GeofenceBanner";
-import QRModal          from "./components/QRModal";
 import TrailStopCard    from "./components/TrailStopCard";
 import useIndoorData    from "./hooks/useIndoorData";
-import useGeofence      from "./hooks/useGeofence";
 import { useIndoorNavigation } from "./hooks/useIndoorNavigation";
 import useMapControls        from "./hooks/useMapControls";
 import useLocationSelection  from "./hooks/useLocationSelection";
-import { haversineM }        from "./lib/routeUtils";
 
 const MapView = dynamic(() => import("./components/MapView"), {
     ssr: false,
@@ -37,39 +33,13 @@ function ArrivedToast({ show }) {
         <Box sx={{
             position: "absolute", top: 16, left: "50%",
             transform: "translateX(-50%)", zIndex: 30,
-            background: "#00B4B4", color: "#fff", fontWeight: 700,
+            background: "#7C3AED", color: "#fff", fontWeight: 700,
             fontSize: 14, px: 3, py: 1.5, borderRadius: 99,
             boxShadow: "0 4px 20px rgba(0,0,0,0.2)", whiteSpace: "nowrap",
         }}>
             ✅ You have arrived!
         </Box>
     );
-}
-
-function findNearestTapTarget(lngLat, rooms, locs) {
-    let best = null, bestDist = Infinity;
-
-    if (rooms?.features) {
-        for (const f of rooms.features) {
-            const p = f.properties;
-            if (p.centerLng == null || p.centerLat == null) continue;
-            const d = haversineM([lngLat.lng, lngLat.lat], [p.centerLng, p.centerLat]);
-            if (d < bestDist) { bestDist = d; best = { type: 'room', label: p.name || p.roomCode, feature: f }; }
-        }
-    }
-
-    if (bestDist > 50) {
-        best = null;
-        let locDist = Infinity;
-        for (const loc of (Array.isArray(locs) ? locs : [])) {
-            const c = loc.coordinates || [loc.lng, loc.lat];
-            if (!c) continue;
-            const d = haversineM([lngLat.lng, lngLat.lat], c);
-            if (d < locDist) { locDist = d; best = { type: 'location', label: loc.name, loc }; }
-        }
-    }
-
-    return best;
 }
 
 function buildOutdoorFallback(destFeature, startFeature = null) {
@@ -101,7 +71,7 @@ function Home() {
     const mapRef = useRef(null);
     const searchParams = useSearchParams();
 
-    const { rooms, stairs, floorplans, campusGraph, roomNameMap, entrances,
+    const { rooms, stairs, floorplans, campusGraph, roomNameMap,
             buildings, buildingLookup, loading, error } = useIndoorData();
 
     const [isMounted,    setIsMounted]    = useState(false);
@@ -120,29 +90,12 @@ function Home() {
     const [navPointA,        setNavPointA]        = useState(null);
     const [navPointB,        setNavPointB]        = useState(null);
     const [navStartOverride, setNavStartOverride] = useState(null);
-    const [pickingNavPoint,  setPickingNavPoint]  = useState(null);
-
-    const [pickingIndoorStart, setPickingIndoorStart] = useState(false);
-    const [pickingRoomStart,   setPickingRoomStart]   = useState(false);
-    const [destinationRoom,    setDestinationRoom]    = useState(null);
 
     const [activeTrail,           setActiveTrail]           = useState(null);
     const [currentTrailStopIndex, setCurrentTrailStopIndex] = useState(0);
 
-    const [qrOpen,          setQrOpen]          = useState(false);
-    const [bannerDismissed, setBannerDismissed] = useState(false);
-    const dismissTimerRef = useRef(null);
-
-    const { nearestEntrance } = useGeofence({ userLocation: gpsLocation, entrances });
-
-    const handleDismissBanner = () => {
-        setBannerDismissed(true);
-        dismissTimerRef.current = setTimeout(() => setBannerDismissed(false), 60000);
-    };
-
     const {
         activeRoute, currentStepIndex, arrivedMessage,
-        activeDestination,
         handleNavigateTo, handleCancelNavigation,
     } = useIndoorNavigation({
         rooms, stairs, gpsLocation, mapRef,
@@ -203,10 +156,6 @@ function Home() {
     }, [isNavigating]);
 
     useEffect(() => {
-        return () => { if (dismissTimerRef.current) clearTimeout(dismissTimerRef.current); };
-    }, []);
-
-    useEffect(() => {
         const storedView  = localStorage.getItem('activeTrail');
         const storedStart = localStorage.getItem('startTrail');
 
@@ -227,16 +176,6 @@ function Home() {
             } catch {}
         }
     }, []);
-
-    const handleNavPick = useCallback((lngLat) => {
-        if (!pickingNavPoint) return;
-        const best = findNearestTapTarget(lngLat, rooms, locations);
-        if (!best) return;
-        if (pickingNavPoint === 'A') setNavPointA(best);
-        else setNavPointB(best);
-        setPickingNavPoint(null);
-        setNavDrawerOpen(true);
-    }, [pickingNavPoint, rooms]);
 
     const handleNavDrawerNavigate = useCallback((pointA, pointB) => {
         if (pointA.type === 'room' && pointB.type === 'room') {
@@ -280,12 +219,6 @@ function Home() {
     };
 
     const handleRoomSelect = useCallback((feature) => {
-        if (pickingRoomStart && destinationRoom) {
-            setPickingRoomStart(false);
-            handleNavigateTo(destinationRoom, feature);
-            setDestinationRoom(null);
-            return;
-        }
         const p = feature.properties;
         setHighlightedRoomId(p.poiId);
         setSelectedRoom(feature);
@@ -293,7 +226,7 @@ function Home() {
         if (p.centerLng != null && p.centerLat != null) {
             mapRef.current?.flyTo({ center: [p.centerLng, p.centerLat], zoom: 19.5, duration: 1200 });
         }
-    }, [pickingRoomStart, destinationRoom]);
+    }, [setActiveFloorName]);
 
     useEffect(() => {
         const roomId = searchParams.get("selectedRoomId");
@@ -302,19 +235,22 @@ function Home() {
         if (feature) handleRoomSelect(feature);
     }, [searchParams, rooms, handleRoomSelect]);
 
-    const handleIndoorChangeStart = useCallback(() => {
-        setPickingIndoorStart(true);
-    }, []);
-
-    const handleIndoorRoomPick = useCallback((feature) => {
-        setPickingIndoorStart(false);
-        if (activeDestination) handleNavigateTo(activeDestination, feature);
-    }, [activeDestination, handleNavigateTo]);
-
-    const handleNavigateFromRoom = useCallback((roomFeature) => {
-        setDestinationRoom(roomFeature);
+    const handleRoomNavigateTo = useCallback((roomFeature) => {
         setSelectedRoom(null);
-        setPickingRoomStart(true);
+        setHighlightedRoomId(null);
+        handleNavigateTo(roomFeature);
+    }, [handleNavigateTo]);
+
+    const handleRoomSetAsStart = useCallback((roomFeature) => {
+        const p = roomFeature.properties;
+        const point = {
+            type: 'room',
+            label: p.name || p.roomCode,
+            feature: roomFeature,
+        };
+        setNavPointA(point);
+        setSelectedRoom(null);
+        setNavDrawerOpen(true);
     }, []);
 
     const filtered = (Array.isArray(locations) ? locations : []).filter(l =>
@@ -366,15 +302,9 @@ function Home() {
                     activeRoute={activeRoute}
                     currentStepIndex={currentStepIndex}
                     navStart={navStartOverride}
-                    pickingNavPoint={pickingNavPoint}
-                    onNavPick={handleNavPick}
                     roomNameMap={roomNameMap}
-                    pickingIndoorStart={pickingIndoorStart}
-                    onIndoorRoomPick={handleIndoorRoomPick}
-                    onIndoorChangeStart={handleIndoorChangeStart}
                     activeTrail={activeTrail}
                     onCloseTrail={() => { setActiveTrail(null); setCurrentTrailStopIndex(0); }}
-                    pickingRoomStart={pickingRoomStart}
                 />
 
                 <MapSidebar
@@ -393,16 +323,8 @@ function Home() {
                         navTarget={navTarget}
                         activeRoute={activeRoute}
                         onExit={activeRoute
-                            ? () => { handleCancelNavigation(); setPickingIndoorStart(false); }
+                            ? handleCancelNavigation
                             : () => { setNavTarget(null); setIsNavigating(false); }}
-                    />
-                )}
-
-                {nearestEntrance && !bannerDismissed && !isNavigating && !activeRoute && (
-                    <GeofenceBanner
-                        entrance={nearestEntrance}
-                        onDismiss={handleDismissBanner}
-                        onScanQR={() => setQrOpen(true)}
                     />
                 )}
 
@@ -420,7 +342,7 @@ function Home() {
                         gpsLocation={gpsLocation}
                         onClose={() => { setSelectedRoom(null); setHighlightedRoomId(null); }}
                         onNavigate={handleNavigateTo}
-                        onNavigateFrom={handleNavigateFromRoom}
+                        onNavigateFrom={handleRoomNavigateTo}
                         roomNameMap={roomNameMap}
                     />
                 )}
@@ -462,7 +384,7 @@ function Home() {
 
             <NavigationDrawer
                 open={navDrawerOpen}
-                onClose={() => { setNavDrawerOpen(false); setPickingNavPoint(null); }}
+                onClose={() => setNavDrawerOpen(false)}
                 rooms={rooms}
                 locations={locations}
                 gpsLocation={gpsLocation}
@@ -470,10 +392,6 @@ function Home() {
                 onSetPointA={setNavPointA}
                 pointB={navPointB}
                 onSetPointB={setNavPointB}
-                onPickFromMap={(field) => {
-                    setPickingNavPoint(field);
-                    setNavDrawerOpen(false);
-                }}
                 onNavigate={handleNavDrawerNavigate}
             />
 
@@ -482,8 +400,6 @@ function Home() {
                 onClose={() => setAuthOpen(false)}
                 onSuccess={() => setIsAdmin(true)}
             />
-
-            <QRModal open={qrOpen} onClose={() => setQrOpen(false)} />
 
             <OnboardingTour />
         </Box>

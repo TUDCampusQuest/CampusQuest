@@ -89,9 +89,11 @@ export default function TrailsPage() {
   function handleStartTrail(trail) {
     const stops = trail.stops ?? [];
     const path  = buildTrailPath(stops, campusGraph);
+    const distance = calcTrailDistance(path);
     localStorage.setItem('startTrail', JSON.stringify({
       ...trail,
       computedPath: path,
+      computedDistance: distance,
     }));
     router.push('/');
   }

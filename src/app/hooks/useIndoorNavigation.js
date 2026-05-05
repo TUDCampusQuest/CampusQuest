@@ -84,7 +84,15 @@ export function useIndoorNavigation({
             setActiveRoute(null);
             setCurrentStepIndex(0);
         } else {
+            const nextStep = steps[currentStepIndex + 1];
             setCurrentStepIndex(i => i + 1);
+            if (nextStep?.location && mapRef?.current) {
+                mapRef.current.flyTo({
+                    center: nextStep.location,
+                    zoom: 19,
+                    duration: 800,
+                });
+            }
         }
     }, [gpsLocation, activeRoute, currentStepIndex]);
 

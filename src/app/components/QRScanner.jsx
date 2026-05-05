@@ -20,7 +20,13 @@ export default function QRScanner() {
 
         const onScanSuccess = (decodedText) => {
             scanner.clear().then(() => {
-                router.push(`/location/${decodedText.toUpperCase()}`);
+                const text = decodedText.trim();
+                try {
+                    const url = new URL(text);
+                    router.push(url.pathname);
+                } catch {
+                    router.push(`/location/${text.toUpperCase()}`);
+                }
             }).catch(err => console.error("Failed to clear scanner", err));
         };
 
