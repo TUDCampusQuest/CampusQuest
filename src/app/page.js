@@ -91,6 +91,7 @@ function Home() {
     const [navPointB,        setNavPointB]        = useState(null);
     const [navStartOverride, setNavStartOverride] = useState(null);
     const [showStairsPrompt, setShowStairsPrompt] = useState(false);
+    const [pickFromMapField, setPickFromMapField] = useState(null); // 'A' | 'B' | null
 
     // Tracks which navigation system is active: null | 'outdoor' | 'indoor'
     const [activeNavSystem, setActiveNavSystem] = useState(null);
@@ -197,6 +198,20 @@ function Home() {
     }, []);
 
     const handleNavDrawerNavigate = useCallback((pointA, pointB) => {
+        // coords helper — turns any point type into {id, name, coordinates}
+        const toLocObj = (pt) => {
+            if (!pt) return null;
+            if (pt.type === 'location') return pt.loc;
+            if (pt.type === 'gps' || pt.type === 'coords')
+                return { id: pt.type, name: pt.label, coordinates: pt.coords };
+            if (pt.type === 'room') {
+                const p = pt.feature?.properties;
+                if (p?.centerLng != null && p?.centerLat != null)
+                    return { id: `room-${p.poiId}`, name: p.name || p.roomCode, coordinates: [p.centerLng, p.centerLat] };
+            }
+            return null;
+        };
+
         if (pointA.type === 'room' && pointB.type === 'room') {
             setActiveNavSystem('indoor');
             setIsNavigating(false);
@@ -209,7 +224,8 @@ function Home() {
                 setNavTarget(null);
                 const startOverride = pointA.type === 'room' ? pointA.feature : null;
                 handleNavigateTo(pointB.feature, startOverride);
-            } else if (pointA.type === 'location') {
+            } else {
+                // pointA is location or coords — outdoor nav to the room's centre
                 const dp = pointB.feature?.properties;
                 if (dp?.centerLng != null && dp?.centerLat != null) {
                     setActiveNavSystem('outdoor');
@@ -219,14 +235,20 @@ function Home() {
                         coordinates: [dp.centerLng, dp.centerLat],
                     });
                     setIsNavigating(true);
-                    setNavStartOverride(pointA.loc);
+                    const startLoc = toLocObj(pointA);
+                    if (startLoc) setNavStartOverride(startLoc);
                 }
             }
-        } else if (pointB.type === 'location') {
-            setActiveNavSystem('outdoor');
-            setNavTarget(pointB.loc);
-            setIsNavigating(true);
-            if (pointA.type === 'location') setNavStartOverride(pointA.loc);
+        } else {
+            // Both non-room — outdoor nav
+            const destLoc = toLocObj(pointB);
+            if (destLoc) {
+                setActiveNavSystem('outdoor');
+                setNavTarget(destLoc);
+                setIsNavigating(true);
+                const startLoc = toLocObj(pointA);
+                if (startLoc) setNavStartOverride(startLoc);
+            }
         }
 
         setNavDrawerOpen(false);
@@ -263,6 +285,22 @@ function Home() {
         if (feature) handleRoomSelect(feature);
     }, [searchParams, rooms, handleRoomSelect]);
 
+    useEffect(() => {
+        const navTo = searchParams.get("navTo");
+        const lng   = parseFloat(searchParams.get("lng"));
+        const lat   = parseFloat(searchParams.get("lat"));
+        if (!navTo || isNaN(lng) || isNaN(lat)) return;
+        const loc = locations.find(l => l.id.toUpperCase() === navTo.toUpperCase());
+        if (!loc) return;
+        setActiveNavSystem('outdoor');
+        setNavTarget({ id: loc.id, name: loc.name, coordinates: [lng, lat] });
+        setIsNavigating(true);
+        if (mapRef.current) {
+            mapRef.current.flyTo({ center: [lng, lat], zoom: 17, duration: 1400 });
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchParams]);
+
     const handleRoomNavigateTo = useCallback((roomFeature) => {
         setActiveNavSystem('indoor');
         setIsNavigating(false);
@@ -283,6 +321,26 @@ function Home() {
         setSelectedRoom(null);
         setNavDrawerOpen(true);
     }, []);
+
+    const handlePickFromMap = useCallback((field) => {
+        setNavDrawerOpen(false);
+        setPickFromMapField(field);
+    }, []);
+
+    const handlePickPoint = useCallback((picked) => {
+        // picked = { type: 'room', feature } | { type: 'location', loc }
+        let point;
+        if (picked.type === 'room') {
+            const p = picked.feature.properties;
+            point = { type: 'room', label: p.name || p.roomCode, feature: picked.feature };
+        } else {
+            point = { type: 'location', label: picked.loc.name || picked.loc.id, loc: picked.loc };
+        }
+        if (pickFromMapField === 'A') setNavPointA(point);
+        else setNavPointB(point);
+        setPickFromMapField(null);
+        setNavDrawerOpen(true);
+    }, [pickFromMapField]);
 
     const filtered = (Array.isArray(locations) ? locations : []).filter(l =>
         l.name?.toLowerCase().includes(query.toLowerCase()) ||
@@ -314,6 +372,24 @@ function Home() {
             />
 
             <Box sx={{ flex: 1, position: "relative", minHeight: 0 }}>
+
+                {pickFromMapField && (
+                    <div style={{
+                        position: 'absolute', top: 0, left: 0, right: 0,
+                        zIndex: 1060,
+                        background: 'rgba(124,58,237,0.92)',
+                        backdropFilter: 'blur(10px)',
+                        padding: '14px 16px',
+                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                        color: '#fff', fontWeight: 700, fontSize: 14,
+                    }}>
+                        <span>📌 Tap the map to set {pickFromMapField === 'A' ? 'start point' : 'destination'}</span>
+                        <button
+                            onClick={() => { setPickFromMapField(null); setNavDrawerOpen(true); }}
+                            style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 18, cursor: 'pointer', lineHeight: 1 }}
+                        >✕</button>
+                    </div>
+                )}
 
                 {showStairsPrompt && (
                     <div style={{
@@ -363,7 +439,10 @@ function Home() {
                     activeTrail={activeTrail}
                     onCloseTrail={() => { setActiveTrail(null); setCurrentTrailStopIndex(0); }}
                     onRoomSelect={handleRoomSelect}
+                    onRoomNavigate={handleRoomNavigateTo}
                     onMapTap={() => { setSelectedRoom(null); setHighlightedRoomId(null); }}
+                    pickMode={!!pickFromMapField}
+                    onPickPoint={handlePickPoint}
                 />
 
                 <MapSidebar
@@ -385,6 +464,32 @@ function Home() {
                             ? () => { setActiveNavSystem(null); handleCancelNavigation(); }
                             : () => { setActiveNavSystem(null); setNavTarget(null); setIsNavigating(false); }}
                     />
+                )}
+
+                {((isNavigating && navTarget) || activeRoute) && (
+                    <button
+                        onClick={activeRoute
+                            ? () => { setActiveNavSystem(null); handleCancelNavigation(); }
+                            : () => { setActiveNavSystem(null); setNavTarget(null); setIsNavigating(false); }}
+                        style={{
+                            position: 'absolute', bottom: 24, left: '50%',
+                            transform: 'translateX(-50%)',
+                            zIndex: 25,
+                            display: 'flex', alignItems: 'center', gap: 8,
+                            padding: '12px 24px',
+                            background: 'rgba(239,68,68,0.92)',
+                            backdropFilter: 'blur(12px)',
+                            WebkitBackdropFilter: 'blur(12px)',
+                            border: '1px solid rgba(255,255,255,0.2)',
+                            borderRadius: 99,
+                            color: '#fff', fontWeight: 700, fontSize: 14,
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 20px rgba(239,68,68,0.4)',
+                            whiteSpace: 'nowrap',
+                        }}
+                    >
+                        ✕ Cancel Navigation
+                    </button>
                 )}
 
                 {selectedLocation && !isNavigating && (
@@ -452,6 +557,7 @@ function Home() {
                 pointB={navPointB}
                 onSetPointB={setNavPointB}
                 onNavigate={handleNavDrawerNavigate}
+                onPickFromMap={handlePickFromMap}
             />
 
             <StaffAuthModal

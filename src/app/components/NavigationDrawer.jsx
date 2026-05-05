@@ -32,12 +32,7 @@ export default function NavigationDrawer({
         setQuery('');
     }, [open]);
 
-    // Auto-fill Point A with GPS on open when nothing is set
-    useEffect(() => {
-        if (open && !pointA && gpsLocation) {
-            onSetPointA({ type: 'gps', label: 'My Location', coords: [gpsLocation.lng, gpsLocation.lat] });
-        }
-    }, [open]);
+    // Do NOT auto-fill GPS — let the user explicitly choose My Location or a room
 
     const roomIndex = useMemo(() => {
         if (!rooms?.features) return [];

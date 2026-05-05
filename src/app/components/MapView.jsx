@@ -34,7 +34,8 @@ function MapViewInner({
     activeRoute, currentStepIndex,
     roomNameMap,
     activeTrail, onCloseTrail,
-    onRoomSelect, onMapTap,
+    onRoomSelect, onRoomNavigate, onMapTap,
+    pickMode, onPickPoint,
 }) {
     const mapRef = useRef(null);
     const { isDark } = useTheme();
@@ -69,7 +70,16 @@ function MapViewInner({
         onMapClick, trailGeoJSON, routeGeoJSON, capturedGeoJSON, trailPaths,
     } = useTrailSelector({ captureMode, setCapturedPoints, mapRef });
 
+    const pickModeRef = useRef(pickMode);
+    pickModeRef.current = pickMode;
+    const onPickPointRef = useRef(onPickPoint);
+    onPickPointRef.current = onPickPoint;
+
     const handleLocationSelect = useCallback((loc) => {
+        if (pickModeRef.current) {
+            onPickPointRef.current?.({ type: 'location', loc });
+            return;
+        }
         if (routeStep === 'PICK_A') {
             pickBuildingA(loc);
         } else {
@@ -98,13 +108,29 @@ function MapViewInner({
         if (!map) { onMapTap?.(); return; }
 
         const features = map.queryRenderedFeatures(e.point, { layers: ['indoor-rooms-fill'] });
+
+        // In pick mode, a room tap sets the pick point and exits pick mode
+        if (pickModeRef.current) {
+            if (features?.length > 0) {
+                const roomFeature = rooms?.features?.find(f => f.properties.poiId === features[0].properties.poiId);
+                if (roomFeature) {
+                    onPickPointRef.current?.({ type: 'room', feature: roomFeature });
+                    return;
+                }
+            }
+            // Tapped empty map area — do nothing, keep pick mode active
+            return;
+        }
+
         const now = Date.now();
         const delta = now - lastClickTimeRef.current;
         const clickedFeatureId = features?.[0]?.properties?.poiId ?? null;
 
-        if (features?.length > 0 && delta < 400 && lastClickFeatureRef.current === clickedFeatureId) {
+        // 600 ms window works for both mouse double-click and mobile double-tap
+        if (features?.length > 0 && delta < 600 && lastClickFeatureRef.current === clickedFeatureId) {
             const roomFeature = rooms?.features?.find(f => f.properties.poiId === features[0].properties.poiId);
-            if (roomFeature && onRoomSelect) onRoomSelect(roomFeature);
+            // Double-tap/click goes straight to navigate — no RoomSheet step needed
+            if (roomFeature && onRoomNavigate) onRoomNavigate(roomFeature);
             lastClickTimeRef.current = 0;
             lastClickFeatureRef.current = null;
         } else if (features?.length > 0) {
@@ -113,9 +139,9 @@ function MapViewInner({
         } else {
             lastClickTimeRef.current = 0;
             lastClickFeatureRef.current = null;
-            onMapTap?.();
+            onMapTap?.(e.lngLat);
         }
-    }, [onMapClick, onRoomSelect, onMapTap, rooms]);
+    }, [onMapClick, onRoomNavigate, onMapTap, rooms]);
 
     useEffect(() => {
         if (!navTarget || !mapRef.current) return;
@@ -123,7 +149,7 @@ function MapViewInner({
         mapRef.current.flyTo({ center: [lng, lat], zoom: 17.5, duration: 1400, pitch: 45 });
     }, [navTarget]);
 
-    const activeCursor = captureMode ? 'crosshair' : 'inherit';
+    const activeCursor = (captureMode || pickMode) ? 'crosshair' : 'inherit';
 
     const trailPathGeoJSON = useMemo(() => {
         if (!activeTrail?.computedPath?.length) return null;
