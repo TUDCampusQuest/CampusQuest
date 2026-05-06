@@ -93,7 +93,7 @@ function MapViewInner({
         onLocationSelect?.(loc);
     }, [routeStep, pickBuildingA, onLocationSelect, isNavigating, onSwapDestination, navTarget]);
 
-    useBuildingMarkers({ map: mapRef.current?.getMap?.(), styleLoaded, onLocationSelect: handleLocationSelect });
+    useBuildingMarkers({ map: mapRef.current?.getMap?.(), styleLoaded, onLocationSelect: handleLocationSelect, buildingA, buildingB });
 
     const handleMapLoad = useCallback((e) => {
         setStyleLoaded(true);
@@ -288,16 +288,6 @@ function MapViewInner({
                             </Marker>
                         ))}
 
-                        {buildingA?.coordinates && (
-                            <Marker longitude={buildingA.coordinates[0]} latitude={buildingA.coordinates[1]} anchor="center">
-                                <div style={{ background: '#22c55e', color: '#fff', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 11, border: '2px solid #fff', boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}>A</div>
-                            </Marker>
-                        )}
-                        {buildingB?.coordinates && isNavigating && (
-                            <Marker longitude={buildingB.coordinates[0]} latitude={buildingB.coordinates[1]} anchor="center">
-                                <div style={{ background: '#ef4444', color: '#fff', borderRadius: '50%', width: 22, height: 22, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 900, fontSize: 11, border: '2px solid #fff', boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}>B</div>
-                            </Marker>
-                        )}
 
                         {displayLocation?.lng != null && displayLocation?.lat != null && (
                             <Marker longitude={displayLocation.lng} latitude={displayLocation.lat} anchor="center">
