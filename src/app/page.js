@@ -1,8 +1,7 @@
-﻿'use client';
+'use client';
 // Root page — wires together the map, navigation, search, indoor routing, and all sheet/drawer UI.
 
 import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
 import { Box } from "@mui/material";
 import dynamic from "next/dynamic";
 
@@ -18,60 +17,22 @@ import StaffAuthModal        from "./components/StaffAuthModal";
 import OnboardingTour        from "./components/OnboardingTour";
 import NavigationDrawer      from "./components/NavigationDrawer";
 import TrailStopCard         from "./components/TrailStopCard";
+import { ArrivedToast, PickFromMapBanner, StairsPrompt } from "./components/MapOverlays";
 import useIndoorData         from "./hooks/useIndoorData";
 import { useIndoorNavigation } from "./hooks/useIndoorNavigation";
 import useMapControls        from "./hooks/useMapControls";
 import useLocationSelection  from "./hooks/useLocationSelection";
-import { isWithinCampus }   from "./lib/campusBounds";
+import useNavDrawer, { buildOutdoorFallback } from "./hooks/useNavDrawer";
+import usePageSetup          from "./hooks/usePageSetup";
+import { isWithinCampus }    from "./lib/campusBounds";
 
 const MapView = dynamic(() => import("./components/MapView"), {
     ssr: false,
     loading: () => <Box sx={{ height: "100dvh", width: "100vw", bgcolor: "#f1f5f9" }} />,
 });
 
-function ArrivedToast({ show }) {
-    if (!show) return null;
-    return (
-        <Box sx={{
-            position: "absolute", top: 16, left: "50%",
-            transform: "translateX(-50%)", zIndex: 30,
-            background: "#7C3AED", color: "#fff", fontWeight: 700,
-            fontSize: 14, px: 3, py: 1.5, borderRadius: 99,
-            boxShadow: "0 4px 20px rgba(0,0,0,0.2)", whiteSpace: "nowrap",
-        }}>
-            ✅ You have arrived!
-        </Box>
-    );
-}
-
-function buildOutdoorFallback(destFeature, startFeature = null) {
-    const dp = destFeature?.properties;
-    if (!dp || dp.centerLng == null || dp.centerLat == null) return null;
-
-    const navDest = {
-        id:          `room-${dp.poiId}`,
-        name:        dp.name || dp.roomCode || dp.buildingName || 'Destination',
-        coordinates: [dp.centerLng, dp.centerLat],
-    };
-
-    let navStart = null;
-    if (startFeature) {
-        const sp = startFeature.properties;
-        if (sp?.centerLng != null && sp?.centerLat != null) {
-            navStart = {
-                id:          `room-${sp.poiId}`,
-                name:        sp.name || sp.roomCode || sp.buildingName || 'Start',
-                coordinates: [sp.centerLng, sp.centerLat],
-            };
-        }
-    }
-
-    return { navDest, navStart };
-}
-
 function Home() {
     const mapRef = useRef(null);
-    const searchParams = useSearchParams();
 
     const { rooms, stairs, floorplans, campusGraph, roomNameMap,
             buildings, buildingLookup, loading, error } = useIndoorData();
@@ -88,12 +49,12 @@ function Home() {
     const [highlightedRoomId, setHighlightedRoomId] = useState(null);
     const [selectedRoom,      setSelectedRoom]      = useState(null);
 
-    const [navDrawerOpen,       setNavDrawerOpen]       = useState(false);
-    const [navPointA,           setNavPointA]           = useState(null);
-    const [navPointB,           setNavPointB]           = useState(null);
-    const [navStartOverrideRaw, setNavStartOverride]    = useState(null);
-    const [showStairsPrompt,    setShowStairsPrompt]    = useState(false);
-    const [pickFromMapField,    setPickFromMapField]    = useState(null);
+    const [navDrawerOpen,       setNavDrawerOpen]    = useState(false);
+    const [navPointA,           setNavPointA]        = useState(null);
+    const [navPointB,           setNavPointB]        = useState(null);
+    const [navStartOverrideRaw, setNavStartOverride] = useState(null);
+    const [showStairsPrompt,    setShowStairsPrompt] = useState(false);
+    const [pickFromMapField,    setPickFromMapField] = useState(null);
 
     // Stabilise navStartOverride so a new object with the same id doesn't
     // cause useNavigation to re-run routing on every GPS tick.
@@ -116,7 +77,6 @@ function Home() {
         onOutdoorFallback: (destFeature, startFeature = null) => {
             const result = buildOutdoorFallback(destFeature, startFeature);
             if (!result) return;
-            // Switch cleanly to outdoor — ensure indoor state is cleared first
             handleCancelNavigation();
             setActiveNavSystem('outdoor');
             setNavTarget(result.navDest);
@@ -139,46 +99,34 @@ function Home() {
         handleSelectLocation,
     } = useLocationSelection({ mapRef, setSearchOpen, setQuery, buildings, buildingLookup });
 
-    useEffect(() => { setIsMounted(true); }, []);
-
-    useEffect(() => {
-        if (sessionStorage.getItem("cq_staff") === "true") setIsAdmin(true);
-    }, []);
-
-    useEffect(() => {
-        if (typeof navigator === 'undefined' || !navigator.geolocation) return;
-        let id = null;
-        try {
-            id = navigator.geolocation.watchPosition(
-                p => {
-                    try {
-                        if (p?.coords) setGpsLocation({ lng: p.coords.longitude, lat: p.coords.latitude });
-                    } catch {}
-                },
-                () => {},
-                { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 },
-            );
-        } catch {}
-        return () => {
-            if (id != null) {
-                try { navigator.geolocation.clearWatch(id); } catch {}
+    const handleRoomSelect = useCallback((feature) => {
+        const p = feature.properties;
+        setHighlightedRoomId(p.poiId);
+        setSelectedRoom(feature);
+        if (p.floorName) setActiveFloorName(p.floorName);
+        if (p.centerLng != null && p.centerLat != null) {
+            try {
+                mapRef.current?.flyTo({ center: [p.centerLng, p.centerLat], zoom: 19.5, duration: 1200 });
+            } catch (err) {
+                console.warn('flyTo room suppressed:', err?.message || err);
             }
-        };
-    }, []);
+        }
+    }, [setActiveFloorName]);
 
-    const fetchTrails = useCallback(async () => {
-        try {
-            const res  = await fetch("/api/trails", { cache: "no-store" });
-            const data = await res.json();
-            return Array.isArray(data) ? data : [];
-        } catch { return []; }
-    }, []);
+    const { fetchTrails } = usePageSetup({
+        setGpsLocation, setIsAdmin,
+        setActiveNavSystem, setNavTarget, setIsNavigating,
+        setActiveTrail, setCurrentTrailStopIndex,
+        handleRoomSelect, rooms, mapRef,
+    });
 
-    useEffect(() => {
-        fetchTrails();
-        window.addEventListener("focus", fetchTrails);
-        return () => window.removeEventListener("focus", fetchTrails);
-    }, [fetchTrails]);
+    const { handleNavDrawerNavigate } = useNavDrawer({
+        handleNavigateTo, handleCancelNavigation,
+        setActiveNavSystem, setNavTarget, setIsNavigating,
+        setNavStartOverride, setNavDrawerOpen, setNavPointA, setNavPointB,
+    });
+
+    useEffect(() => { setIsMounted(true); }, []);
 
     useEffect(() => {
         if (!isNavigating) {
@@ -193,101 +141,6 @@ function Home() {
         return () => clearTimeout(t);
     }, [showStairsPrompt]);
 
-    useEffect(() => {
-        const storedView  = localStorage.getItem('activeTrail');
-        const storedStart = localStorage.getItem('startTrail');
-
-        if (storedView) {
-            localStorage.removeItem('activeTrail');
-            try {
-                const trail = JSON.parse(storedView);
-                if (trail?.computedPath?.length) setActiveTrail(trail);
-            } catch {}
-        } else if (storedStart) {
-            localStorage.removeItem('startTrail');
-            try {
-                const trail = JSON.parse(storedStart);
-                if (trail?.computedPath?.length) {
-                    setActiveTrail(trail);
-                    setCurrentTrailStopIndex(0);
-                }
-            } catch {}
-        }
-    }, []);
-
-    const handleNavDrawerNavigate = useCallback((pointA, pointB) => {
-        // Resolve a point to a campus location object (must have an id that exists
-        // in locationNodeMap so the campus graph can route from/to it).
-        // For rooms, resolve to the building's location entry — NOT the room coords —
-        // so outdoor routing uses the correct campus graph node.
-        const toBuildingLoc = (pt) => {
-            if (!pt) return null;
-            if (pt.type === 'location') return pt.loc;
-            if (pt.type === 'gps' || pt.type === 'coords')
-                return { id: pt.type, name: pt.label, coordinates: pt.coords };
-            if (pt.type === 'room') {
-                const buildingId = pt.feature?.properties?.buildingId;
-                if (buildingId == null) return null;
-                const loc = locations.find(l => String(l.buildingId) === String(buildingId));
-                return loc ?? null;
-            }
-            return null;
-        };
-
-        if (pointA.type === 'room' && pointB.type === 'room') {
-            // Room → room: pure indoor (cross-building if needed)
-            setIsNavigating(false);
-            setNavTarget(null);
-            setNavStartOverride(null);
-            setActiveNavSystem('indoor');
-            handleNavigateTo(pointB.feature, pointA.feature);
-
-        } else if (pointB.type === 'room') {
-            if (pointA.type === 'gps' || pointA.type === 'room') {
-                // GPS/room → room: indoor nav handles it (cross-building if needed)
-                setIsNavigating(false);
-                setNavTarget(null);
-                setNavStartOverride(null);
-                setActiveNavSystem('indoor');
-                const startOverride = pointA.type === 'room' ? pointA.feature : null;
-                handleNavigateTo(pointB.feature, startOverride);
-            } else {
-                // Building location → room: outdoor to building coords, then indoor
-                const dp = pointB.feature?.properties;
-                if (dp?.centerLng != null && dp?.centerLat != null) {
-                    handleCancelNavigation();
-                    setActiveNavSystem('outdoor');
-                    setNavTarget({
-                        id: `room-${dp.poiId}`,
-                        name: dp.name || dp.roomCode || dp.buildingName || 'Destination',
-                        coordinates: [dp.centerLng, dp.centerLat],
-                    });
-                    setIsNavigating(true);
-                    const startLoc = toBuildingLoc(pointA);
-                    if (startLoc) setNavStartOverride(startLoc);
-                }
-            }
-
-        } else {
-            // Anything → building location (including room → building)
-            const destLoc = toBuildingLoc(pointB);
-            if (destLoc) {
-                handleCancelNavigation();
-                setActiveNavSystem('outdoor');
-                setNavTarget(destLoc);
-                setIsNavigating(true);
-                // If start is a room, resolve to its building so campus graph works
-                const startLoc = toBuildingLoc(pointA);
-                if (startLoc) setNavStartOverride(startLoc);
-                else setNavStartOverride(null);
-            }
-        }
-
-        setNavDrawerOpen(false);
-        setNavPointA(null);
-        setNavPointB(null);
-    }, [handleNavigateTo, handleCancelNavigation]);
-
     const handleStaffClick = () => {
         if (isAdmin) { sessionStorage.removeItem("cq_staff"); setIsAdmin(false); }
         else setAuthOpen(true);
@@ -296,7 +149,6 @@ function Home() {
     const handleNavigateFromSheet = (loc) => {
         const point = { type: 'location', label: loc.name || loc.id, loc };
         setNavPointB(point);
-        // Auto-set GPS as start if user is on campus so they don't have to pick manually
         const autoGps = gpsLocation && isWithinCampus(gpsLocation.lng, gpsLocation.lat)
             ? { type: 'gps', label: 'My Location', coords: [gpsLocation.lng, gpsLocation.lat] }
             : null;
@@ -322,56 +174,9 @@ function Home() {
         setNavTarget({ id: loc.id, name: loc.name, coordinates: coords });
     }, [navTarget]);
 
-    const handleRoomSelect = useCallback((feature) => {
-        const p = feature.properties;
-        setHighlightedRoomId(p.poiId);
-        setSelectedRoom(feature);
-        if (p.floorName) setActiveFloorName(p.floorName);
-        if (p.centerLng != null && p.centerLat != null) {
-            try {
-                mapRef.current?.flyTo({ center: [p.centerLng, p.centerLat], zoom: 19.5, duration: 1200 });
-            } catch (err) {
-                console.warn('flyTo room suppressed:', err?.message || err);
-            }
-        }
-    }, [setActiveFloorName]);
-
-    useEffect(() => {
-        const roomId = searchParams.get("selectedRoomId");
-        if (!roomId || !rooms?.features) return;
-        const feature = rooms.features.find(f => String(f.properties.poiId) === String(roomId));
-        if (feature) handleRoomSelect(feature);
-    }, [searchParams, rooms, handleRoomSelect]);
-
-    useEffect(() => {
-        const navTo = searchParams.get("navTo");
-        const lng   = parseFloat(searchParams.get("lng"));
-        const lat   = parseFloat(searchParams.get("lat"));
-        if (!navTo || isNaN(lng) || isNaN(lat)) return;
-        const loc = locations.find(l => l.id.toUpperCase() === navTo.toUpperCase());
-        if (!loc) return;
-        setActiveNavSystem('outdoor');
-        setNavTarget({ id: loc.id, name: loc.name, coordinates: [lng, lat] });
-        setIsNavigating(true);
-        if (mapRef.current) {
-            try {
-                mapRef.current.flyTo({ center: [lng, lat], zoom: 17, duration: 1400 });
-            } catch (err) {
-                console.warn('flyTo navTo suppressed:', err?.message || err);
-            }
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [searchParams]);
-
     const handleRoomNavigateTo = useCallback((roomFeature) => {
         const p = roomFeature.properties;
-        const point = {
-            type: 'room',
-            label: p.name || p.roomCode,
-            feature: roomFeature,
-        };
-        setNavPointB(point);
-        // Auto-set GPS as start if user is on campus
+        setNavPointB({ type: 'room', label: p.name || p.roomCode, feature: roomFeature });
         const autoGps = gpsLocation && isWithinCampus(gpsLocation.lng, gpsLocation.lat)
             ? { type: 'gps', label: 'My Location', coords: [gpsLocation.lng, gpsLocation.lat] }
             : null;
@@ -383,12 +188,7 @@ function Home() {
 
     const handleRoomSetAsStart = useCallback((roomFeature) => {
         const p = roomFeature.properties;
-        const point = {
-            type: 'room',
-            label: p.name || p.roomCode,
-            feature: roomFeature,
-        };
-        setNavPointA(point);
+        setNavPointA({ type: 'room', label: p.name || p.roomCode, feature: roomFeature });
         setSelectedRoom(null);
         setNavDrawerOpen(true);
     }, []);
@@ -399,13 +199,9 @@ function Home() {
     }, []);
 
     const handlePickPoint = useCallback((picked) => {
-        let point;
-        if (picked.type === 'room') {
-            const p = picked.feature.properties;
-            point = { type: 'room', label: p.name || p.roomCode, feature: picked.feature };
-        } else {
-            point = { type: 'location', label: picked.loc.name || picked.loc.id, loc: picked.loc };
-        }
+        const point = picked.type === 'room'
+            ? { type: 'room', label: picked.feature.properties.name || picked.feature.properties.roomCode, feature: picked.feature }
+            : { type: 'location', label: picked.loc.name || picked.loc.id, loc: picked.loc };
         if (pickFromMapField === 'A') setNavPointA(point);
         else setNavPointB(point);
         setPickFromMapField(null);
@@ -443,49 +239,12 @@ function Home() {
 
             <Box sx={{ flex: 1, position: "relative", minHeight: 0 }}>
 
-                {pickFromMapField && (
-                    <div style={{
-                        position: 'absolute', top: 0, left: 0, right: 0,
-                        zIndex: 1060,
-                        background: 'rgba(124,58,237,0.92)',
-                        backdropFilter: 'blur(10px)',
-                        padding: '14px 16px',
-                        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                        color: '#fff', fontWeight: 700, fontSize: 14,
-                    }}>
-                        <span>📌 Tap the map to set {pickFromMapField === 'A' ? 'start point' : 'destination'}</span>
-                        <button
-                            onClick={() => { setPickFromMapField(null); setNavDrawerOpen(true); }}
-                            style={{ background: 'transparent', border: 'none', color: '#fff', fontSize: 18, cursor: 'pointer', lineHeight: 1 }}
-                        >✕</button>
-                    </div>
-                )}
+                <PickFromMapBanner
+                    field={pickFromMapField}
+                    onCancel={() => { setPickFromMapField(null); setNavDrawerOpen(true); }}
+                />
 
-                {showStairsPrompt && (
-                    <div style={{
-                        position: 'absolute', top: 60, left: 8, right: 8,
-                        zIndex: 1050,
-                        background: 'var(--glass-bg)',
-                        backdropFilter: 'blur(16px)',
-                        border: '1px solid var(--glass-border)',
-                        borderLeft: '4px solid #7C3AED',
-                        borderRadius: 14,
-                        padding: '12px 16px',
-                        display: 'flex', alignItems: 'center', gap: 10,
-                        boxShadow: 'var(--card-shadow)',
-                        pointerEvents: 'none',
-                    }}>
-                        <span style={{ fontSize: 20 }}>🪜</span>
-                        <div>
-                            <div style={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>
-                                Head to the stairs
-                            </div>
-                            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-                                Your destination is on floor {activeFloorName} — map updated
-                            </div>
-                        </div>
-                    </div>
-                )}
+                <StairsPrompt show={showStairsPrompt} floorName={activeFloorName} />
 
                 <MapView
                     viewState={viewState}
@@ -537,7 +296,6 @@ function Home() {
                             : () => { setActiveNavSystem(null); setNavTarget(null); setIsNavigating(false); }}
                     />
                 )}
-
 
                 {selectedLocation && !isNavigating && !activeRoute && (
                     <LocationSheet
