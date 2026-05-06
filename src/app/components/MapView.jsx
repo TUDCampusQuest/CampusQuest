@@ -1,6 +1,5 @@
-// Main Mapbox map component — renders outdoor/indoor layers, building markers, navigation overlays, and handles room double-click and map tap events.
 'use client';
-
+// Main map component — renders the Mapbox map, building markers, indoor overlays, navigation, and handles all map tap/click events.
 import Map, { Marker, Popup } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from 'react';
@@ -20,10 +19,7 @@ const STYLE_LIGHT = process.env.NEXT_PUBLIC_MAPBOX_STYLE || 'mapbox://styles/map
 const STYLE_DARK  = 'mapbox://styles/mapbox/dark-v11';
 const STYLE_3D    = 'mapbox://styles/mapbox/standard';
 
-const CAMPUS_BOUNDS = [
-    [-6.395, 53.398],
-    [-6.360, 53.415],
-];
+const CAMPUS_BOUNDS = [[-6.395, 53.398], [-6.360, 53.415]];
 
 function MapViewInner({
     viewState, onMove, onMapLoad,
@@ -48,7 +44,6 @@ function MapViewInner({
     const [styleLoaded,    setStyleLoaded]    = useState(false);
     const [prevIs3D,       setPrevIs3D]       = useState(is3D);
 
-    // Synchronously clear styleLoaded on 3D toggle to prevent appendChild errors during style transition.
     if (prevIs3D !== is3D) {
         setPrevIs3D(is3D);
         setStyleLoaded(false);
@@ -70,9 +65,9 @@ function MapViewInner({
         onMapClick, trailGeoJSON, routeGeoJSON, capturedGeoJSON, trailPaths,
     } = useTrailSelector({ captureMode, setCapturedPoints, mapRef });
 
-    const pickModeRef = useRef(pickMode);
-    pickModeRef.current = pickMode;
+    const pickModeRef    = useRef(pickMode);
     const onPickPointRef = useRef(onPickPoint);
+    pickModeRef.current    = pickMode;
     onPickPointRef.current = onPickPoint;
 
     const handleLocationSelect = useCallback((loc) => {
@@ -84,8 +79,6 @@ function MapViewInner({
             pickBuildingA(loc);
             return;
         }
-        // Navigating to somewhere else and the user taps a different building —
-        // treat that as a destination swap so the directions panel stays in place.
         if (isNavigating && onSwapDestination && loc?.id && loc.id !== navTarget?.id) {
             onSwapDestination(loc);
             return;
@@ -115,38 +108,30 @@ function MapViewInner({
 
         const features = map.queryRenderedFeatures(e.point, { layers: ['indoor-rooms-fill'] });
 
-        // In pick mode, a room tap sets the pick point and exits pick mode
         if (pickModeRef.current) {
             if (features?.length > 0) {
                 const roomFeature = rooms?.features?.find(f => f.properties.poiId === features[0].properties.poiId);
-                if (roomFeature) {
-                    onPickPointRef.current?.({ type: 'room', feature: roomFeature });
-                    return;
-                }
+                if (roomFeature) { onPickPointRef.current?.({ type: 'room', feature: roomFeature }); return; }
             }
-            // Tapped empty map area — do nothing, keep pick mode active
             return;
         }
 
-        const now = Date.now();
-        const delta = now - lastClickTimeRef.current;
+        const now             = Date.now();
+        const delta           = now - lastClickTimeRef.current;
         const clickedFeatureId = features?.[0]?.properties?.poiId ?? null;
 
-        // 600 ms window works for both mouse double-click and mobile double-tap
         if (features?.length > 0 && delta < 600 && lastClickFeatureRef.current === clickedFeatureId) {
             const roomFeature = rooms?.features?.find(f => f.properties.poiId === features[0].properties.poiId);
-            // Double-tap/click goes straight to navigate
             if (roomFeature && onRoomNavigate) onRoomNavigate(roomFeature);
-            lastClickTimeRef.current = 0;
+            lastClickTimeRef.current    = 0;
             lastClickFeatureRef.current = null;
         } else if (features?.length > 0) {
             const roomFeature = rooms?.features?.find(f => f.properties.poiId === features[0].properties.poiId);
-            // Single tap highlights the room and shows the RoomSheet
             if (roomFeature && onRoomSelect) onRoomSelect(roomFeature);
-            lastClickTimeRef.current = now;
+            lastClickTimeRef.current    = now;
             lastClickFeatureRef.current = clickedFeatureId;
         } else {
-            lastClickTimeRef.current = 0;
+            lastClickTimeRef.current    = 0;
             lastClickFeatureRef.current = null;
             onMapTap?.(e.lngLat);
         }
@@ -168,17 +153,12 @@ function MapViewInner({
         if (!activeTrail?.computedPath?.length) return null;
         return {
             type: 'FeatureCollection',
-            features: [{
-                type: 'Feature',
-                geometry: { type: 'LineString', coordinates: activeTrail.computedPath },
-                properties: {},
-            }],
+            features: [{ type: 'Feature', geometry: { type: 'LineString', coordinates: activeTrail.computedPath }, properties: {} }],
         };
     }, [activeTrail?.computedPath]);
 
     return (
         <div style={{ width: '100%', height: '100%', position: 'relative', cursor: activeCursor }}>
-
             {activeTrail && (
                 <div style={{
                     position: 'absolute', top: 0, left: 0, right: 0, zIndex: 20,
@@ -204,9 +184,7 @@ function MapViewInner({
                             cursor: 'pointer', padding: '2px 4px', lineHeight: 1,
                         }}
                         aria-label="Close trail"
-                    >
-                        ✕
-                    </button>
+                    >✕</button>
                 </div>
             )}
 
@@ -221,7 +199,6 @@ function MapViewInner({
                         onToggleCaptureUI={() => setShowCaptureUI(o => !o)}
                     />
                 )}
-
                 {isAdmin && showCaptureUI && (
                     <TrailCaptureOverlay
                         captureMode={captureMode}
@@ -287,7 +264,6 @@ function MapViewInner({
                                 </div>
                             </Marker>
                         ))}
-
 
                         {displayLocation?.lng != null && displayLocation?.lat != null && (
                             <Marker longitude={displayLocation.lng} latitude={displayLocation.lat} anchor="center">

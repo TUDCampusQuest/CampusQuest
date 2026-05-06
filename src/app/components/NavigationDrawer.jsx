@@ -1,42 +1,37 @@
 'use client';
+// Slide-up drawer where users pick a start and destination to begin navigation.
 import { useState, useMemo, useEffect } from 'react';
-import {
-    Box, Drawer, TextField, Typography, Stack,
-    IconButton, List, ListItem, ListItemText,
-} from '@mui/material';
-import CloseIcon            from '@mui/icons-material/Close';
-import MeetingRoomIcon      from '@mui/icons-material/MeetingRoom';
-import NavigationIcon       from '@mui/icons-material/Navigation';
-import MyLocationIcon       from '@mui/icons-material/MyLocation';
-import SwapVertIcon         from '@mui/icons-material/SwapVert';
+import { Box, Drawer, TextField, Typography, Stack, IconButton, List, ListItem, ListItemText } from '@mui/material';
+import CloseIcon              from '@mui/icons-material/Close';
+import MeetingRoomIcon        from '@mui/icons-material/MeetingRoom';
+import NavigationIcon         from '@mui/icons-material/Navigation';
+import MyLocationIcon         from '@mui/icons-material/MyLocation';
+import SwapVertIcon           from '@mui/icons-material/SwapVert';
 import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
-import FmdGoodIcon          from '@mui/icons-material/FmdGood';
-import { isWithinCampus }   from '../lib/campusBounds';
+import FmdGoodIcon            from '@mui/icons-material/FmdGood';
+import { isWithinCampus }     from '../lib/campusBounds';
 
-const TEAL = '#7C3AED';
+const PURPLE = '#7C3AED';
 
 export default function NavigationDrawer({
     open, onClose,
     rooms, locations, gpsLocation,
     pointA, onSetPointA,
     pointB, onSetPointB,
-    onPickFromMap,  // (field: 'A'|'B') => void
-    onNavigate,     // (pointA, pointB) => void
+    onPickFromMap,
+    onNavigate,
 }) {
-    const [activeField, setActiveField] = useState('B');
-    const [query, setQuery] = useState('');
+    const [activeField,          setActiveField]          = useState('B');
+    const [query,                setQuery]                = useState('');
     const [showOffCampusWarning, setShowOffCampusWarning] = useState(false);
 
     const gpsOnCampus = !!gpsLocation && isWithinCampus(gpsLocation.lng, gpsLocation.lat);
 
-    // When the drawer opens, focus destination field if A is already set
     useEffect(() => {
         if (!open) return;
         setActiveField(pointA ? 'B' : 'A');
         setQuery('');
     }, [open]);
-
-    // Do NOT auto-fill GPS — let the user explicitly choose My Location or a room
 
     const roomIndex = useMemo(() => {
         if (!rooms?.features) return [];
@@ -75,15 +70,15 @@ export default function NavigationDrawer({
                 const bldA = (a.feature?.properties?.buildingName ?? '').toLowerCase();
                 const bldB = (b.feature?.properties?.buildingName ?? '').toLowerCase();
                 if (bldA !== bldB) return bldA.localeCompare(bldB);
-                const flA = (a.feature?.properties?.floorName ?? '');
-                const flB = (b.feature?.properties?.floorName ?? '');
+                const flA = a.feature?.properties?.floorName ?? '';
+                const flB = b.feature?.properties?.floorName ?? '';
                 if (flA !== flB) return flA.localeCompare(flB);
-                return (a.label).localeCompare(b.label);
+                return a.label.localeCompare(b.label);
             })
             .slice(0, 50);
-        const matchedLocs = locationIndex.filter(l =>
-            l.label.toLowerCase().includes(q) || l.sub.toLowerCase().includes(q)
-        ).slice(0, 8);
+        const matchedLocs = locationIndex
+            .filter(l => l.label.toLowerCase().includes(q) || l.sub.toLowerCase().includes(q))
+            .slice(0, 8);
         return [...matchedRooms, ...matchedLocs];
     }, [roomIndex, locationIndex, query]);
 
@@ -108,39 +103,23 @@ export default function NavigationDrawer({
 
     const canNavigate = !!(pointA && pointB);
 
-    const fieldBox = (field, point, icon, placeholder, accentColor) => (
+    const fieldBox = (field, point, icon, placeholder) => (
         <Box
             onClick={() => { setActiveField(field); setQuery(''); }}
             sx={{
-                flex: 1,
-                display: 'flex', alignItems: 'center', gap: 1,
-                px: 1.5, py: 1.25,
-                borderRadius: '12px',
+                flex: 1, display: 'flex', alignItems: 'center', gap: 1,
+                px: 1.5, py: 1.25, borderRadius: '12px',
                 bgcolor: activeField === field ? 'var(--bg-surface)' : 'var(--btn-ghost-bg)',
-                border: `1.5px solid ${activeField === field ? '#7C3AED' : 'var(--border-subtle)'}`,
-                cursor: 'pointer',
-                minHeight: 48,
-                transition: 'all 0.15s',
+                border: `1.5px solid ${activeField === field ? PURPLE : 'var(--border-subtle)'}`,
+                cursor: 'pointer', minHeight: 48, transition: 'all 0.15s',
             }}
         >
             {icon}
-            <Typography sx={{
-                flex: 1, fontSize: 14,
-                fontWeight: point ? 600 : 400,
-                color: point ? 'var(--text-primary)' : 'var(--text-muted)',
-            }}>
+            <Typography sx={{ flex: 1, fontSize: 14, fontWeight: point ? 600 : 400, color: point ? 'var(--text-primary)' : 'var(--text-muted)' }}>
                 {point ? point.label : placeholder}
             </Typography>
             {point && (
-                <IconButton
-                    size="small"
-                    onClick={e => {
-                        e.stopPropagation();
-                        if (field === 'A') onSetPointA(null);
-                        else onSetPointB(null);
-                    }}
-                    sx={{ p: 0.25, flexShrink: 0 }}
-                >
+                <IconButton size="small" onClick={e => { e.stopPropagation(); if (field === 'A') onSetPointA(null); else onSetPointB(null); }} sx={{ p: 0.25, flexShrink: 0 }}>
                     <CloseIcon sx={{ fontSize: 14, color: 'var(--text-secondary)' }} />
                 </IconButton>
             )}
@@ -154,34 +133,26 @@ export default function NavigationDrawer({
             onClose={onClose}
             PaperProps={{
                 sx: {
-                    borderRadius: '24px 24px 0 0',
-                    height: '82dvh',
+                    borderRadius: '24px 24px 0 0', height: '82dvh',
                     pb: 'env(safe-area-inset-bottom)',
                     display: 'flex', flexDirection: 'column',
-                    bgcolor: 'var(--bg-secondary)',
-                    color: 'var(--text-primary)',
+                    bgcolor: 'var(--bg-secondary)', color: 'var(--text-primary)',
                     borderTop: '1px solid var(--border-card)',
                 },
             }}
         >
             <Box sx={{ p: 2.5, display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-
-                {/* Header */}
                 <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2.5, flexShrink: 0 }}>
                     <Typography variant="h5" sx={{ fontWeight: 800, color: 'var(--text-primary)' }}>Navigate</Typography>
                     <IconButton onClick={onClose} sx={{ color: 'var(--text-secondary)' }}><CloseIcon /></IconButton>
                 </Stack>
 
-                {/* A → B selector */}
                 <Box sx={{ display: 'flex', gap: 1, mb: 2, flexShrink: 0 }}>
-                    {/* Timeline dots */}
                     <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', pt: 1.75, gap: 0 }}>
                         <RadioButtonCheckedIcon sx={{ color: '#22c55e', fontSize: 18 }} />
                         <Box sx={{ width: 2, flex: 1, bgcolor: 'var(--border-card)', my: 0.5, minHeight: 16 }} />
                         <FmdGoodIcon sx={{ color: '#ef4444', fontSize: 18 }} />
                     </Box>
-
-                    {/* Input fields */}
                     <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
                         {fieldBox(
                             'A', pointA,
@@ -189,29 +160,20 @@ export default function NavigationDrawer({
                                 ? <MyLocationIcon sx={{ fontSize: 16, color: '#22c55e', flexShrink: 0 }} />
                                 : <Box sx={{ width: 8, height: 8, borderRadius: '50%', bgcolor: '#22c55e', flexShrink: 0 }} />,
                             'Choose start point…',
-                            '#22c55e',
                         )}
                         {fieldBox(
                             'B', pointB,
                             <FmdGoodIcon sx={{ fontSize: 16, color: '#ef4444', flexShrink: 0 }} />,
                             'Choose destination…',
-                            '#ef4444',
                         )}
                     </Box>
-
-                    {/* Swap button */}
                     <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <IconButton
-                            onClick={handleSwap}
-                            size="small"
-                            sx={{ border: '1px solid var(--border-card)', bgcolor: 'var(--btn-ghost-bg)' }}
-                        >
+                        <IconButton onClick={handleSwap} size="small" sx={{ border: '1px solid var(--border-card)', bgcolor: 'var(--btn-ghost-bg)' }}>
                             <SwapVertIcon sx={{ fontSize: 18, color: 'var(--text-secondary)' }} />
                         </IconButton>
                     </Box>
                 </Box>
 
-                {/* Search input */}
                 <TextField
                     fullWidth
                     placeholder={activeField === 'A' ? 'Search for start point…' : 'Search for destination…'}
@@ -222,7 +184,6 @@ export default function NavigationDrawer({
                     sx={{ mb: 1.5, flexShrink: 0, '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: 'var(--bg-input)', color: 'var(--text-primary)', '& .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--border-subtle)' }, '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--border-card)' }, '& input': { color: 'var(--text-primary)' }, '& input::placeholder': { color: 'var(--text-muted)', opacity: 1 } } }}
                 />
 
-                {/* Quick options for From field */}
                 {activeField === 'A' && !query && (
                     <Stack direction="row" spacing={1} sx={{ mb: 1.5, flexShrink: 0, flexWrap: 'wrap' }}>
                         {gpsLocation && (
@@ -237,12 +198,11 @@ export default function NavigationDrawer({
                                     setActiveField('B');
                                     setQuery('');
                                 }}
-                                title={gpsOnCampus ? 'Use my GPS as start' : 'Only available on campus'}
                                 sx={{
                                     display: 'flex', alignItems: 'center', gap: 0.75,
                                     px: 1.5, py: 0.75, borderRadius: 99,
-                                    bgcolor: gpsOnCampus ? 'rgba(34,197,94,0.1)'   : 'rgba(148,163,184,0.08)',
-                                    border:   gpsOnCampus ? '1px solid rgba(34,197,94,0.25)' : '1px dashed rgba(148,163,184,0.35)',
+                                    bgcolor: gpsOnCampus ? 'rgba(34,197,94,0.1)' : 'rgba(148,163,184,0.08)',
+                                    border: gpsOnCampus ? '1px solid rgba(34,197,94,0.25)' : '1px dashed rgba(148,163,184,0.35)',
                                     cursor: gpsOnCampus ? 'pointer' : 'not-allowed',
                                     opacity: gpsOnCampus ? 1 : 0.55,
                                     fontSize: 13, fontWeight: 700,
@@ -257,7 +217,7 @@ export default function NavigationDrawer({
                         )}
                         {onPickFromMap && (
                             <Box
-                                onClick={() => { onPickFromMap('A'); }}
+                                onClick={() => onPickFromMap('A')}
                                 sx={{
                                     display: 'flex', alignItems: 'center', gap: 0.75,
                                     px: 1.5, py: 0.75, borderRadius: 99,
@@ -270,20 +230,17 @@ export default function NavigationDrawer({
                             </Box>
                         )}
                         {showOffCampusWarning && (
-                            <Box
-                                sx={{
-                                    width: '100%', mt: 1, px: 1.5, py: 1, borderRadius: 1.5,
-                                    bgcolor: 'rgba(234,179,8,0.12)', border: '1px solid rgba(234,179,8,0.35)',
-                                    color: '#eab308', fontSize: 12, fontWeight: 600,
-                                }}
-                            >
+                            <Box sx={{
+                                width: '100%', mt: 1, px: 1.5, py: 1, borderRadius: 1.5,
+                                bgcolor: 'rgba(234,179,8,0.12)', border: '1px solid rgba(234,179,8,0.35)',
+                                color: '#eab308', fontSize: 12, fontWeight: 600,
+                            }}>
                                 ⚠️ You&apos;re currently off-campus. Please pick a building as your start point.
                             </Box>
                         )}
                     </Stack>
                 )}
 
-                {/* Results */}
                 <List sx={{ flex: 1, overflowY: 'auto' }}>
                     {results.map(item => (
                         <ListItem
@@ -303,7 +260,7 @@ export default function NavigationDrawer({
                             />
                             {item.type === 'room'
                                 ? <MeetingRoomIcon sx={{ color: '#0ea5e9', fontSize: 18, flexShrink: 0 }} />
-                                : <NavigationIcon  sx={{ color: TEAL,      fontSize: 18, flexShrink: 0 }} />}
+                                : <NavigationIcon  sx={{ color: PURPLE,    fontSize: 18, flexShrink: 0 }} />}
                         </ListItem>
                     ))}
                     {query.trim() && results.length === 0 && (
@@ -313,7 +270,6 @@ export default function NavigationDrawer({
                     )}
                 </List>
 
-                {/* Navigate button */}
                 <Box
                     component="button"
                     disabled={!canNavigate}
@@ -321,9 +277,7 @@ export default function NavigationDrawer({
                     sx={{
                         mt: 1.5, flexShrink: 0,
                         width: '100%', py: 1.75, borderRadius: '14px', border: 'none',
-                        background: canNavigate
-                            ? 'linear-gradient(135deg, #7C3AED 0%, #5b21b6 100%)'
-                            : 'var(--btn-ghost-bg)',
+                        background: canNavigate ? 'linear-gradient(135deg, #7C3AED 0%, #5b21b6 100%)' : 'var(--btn-ghost-bg)',
                         color: canNavigate ? '#fff' : 'var(--text-muted)',
                         fontWeight: 800, fontSize: 15,
                         cursor: canNavigate ? 'pointer' : 'not-allowed',

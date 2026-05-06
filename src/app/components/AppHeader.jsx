@@ -1,4 +1,5 @@
 "use client";
+// App header with the Campus Quest logo, navigate/search/info buttons, and a dark mode toggle.
 
 import { Box, Stack, Typography, Tooltip } from "@mui/material";
 import { useRouter } from "next/navigation";
@@ -72,7 +73,6 @@ export default function AppHeader({ isAdmin, onStaffClick, onSearchClick, onNavi
             borderBottom: "1px solid var(--header-border)",
             zIndex: 1100,
         }}>
-            {/* Logo */}
             <Stack direction="row" alignItems="center" spacing={1} sx={{ flex: 1 }}>
                 <Box
                     onDoubleClick={onStaffClick}
@@ -113,7 +113,6 @@ export default function AppHeader({ isAdmin, onStaffClick, onSearchClick, onNavi
                 )}
             </Stack>
 
-            {/* Nav buttons */}
             <Stack direction="row" spacing={1} alignItems="center">
                 <HeaderBtn
                     icon={<DirectionsIcon sx={{ fontSize: 15, color: "var(--accent-teal)" }} />}

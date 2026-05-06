@@ -1,4 +1,5 @@
 'use client';
+// Admin-only overlay for recording, naming, and saving trail paths to S3.
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
@@ -117,7 +118,6 @@ export default function TrailCaptureOverlay({
                 </div>
             )}
 
-            {/* Designer panel */}
             <div style={{
                 background: 'rgba(15,23,42,0.85)',
                 backdropFilter: 'blur(16px)',
@@ -128,7 +128,6 @@ export default function TrailCaptureOverlay({
                 padding: 12,
                 display: 'flex', flexDirection: 'column', gap: 8,
             }}>
-                {/* Header */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: 13, fontWeight: 800, color: '#f1f5f9' }}>Trail Designer</span>
                     <button onClick={onClose} style={{
@@ -138,7 +137,6 @@ export default function TrailCaptureOverlay({
                     }}>✕</button>
                 </div>
 
-                {/* Record button */}
                 <button onClick={() => setCaptureMode(!captureMode)} style={{
                     padding: '10px', borderRadius: 10, fontWeight: 700, fontSize: 12,
                     border: 'none', cursor: 'pointer',
@@ -156,13 +154,11 @@ export default function TrailCaptureOverlay({
                     {capturedPoints.length} point{capturedPoints.length !== 1 ? 's' : ''} captured
                 </p>
 
-                {/* Undo / Clear */}
                 <div style={{ display: 'flex', gap: 6 }}>
                     {btn('Undo Last', handleUndo, { disabled: capturedPoints.length === 0, extra: { flex: 1 }, border: '1px solid rgba(255,255,255,0.1)' })}
                     {btn('Clear All', handleClear, { disabled: capturedPoints.length === 0, extra: { flex: 1 }, color: '#f87171', border: '1px solid rgba(239,68,68,0.2)', bg: 'rgba(239,68,68,0.08)' })}
                 </div>
 
-                {/* Save button */}
                 <button onClick={handleOpenModal} disabled={capturedPoints.length === 0} style={{
                     padding: '10px', borderRadius: 10, fontWeight: 700, fontSize: 12, border: 'none',
                     cursor: capturedPoints.length === 0 ? 'not-allowed' : 'pointer',
@@ -175,7 +171,6 @@ export default function TrailCaptureOverlay({
 
                 <div style={{ height: 1, background: 'rgba(255,255,255,0.07)', margin: '2px 0' }} />
 
-                {/* Saved trails toggle */}
                 <button onClick={() => setShowTrailsList(v => !v)} style={{
                     padding: '8px 10px', borderRadius: 10,
                     border: '1px solid rgba(255,255,255,0.1)',
@@ -221,7 +216,6 @@ export default function TrailCaptureOverlay({
                 )}
             </div>
 
-            {/* Save modal */}
             {showSaveModal && (
                 <div style={{
                     position: 'fixed', inset: 0,

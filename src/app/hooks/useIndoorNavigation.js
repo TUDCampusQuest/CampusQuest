@@ -1,5 +1,5 @@
-// Hook managing indoor route state — builds room-to-room paths, advances steps via GPS proximity, and falls back to outdoor routing when rooms span buildings.
 'use client';
+// Builds indoor room-to-room routes, advances steps as the user walks, and falls back to outdoor routing when needed.
 import { useState, useEffect, useCallback } from 'react';
 import { locations } from '../data/locations';
 import { buildIndoorRoute } from '../lib/indoorRouter';
@@ -7,6 +7,7 @@ import { haversineM } from '../lib/routeUtils';
 import { buildCrossBuildingRoute } from '../lib/crossBuildingRoute';
 
 const R = 6371000;
+const MAX_SNAP_METRES = 300;
 
 function findStartRoomForBuilding(buildingId, roomsFeatures) {
     const candidates = roomsFeatures.filter(f => {
@@ -30,8 +31,6 @@ function findStartRoomForBuilding(buildingId, roomsFeatures) {
     ) ?? null;
 }
 
-const MAX_SNAP_METRES = 300;
-
 function findNearestBuildingId(gpsLng, gpsLat, locs) {
     const r = d => d * Math.PI / 180;
     let best = null, bestDist = Infinity;
@@ -41,13 +40,10 @@ function findNearestBuildingId(gpsLng, gpsLat, locs) {
         const dLat = r(coords[1] - gpsLat);
         const dLng = r(coords[0] - gpsLng);
         const a = Math.sin(dLat / 2) ** 2 +
-            Math.cos(r(gpsLat)) * Math.cos(r(coords[1])) *
-            Math.sin(dLng / 2) ** 2;
+            Math.cos(r(gpsLat)) * Math.cos(r(coords[1])) * Math.sin(dLng / 2) ** 2;
         const d = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         if (d < bestDist) { bestDist = d; best = loc; }
     }
-    // Only snap if the user is actually near campus — prevents picking a random
-    // building (e.g. Horticulture) when GPS puts the user far away.
     if (bestDist > MAX_SNAP_METRES) return null;
     return best?.buildingId ?? null;
 }
@@ -68,10 +64,10 @@ export function useIndoorNavigation({
     onFloorChange,
     activeNavSystem,
 }) {
-    const [activeRoute,        setActiveRoute]        = useState(null);
-    const [currentStepIndex,   setCurrentStepIndex]   = useState(0);
-    const [arrivedMessage,     setArrivedMessage]     = useState(false);
-    const [activeDestination,  setActiveDestination]  = useState(null);
+    const [activeRoute,       setActiveRoute]       = useState(null);
+    const [currentStepIndex,  setCurrentStepIndex]  = useState(0);
+    const [arrivedMessage,    setArrivedMessage]    = useState(false);
+    const [activeDestination, setActiveDestination] = useState(null);
 
     useEffect(() => {
         if (!activeRoute || !gpsLocation) return;
@@ -152,7 +148,6 @@ export function useIndoorNavigation({
                             console.warn('fitBounds cross-building suppressed:', err?.message || err);
                         }
                     }
-
                     const destFloor = destinationFeature.properties.floorName;
                     if (destFloor && destFloor !== 'G') onFloorChange?.(destFloor, true);
                     return;
@@ -168,6 +163,7 @@ export function useIndoorNavigation({
             setArrivedMessage(false);
             onClearSelectedRoom?.();
             onHighlightRoom?.(destinationFeature.properties.poiId);
+
             const dp = destinationFeature.properties;
             if (dp.centerLng != null && dp.centerLat != null && mapRef?.current) {
                 try {

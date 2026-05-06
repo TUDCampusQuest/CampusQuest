@@ -1,15 +1,7 @@
 'use client';
+// Watches the device GPS and returns the current position, or null until the first fix.
 import { useState, useEffect } from 'react';
 
-/**
- * useGPS
- * Watches the device's GPS position and returns the current location.
- * Returns null until the first fix is obtained. Defensive against missing
- * geolocation APIs and runtime callback errors so a GPS failure never
- * propagates up and wipes nav state.
- *
- * @returns {{ lng: number, lat: number } | null}
- */
 export function useGPS() {
     const [userLocation, setUserLocation] = useState(null);
 
@@ -26,8 +18,6 @@ export function useGPS() {
         const onErr = () => {};
 
         try {
-            // getCurrentPosition first — triggers the permission prompt on mobile
-            // browsers where watchPosition alone does not show the dialog.
             navigator.geolocation.getCurrentPosition(onPos, onErr, {
                 enableHighAccuracy: true, timeout: 10000,
             });

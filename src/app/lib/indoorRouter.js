@@ -1,35 +1,19 @@
-/**
- * Indoor routing library — standalone, no external dependencies.
- * Paths trace along room polygon boundaries so routes follow corridors
- * rather than cutting through walls or other rooms.
- *
- * Usage:
- *   import { buildIndoorRoute } from '../lib/indoorRouter';
- *   const result = buildIndoorRoute(startFeature, endFeature, stairsGeoJSON, allRoomsGeoJSON, buildings);
- */
-
-const WALK_PACE_MPM = 80; // metres per minute
+// Builds a turn-by-turn indoor route between two room features, tracing polygon boundaries to follow corridors.
+const WALK_PACE_MPM = 80;
 
 const FLOOR_LABEL = {
-    G:   'Ground Floor',
-    '1': 'First Floor',
-    '2': 'Second Floor',
-    '3': 'Third Floor',
+    G: 'Ground Floor', '1': 'First Floor', '2': 'Second Floor', '3': 'Third Floor',
 };
-
-// ─── geometry helpers ────────────────────────────────────────────────────────
 
 function haversineMetres([lng1, lat1], [lng2, lat2]) {
     const R = 6_371_000;
     const toRad = d => d * Math.PI / 180;
     const dLat = toRad(lat2 - lat1);
     const dLng = toRad(lng2 - lng1);
-    const a = Math.sin(dLat / 2) ** 2
-            + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
-/** Closest point on segment a→b to point p */
 function closestPointOnSegment([x1, y1], [x2, y2], [px, py]) {
     const dx = x2 - x1, dy = y2 - y1;
     const lenSq = dx * dx + dy * dy;
@@ -38,24 +22,17 @@ function closestPointOnSegment([x1, y1], [x2, y2], [px, py]) {
     return [x1 + t * dx, y1 + t * dy];
 }
 
-/**
- * Returns the point on a polygon's outer ring boundary closest to `point`.
- * Used to find exactly where a path exits or enters a room along its wall,
- * ensuring the visible route hugs the room outline rather than cutting through.
- */
 function closestPointOnPolygon(geometry, point) {
     const ring = geometry?.coordinates?.[0];
     if (!ring || ring.length < 2) return null;
     let best = null, bestDist = Infinity;
     for (let i = 0; i < ring.length - 1; i++) {
         const pt = closestPointOnSegment(ring[i], ring[i + 1], point);
-        const d = haversineMetres(pt, point);
+        const d  = haversineMetres(pt, point);
         if (d < bestDist) { bestDist = d; best = pt; }
     }
     return best;
 }
-
-// ─── indoor helpers ──────────────────────────────────────────────────────────
 
 function getCentroid(feature) {
     return [feature.properties.centerLng, feature.properties.centerLat];
@@ -73,14 +50,8 @@ function findNearestStair(fromCentroid, stairFeatures) {
     return nearest;
 }
 
-function roomLabel(props) {
-    return props.name || props.roomCode || 'destination';
-}
-
-function floorLabel(floorName) {
-    return FLOOR_LABEL[floorName] ?? `Floor ${floorName}`;
-}
-
+function roomLabel(props)  { return props.name || props.roomCode || 'destination'; }
+function floorLabel(name)  { return FLOOR_LABEL[name] ?? `Floor ${name}`; }
 function floorZ(props) {
     if (props.z != null) return props.z;
     if (props.floorName === 'G') return 1;
@@ -88,53 +59,27 @@ function floorZ(props) {
     return isNaN(n) ? 1 : n + 1;
 }
 
-
-// ─── public API ──────────────────────────────────────────────────────────────
-
-/**
- * Builds a turn-by-turn indoor route between two GeoJSON room features.
- * Paths trace along room polygon boundaries so the route follows corridors.
- *
- * @param {object} startFeature    GeoJSON Feature for the origin room
- * @param {object} endFeature      GeoJSON Feature for the destination room
- * @param {object} stairsGeoJSON   FeatureCollection of stair features
- * @param {object} allRoomsGeoJSON FeatureCollection of all room features (unused, kept for API compat)
- *
- * @returns {{ steps, path, totalMetres, totalMinutes, requiresStairs } | null}
- * Returns null when start and end are in different buildings — caller must use
- * the outdoor campus trail system for that leg.
- */
 export function buildIndoorRoute(startFeature, endFeature, stairsGeoJSON) {
-    const sp = startFeature.properties;
-    const ep = endFeature.properties;
-    const startC = getCentroid(startFeature);
-    const endC   = getCentroid(endFeature);
+    const sp       = startFeature.properties;
+    const ep       = endFeature.properties;
+    const startC   = getCentroid(startFeature);
+    const endC     = getCentroid(endFeature);
     const allStairs = stairsGeoJSON?.features ?? [];
 
-    // Different buildings: caller must handle via outdoor trail routing
     if (sp.buildingId !== ep.buildingId) return null;
 
     const sameFloor = sp.floorId === ep.floorId;
     const steps = [];
     const path  = [];
 
-    // ── 1. Same building, same floor ────────────────────────────────────────
-    // Path traces along room polygon boundaries so the visible line stays in
-    // the corridor space between the two rooms rather than cutting through walls.
     if (sameFloor) {
         const startWall = closestPointOnPolygon(startFeature.geometry, endC)   ?? startC;
         const endWall   = closestPointOnPolygon(endFeature.geometry,   startC) ?? endC;
-
         path.push(startC, startWall, endWall, endC);
-
         const dist = haversineMetres(startC, endC);
         steps.push({ type: 'walk',    description: `Walk to ${roomLabel(ep)}`,             metres: dist, location: endC, stairRoomCode: null });
         steps.push({ type: 'arrived', description: `You have arrived at ${roomLabel(ep)}`, metres: 0,    location: endC, stairRoomCode: null });
-    }
-
-    // ── 2. Same building, different floor ───────────────────────────────────
-    // Traces: startC → startWall → stairC → endWall → endC
-    else {
+    } else {
         const bldStairs = allStairs.filter(f => f.properties.buildingId === sp.buildingId);
         const stair     = findNearestStair(startC, bldStairs);
 
@@ -151,7 +96,6 @@ export function buildIndoorRoute(startFeature, endFeature, stairsGeoJSON) {
             const stairType = goingUp ? 'stairs_up' : 'stairs_down';
             const verb      = goingUp ? 'up' : 'down';
             const stairCode = stair.properties.roomCode ?? null;
-
             path.push(startC, startWall, stairC, endWall, endC);
             steps.push({ type: 'walk',    description: 'Walk to stairs',                                        metres: haversineMetres(startC, stairC), location: stairC, stairRoomCode: stairCode });
             steps.push({ type: stairType, description: `Go ${verb} the stairs to ${floorLabel(ep.floorName)}`, metres: 0,                                location: stairC, stairRoomCode: stairCode });
@@ -161,8 +105,8 @@ export function buildIndoorRoute(startFeature, endFeature, stairsGeoJSON) {
         steps.push({ type: 'arrived', description: `You have arrived at ${roomLabel(ep)}`, metres: 0, location: endC, stairRoomCode: null });
     }
 
-    const totalMetres    = steps.reduce((sum, s) => sum + (s.metres ?? 0), 0);
-    const totalMinutes   = Math.ceil(totalMetres / WALK_PACE_MPM);
+    const totalMetres  = steps.reduce((sum, s) => sum + (s.metres ?? 0), 0);
+    const totalMinutes = Math.ceil(totalMetres / WALK_PACE_MPM);
     const requiresStairs = steps.some(s => s.type === 'stairs_up' || s.type === 'stairs_down');
 
     return { steps, path, totalMetres, totalMinutes, requiresStairs };

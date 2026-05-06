@@ -1,4 +1,5 @@
 'use client';
+// Collapsible panel that lists available trails and lets admins toggle the trail designer.
 
 import { useState } from 'react';
 
@@ -26,7 +27,6 @@ export default function TrailsPanel({
             overflow: 'hidden',
             minWidth: 160,
         }}>
-            {/* Header / toggle */}
             <button
                 onClick={() => setCollapsed(c => !c)}
                 style={{
@@ -64,7 +64,6 @@ export default function TrailsPanel({
                 }}>▼</span>
             </button>
 
-            {/* Collapsible body */}
             {!collapsed && (
                 <>
                     <div style={{ padding: '8px', display: 'flex', flexDirection: 'column', gap: 3, maxHeight: 220, overflowY: 'auto' }}>
@@ -115,7 +114,6 @@ export default function TrailsPanel({
                         )}
                     </div>
 
-                    {/* Trail Designer — staff only */}
                     {isAdmin && (
                         <div style={{ padding: '0 8px 8px' }}>
                             <button

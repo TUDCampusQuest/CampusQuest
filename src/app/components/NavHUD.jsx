@@ -1,4 +1,5 @@
 'use client';
+// Sticky top bar shown during navigation with destination name, ETA, and an exit button.
 import { Box, Stack, Typography, IconButton } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
@@ -7,11 +8,10 @@ function fmtDist(m) {
 }
 
 export default function NavHUD({ navTarget, activeRoute, onExit }) {
-    const isIndoor   = activeRoute != null && activeRoute.steps?.length > 0;
-    const isOutdoor  = navTarget != null;
+    const isIndoor  = activeRoute != null && activeRoute.steps?.length > 0;
+    const isOutdoor = navTarget != null;
     if (!isIndoor && !isOutdoor) return null;
 
-    // Derive the destination name for indoor nav from the arrived step
     const indoorDestName = isIndoor
         ? (activeRoute.steps.find(s => s.type === 'arrived')?.description
               ?.replace('You have arrived at ', '') ?? 'destination')
@@ -30,9 +30,7 @@ export default function NavHUD({ navTarget, activeRoute, onExit }) {
                 <Box sx={{
                     width: 10, height: 10, borderRadius: '50%',
                     bgcolor: isIndoor ? '#00B4B4' : '#7C3AED',
-                    boxShadow: isIndoor
-                        ? '0 0 0 3px rgba(0,180,180,0.3)'
-                        : '0 0 0 3px rgba(124,58,237,0.3)',
+                    boxShadow: isIndoor ? '0 0 0 3px rgba(0,180,180,0.3)' : '0 0 0 3px rgba(124,58,237,0.3)',
                     animation: 'hudPulse 1.6s ease-in-out infinite',
                     flexShrink: 0,
                 }} />

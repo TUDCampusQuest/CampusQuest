@@ -1,25 +1,15 @@
 'use client';
+// Manages the active trail from the URL, merges S3 and local trail data, and builds GeoJSON for the map.
 import { useMemo, useEffect, useCallback, useState } from 'react';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import trailPaths from '../data/trailPaths';
 
-/**
- * useTrailSelector
- * Manages the active trail from the URL ?trail= param.
- *
- * FIX: Now fetches trails from S3 via /api/trails and merges them with the
- * local trailPaths.js so that trails saved via the Trail Designer are
- * recognised when navigating to /?trail=<id> from the /trails page.
- *
- * Lookup priority: S3 trails first, then local trailPaths fallback.
- */
 export function useTrailSelector({ captureMode, setCapturedPoints, mapRef }) {
     const router       = useRouter();
     const pathname     = usePathname();
     const searchParams = useSearchParams();
 
-    // ── Fetch S3 trails once on mount ────────────────────────────────────────
-    const [s3Trails, setS3Trails] = useState([]);
+    const [s3Trails,    setS3Trails]    = useState([]);
     const [readyToShow, setReadyToShow] = useState(false);
 
     useEffect(() => {
@@ -35,17 +25,11 @@ export function useTrailSelector({ captureMode, setCapturedPoints, mapRef }) {
         return () => clearTimeout(t);
     }, [s3Trails]);
 
-    // ── Merge: build a lookup map of id → coords covering both sources ───────
-    // S3 trails take priority; local trailPaths fills in anything not in S3.
     const allTrailCoords = useMemo(() => {
         const map = {};
-        // Start with local static trails (keyed by name string)
         Object.entries(trailPaths).forEach(([key, coords]) => { map[key] = coords; });
-        // Overlay S3 trails (keyed by id)
         s3Trails.forEach(t => {
-            if (t.id && Array.isArray(t.points) && t.points.length > 0) {
-                map[t.id] = t.points;
-            }
+            if (t.id && Array.isArray(t.points) && t.points.length > 0) map[t.id] = t.points;
         });
         return map;
     }, [s3Trails]);
@@ -65,7 +49,6 @@ export function useTrailSelector({ captureMode, setCapturedPoints, mapRef }) {
         router.push(`${pathname}?${params.toString()}`, { scroll: false });
     }, [searchParams, selectedTrailName, pathname, router]);
 
-    // Fit map to selected trail bounds
     useEffect(() => {
         if (!selectedTrailCoords?.length || !mapRef.current) return;
         try {
@@ -79,33 +62,26 @@ export function useTrailSelector({ captureMode, setCapturedPoints, mapRef }) {
         } catch (err) { console.error('Bounds error:', err); }
     }, [selectedTrailCoords, mapRef]);
 
-    // Map click — only active during trail capture
     const onMapClick = useCallback((e) => {
         if (!captureMode) return;
         const { lng, lat } = e.lngLat;
         setCapturedPoints(prev => [...prev, [Number(lng.toFixed(7)), Number(lat.toFixed(7))]]);
     }, [captureMode, setCapturedPoints]);
 
-    // GeoJSON builders
-    const trailGeoJSON = useMemo(() => {
-        if (!readyToShow) {
-            return { type: 'FeatureCollection', features: [] };
-        }
-        return {
-            type: 'FeatureCollection',
-            features: selectedTrailCoords ? [{
-                type: 'Feature',
-                geometry: { type: 'LineString', coordinates: selectedTrailCoords },
-                properties: {}
-            }] : []
-        };
-    }, [selectedTrailCoords, readyToShow]);
+    const trailGeoJSON = useMemo(() => ({
+        type: 'FeatureCollection',
+        features: readyToShow && selectedTrailCoords ? [{
+            type: 'Feature',
+            geometry: { type: 'LineString', coordinates: selectedTrailCoords },
+            properties: {},
+        }] : [],
+    }), [selectedTrailCoords, readyToShow]);
 
     const routeGeoJSON = useCallback((routeCoords) => {
         if (!routeCoords) return null;
         return {
             type: 'FeatureCollection',
-            features: [{ type: 'Feature', geometry: { type: 'LineString', coordinates: routeCoords }, properties: {} }]
+            features: [{ type: 'Feature', geometry: { type: 'LineString', coordinates: routeCoords }, properties: {} }],
         };
     }, []);
 
@@ -114,16 +90,15 @@ export function useTrailSelector({ captureMode, setCapturedPoints, mapRef }) {
         features: [
             { type: 'Feature', geometry: { type: 'LineString', coordinates: capturedPoints }, properties: { id: 'captured-line' } },
             ...capturedPoints.map((pt, i) => ({
-                type: 'Feature', geometry: { type: 'Point', coordinates: pt }, properties: { id: `node-${i}` }
-            }))
-        ]
+                type: 'Feature', geometry: { type: 'Point', coordinates: pt }, properties: { id: `node-${i}` },
+            })),
+        ],
     }), []);
 
-    // Expose allTrailCoords so MapView sidebar can show ALL trails (S3 + local)
     return {
         selectedTrailName, selectedTrailCoords,
         setTrailInUrl, onMapClick,
         trailGeoJSON, routeGeoJSON, capturedGeoJSON,
-        trailPaths: allTrailCoords,   // replaces the old static trailPaths export
+        trailPaths: allTrailCoords,
     };
 }

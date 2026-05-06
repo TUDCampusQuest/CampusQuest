@@ -1,4 +1,5 @@
 "use client";
+// Mobile-only bottom navigation bar with scan, search, navigate, recenter, and 3D buttons.
 
 import { Box, Tooltip } from "@mui/material";
 import { useRouter } from "next/navigation";

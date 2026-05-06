@@ -1,4 +1,5 @@
 "use client";
+// Right-side map controls column (zoom, 3D, recenter) and floor switcher buttons.
 
 import { Tooltip, Box } from "@mui/material";
 import AddIcon        from "@mui/icons-material/Add";

@@ -1,4 +1,5 @@
 'use client';
+// Places circular building chips on the map and recolors them to show navigation start/destination.
 import { useEffect, useRef } from 'react';
 import mapboxgl from 'mapbox-gl';
 import { locations } from '../data/locations';
@@ -10,19 +11,18 @@ function getLabel(loc) {
 }
 
 function getChipColor(locId, buildingA, buildingB) {
-    if (buildingA?.id && locId === buildingA.id) return '#22c55e'; // green = start
-    if (buildingB?.id && locId === buildingB.id) return '#ef4444'; // red = destination
+    if (buildingA?.id && locId === buildingA.id) return '#22c55e';
+    if (buildingB?.id && locId === buildingB.id) return '#ef4444';
     return '#7C3AED';
 }
 
 export function useBuildingMarkers({ map, styleLoaded, onLocationSelect, buildingA, buildingB }) {
-    const markersRef   = useRef([]); // [{ marker, chip, locId }]
+    const markersRef   = useRef([]);
     const buildingARef = useRef(buildingA);
     const buildingBRef = useRef(buildingB);
     buildingARef.current = buildingA;
     buildingBRef.current = buildingB;
 
-    // Create markers once when map/style is ready
     useEffect(() => {
         if (!map || !styleLoaded) return;
 
@@ -36,8 +36,6 @@ export function useBuildingMarkers({ map, styleLoaded, onLocationSelect, buildin
         locations
             .filter(loc => Array.isArray(loc.coordinates) && !/trail/i.test(loc.name))
             .forEach(loc => {
-                const label = getLabel(loc);
-
                 const wrapper = document.createElement('div');
                 wrapper.style.cssText = 'width:0;height:0;position:relative;';
 
@@ -57,20 +55,18 @@ export function useBuildingMarkers({ map, styleLoaded, onLocationSelect, buildin
                     'user-select:none',
                     'white-space:nowrap',
                 ].join(';');
-                chip.textContent = label;
+                chip.textContent = getLabel(loc);
 
                 chip.addEventListener('mouseenter', () => { chip.style.transform = 'scale(1.15)'; });
                 chip.addEventListener('mouseleave', () => { chip.style.transform = 'scale(1)'; });
-
-                const fireSelect = (e) => {
+                chip.addEventListener('click', (e) => {
                     try {
                         e.stopPropagation();
                         onLocationSelect?.(loc);
                     } catch (err) {
                         console.warn('building marker handler error:', err?.message || err);
                     }
-                };
-                chip.addEventListener('click', fireSelect);
+                });
 
                 wrapper.appendChild(chip);
 
@@ -94,12 +90,10 @@ export function useBuildingMarkers({ map, styleLoaded, onLocationSelect, buildin
         };
     }, [map, styleLoaded, onLocationSelect]);
 
-    // Recolor chips whenever buildingA / buildingB change.
-    // Also runs once after mount with whatever values are current at that point.
     useEffect(() => {
         if (!markersRef.current.length) return;
         markersRef.current.forEach(({ chip, locId }) => {
             chip.style.background = getChipColor(locId, buildingA, buildingB);
         });
-    }); // no dep array — runs after every render so it always stays in sync
+    });
 }

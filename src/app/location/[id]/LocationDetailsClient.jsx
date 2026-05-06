@@ -1,4 +1,5 @@
-"use client";
+'use client';
+// Full-page building detail view showing rooms, floors, a QR share card, and a navigate button.
 
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
@@ -125,8 +126,6 @@ export default function LocationDetailsClient({ id }) {
     const [openFloor, setOpenFloor] = useState('G');
     const [copied, setCopied] = useState(false);
 
-    // Build absolute URL — prefer build-time env, fall back to runtime origin so dev
-    // environments and previews still produce a working link rather than a 404.
     const [pageUrl, setPageUrl] = useState(
         `${process.env.NEXT_PUBLIC_APP_URL || 'https://campusquest.vercel.app'}/location/${id}`
     );
@@ -150,9 +149,7 @@ export default function LocationDetailsClient({ id }) {
                 setCopied(true);
                 setTimeout(() => setCopied(false), 2000);
             }
-        } catch {
-            // user cancelled share dialog or clipboard blocked — silently no-op
-        }
+        } catch {}
     }
 
     const { rooms, roomNameMap } = useIndoorData();

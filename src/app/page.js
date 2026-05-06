@@ -1,23 +1,24 @@
-﻿"use client";
+﻿'use client';
+// Root page — wires together the map, navigation, search, indoor routing, and all sheet/drawer UI.
 
 import { useState, useEffect, useRef, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { Box } from "@mui/material";
 import dynamic from "next/dynamic";
 
-import { locations }  from "./data/locations";
-import AppHeader        from "./components/AppHeader";
-import MapSidebar       from "./components/MapSidebar";
-import BottomBar        from "./components/BottomBar";
-import NavHUD           from "./components/NavHUD";
-import LocationSheet    from "./components/LocationSheet";
-import RoomSheet        from "./components/RoomSheet";
-import SearchDrawer     from "./components/SearchDrawer";
-import StaffAuthModal   from "./components/StaffAuthModal";
-import OnboardingTour  from "./components/OnboardingTour";
-import NavigationDrawer from "./components/NavigationDrawer";
-import TrailStopCard    from "./components/TrailStopCard";
-import useIndoorData    from "./hooks/useIndoorData";
+import { locations }         from "./data/locations";
+import AppHeader             from "./components/AppHeader";
+import MapSidebar            from "./components/MapSidebar";
+import BottomBar             from "./components/BottomBar";
+import NavHUD                from "./components/NavHUD";
+import LocationSheet         from "./components/LocationSheet";
+import RoomSheet             from "./components/RoomSheet";
+import SearchDrawer          from "./components/SearchDrawer";
+import StaffAuthModal        from "./components/StaffAuthModal";
+import OnboardingTour        from "./components/OnboardingTour";
+import NavigationDrawer      from "./components/NavigationDrawer";
+import TrailStopCard         from "./components/TrailStopCard";
+import useIndoorData         from "./hooks/useIndoorData";
 import { useIndoorNavigation } from "./hooks/useIndoorNavigation";
 import useMapControls        from "./hooks/useMapControls";
 import useLocationSelection  from "./hooks/useLocationSelection";
@@ -91,9 +92,8 @@ function Home() {
     const [navPointB,        setNavPointB]        = useState(null);
     const [navStartOverride, setNavStartOverride] = useState(null);
     const [showStairsPrompt, setShowStairsPrompt] = useState(false);
-    const [pickFromMapField, setPickFromMapField] = useState(null); // 'A' | 'B' | null
+    const [pickFromMapField, setPickFromMapField] = useState(null);
 
-    // Tracks which navigation system is active: null | 'outdoor' | 'indoor'
     const [activeNavSystem, setActiveNavSystem] = useState(null);
 
     const [activeTrail,           setActiveTrail]           = useState(null);
@@ -209,7 +209,6 @@ function Home() {
     }, []);
 
     const handleNavDrawerNavigate = useCallback((pointA, pointB) => {
-        // coords helper — turns any point type into {id, name, coordinates}
         const toLocObj = (pt) => {
             if (!pt) return null;
             if (pt.type === 'location') return pt.loc;
@@ -236,7 +235,6 @@ function Home() {
                 const startOverride = pointA.type === 'room' ? pointA.feature : null;
                 handleNavigateTo(pointB.feature, startOverride);
             } else {
-                // pointA is location or coords — outdoor nav to the room's centre
                 const dp = pointB.feature?.properties;
                 if (dp?.centerLng != null && dp?.centerLat != null) {
                     setActiveNavSystem('outdoor');
@@ -251,7 +249,6 @@ function Home() {
                 }
             }
         } else {
-            // Both non-room — outdoor nav
             const destLoc = toLocObj(pointB);
             if (destLoc) {
                 setActiveNavSystem('outdoor');
@@ -288,8 +285,6 @@ function Home() {
         setNavDrawerOpen(true);
     };
 
-    // Tap a different building while navigating → swap destination, keep
-    // start, keep the directions panel mounted. Never resets isNavigating.
     const handleSwapDestination = useCallback((loc) => {
         if (!loc?.id) return;
         if (navTarget?.id === loc.id) return;
@@ -372,7 +367,6 @@ function Home() {
     }, []);
 
     const handlePickPoint = useCallback((picked) => {
-        // picked = { type: 'room', feature } | { type: 'location', loc }
         let point;
         if (picked.type === 'room') {
             const p = picked.feature.properties;

@@ -1,4 +1,5 @@
 'use client';
+// Floating floor selector that animates in when a building is active.
 
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -37,7 +38,6 @@ export default function FloorSwitcher({ activeBuilding, activeFloorId, onFloorCh
                     pointerEvents: 'auto',
                 }}
             >
-                {/* Building name */}
                 <div style={{
                     fontSize: 10,
                     fontWeight: 700,
@@ -53,7 +53,6 @@ export default function FloorSwitcher({ activeBuilding, activeFloorId, onFloorCh
                     {activeBuilding.name}
                 </div>
 
-                {/* Floor buttons */}
                 {floors.map(f => {
                     const active = f.floorId === activeFloorId;
                     return (

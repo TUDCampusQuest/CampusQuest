@@ -1,10 +1,21 @@
 'use client';
-
+// Bottom panel that shows turn-by-turn steps for both outdoor and indoor navigation.
 import { useState, useMemo } from 'react';
 import { getRoomDisplayName } from '../lib/roomUtils';
 import { deriveSteps, fmtDist } from '../lib/routeUtils';
 
 const ROOM_CODE_RE = /[A-Z]{2}-\d{3}[A-Z]?$/;
+const TEAL        = '#1BA39C';
+const INDOOR_TEAL = '#00B4B4';
+
+const STEP_ICON = {
+    walk:           '🚶',
+    stairs_up:      '⬆️',
+    stairs_down:    '⬇️',
+    enter_building: '🚪',
+    exit_building:  '🏃',
+    arrived:        '✅',
+};
 
 function resolveStepDesc(description, roomNameMap) {
     if (!roomNameMap || !description) return description;
@@ -15,9 +26,6 @@ function resolveStepDesc(description, roomNameMap) {
     if (name === code) return description;
     return description.slice(0, description.length - code.length) + name;
 }
-
-const TEAL = '#1BA39C';
-const INDOOR_TEAL = '#00B4B4';
 
 function Toggle({ label, checked, onChange }) {
     return (
@@ -52,33 +60,18 @@ function OutdoorStepRow({ metres, dir, isLast }) {
                     background: isLast ? '#ef4444' : TEAL,
                     boxShadow: `0 0 0 3px ${isLast ? 'rgba(239,68,68,0.2)' : 'rgba(27,163,156,0.25)'}`,
                 }} />
-                {!isLast && (
-                    <div style={{ width: 2, flex: 1, minHeight: 24, background: 'rgba(255,255,255,0.12)', marginTop: 4 }} />
-                )}
+                {!isLast && <div style={{ width: 2, flex: 1, minHeight: 24, background: 'rgba(255,255,255,0.12)', marginTop: 4 }} />}
             </div>
             <div style={{ paddingBottom: isLast ? 0 : 14 }}>
                 <div style={{ fontSize: 13, fontWeight: 700, color: '#f1f5f9', lineHeight: 1.3 }}>
                     🚶 Walk {fmtDist(metres)}
                     <span style={{ fontWeight: 400, color: 'rgba(255,255,255,0.5)' }}> · heading {dir}</span>
                 </div>
-                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>
-                    ~{mins} min
-                </div>
+                <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)', marginTop: 2 }}>~{mins} min</div>
             </div>
         </div>
     );
 }
-
-// ─── indoor step row ─────────────────────────────────────────────────────────
-
-const STEP_ICON = {
-    walk:           '🚶',
-    stairs_up:      '⬆️',
-    stairs_down:    '⬇️',
-    enter_building: '🚪',
-    exit_building:  '🏃',
-    arrived:        '✅',
-};
 
 function IndoorStepRow({ step, isActive, isLast }) {
     const dist = fmtDist(step.metres);
@@ -90,55 +83,39 @@ function IndoorStepRow({ step, isActive, isLast }) {
             paddingBottom: isLast ? 0 : 14,
             transition: 'border-color 0.2s',
         }}>
-            {/* Timeline dot */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
                 <div style={{
                     width: 10, height: 10, borderRadius: '50%', marginTop: 3,
                     background: isActive ? INDOOR_TEAL : (step.type === 'arrived' ? '#22c55e' : 'rgba(255,255,255,0.2)'),
-                    boxShadow: isActive ? `0 0 0 3px rgba(0,180,180,0.25)` : 'none',
+                    boxShadow: isActive ? '0 0 0 3px rgba(0,180,180,0.25)' : 'none',
                     transition: 'background 0.2s',
                 }} />
-                {!isLast && (
-                    <div style={{ width: 2, flex: 1, minHeight: 20, background: 'rgba(255,255,255,0.1)', marginTop: 4 }} />
-                )}
+                {!isLast && <div style={{ width: 2, flex: 1, minHeight: 20, background: 'rgba(255,255,255,0.1)', marginTop: 4 }} />}
             </div>
-
-            {/* Content */}
             <div style={{ paddingBottom: 0 }}>
                 <div style={{
-                    fontSize: 13,
-                    fontWeight: isActive ? 800 : 600,
+                    fontSize: 13, fontWeight: isActive ? 800 : 600,
                     color: isActive ? '#f1f5f9' : 'rgba(255,255,255,0.65)',
-                    lineHeight: 1.35,
-                    transition: 'color 0.2s',
+                    lineHeight: 1.35, transition: 'color 0.2s',
                 }}>
                     <span style={{ marginRight: 6 }}>{STEP_ICON[step.type] ?? '•'}</span>
                     {step.description}
                 </div>
-                {dist && (
-                    <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.38)', marginTop: 2 }}>
-                        {dist}
-                    </div>
-                )}
+                {dist && <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.38)', marginTop: 2 }}>{dist}</div>}
             </div>
         </div>
     );
 }
 
-// ─── main export ─────────────────────────────────────────────────────────────
-
 export default function NavInstructions({
     routeStep, routeStats, routeCoords,
     buildingA, buildingB, routeError,
-    onChangeStart,
-    activeRoute, currentStepIndex,
-    onIndoorChangeStart,
-    roomNameMap,
+    onChangeStart, activeRoute, currentStepIndex,
+    onIndoorChangeStart, roomNameMap,
 }) {
     const [avoidStairs, setAvoidStairs] = useState(false);
     const outdoorSteps = useMemo(() => deriveSteps(routeCoords), [routeCoords]);
 
-    // ── indoor panel — takes priority ──────────────────────────────────────
     if (activeRoute?.steps?.length > 0) {
         return (
             <div style={{
@@ -150,7 +127,6 @@ export default function NavInstructions({
                 boxShadow: '0 -6px 30px rgba(0,0,0,0.4)',
                 maxHeight: '42dvh', display: 'flex', flexDirection: 'column',
             }}>
-                {/* Header */}
                 <div style={{
                     flexShrink: 0, padding: '14px 16px 10px',
                     borderBottom: '1px solid rgba(255,255,255,0.08)',
@@ -185,8 +161,6 @@ export default function NavInstructions({
                         )}
                     </div>
                 </div>
-
-                {/* Step list */}
                 <div style={{ flex: 1, overflowY: 'auto', padding: '14px 16px' }}>
                     {activeRoute.steps.map((step, i) => (
                         <IndoorStepRow
@@ -203,10 +177,7 @@ export default function NavInstructions({
 
     if (routeStep === 'IDLE') return null;
 
-    const isPickA = routeStep === 'PICK_A';
-    const isError = routeStep === 'ERROR';
-
-    if (isPickA) {
+    if (routeStep === 'PICK_A') {
         return (
             <div style={{
                 position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)',
@@ -221,7 +192,7 @@ export default function NavInstructions({
         );
     }
 
-    if (isError) {
+    if (routeStep === 'ERROR') {
         return (
             <div style={{
                 position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)',
@@ -243,7 +214,6 @@ export default function NavInstructions({
         );
     }
 
-    // Show a compact pill while the route is still calculating — not the full panel.
     if (!routeStats) {
         return (
             <div style={{
@@ -280,9 +250,7 @@ export default function NavInstructions({
                     </div>
                     <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', marginTop: 2 }}>
                         {fmtDist(routeStats.metres)}
-                        {buildingA && buildingB && (
-                            <span> · {buildingA.name} → {buildingB.name}</span>
-                        )}
+                        {buildingA && buildingB && <span> · {buildingA.name} → {buildingB.name}</span>}
                     </div>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 8 }}>
@@ -302,12 +270,7 @@ export default function NavInstructions({
                     </div>
                 ) : (
                     outdoorSteps.map((s, i) => (
-                        <OutdoorStepRow
-                            key={i}
-                            metres={s.metres}
-                            dir={s.dir}
-                            isLast={i === outdoorSteps.length - 1}
-                        />
+                        <OutdoorStepRow key={i} metres={s.metres} dir={s.dir} isLast={i === outdoorSteps.length - 1} />
                     ))
                 )}
                 {avoidStairs && (
