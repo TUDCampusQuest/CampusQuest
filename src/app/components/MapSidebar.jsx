@@ -124,7 +124,6 @@ export default function MapSidebar({
 
     return (
         <>
-            {/* Map controls column */}
             <div style={colStyle}>
                 <Box sx={{ display: { xs: "none", sm: "block" } }}>
                     <SqBtn
