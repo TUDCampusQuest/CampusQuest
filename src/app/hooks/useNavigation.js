@@ -1,9 +1,8 @@
 'use client';
 // Handles outdoor building-to-building routing — resolves campus graph paths, Mapbox walking routes, and hybrid combinations.
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { locations } from '../data/locations';
 import {
-    haversineM, walkingStats, snapToNearestBuilding,
+    haversineM, walkingStats,
     toLocationMapKey, routeBetweenNodeIds, fetchMapboxRoute,
     buildHybridRouteFromCoordsToCampus, buildHybridRouteFromCampusToCoords,
 } from '../lib/routeUtils';
@@ -28,6 +27,14 @@ const PATCHED_NODES = [
     { id: 'ave_s4', lng: -6.377900, lat: 53.405200, type: 'junction', name: 'Campus ave south 4' },
     { id: 'ave_s5', lng: -6.378300, lat: 53.405000, type: 'junction', name: 'Campus ave south 5' },
     { id: 'ave_s6', lng: -6.378700, lat: 53.404800, type: 'junction', name: 'Campus ave south 6' },
+    // Car park nodes
+    { id: 'carpark_n',   lng: -6.378200, lat: 53.404550, type: 'junction', name: 'Car park north entrance' },
+    { id: 'carpark_nw',  lng: -6.378800, lat: 53.404400, type: 'junction', name: 'Car park northwest' },
+    { id: 'carpark_ne',  lng: -6.377500, lat: 53.404400, type: 'junction', name: 'Car park northeast' },
+    { id: 'carpark_mid', lng: -6.378100, lat: 53.404150, type: 'junction', name: 'Car park mid lane' },
+    { id: 'carpark_sw',  lng: -6.378800, lat: 53.403900, type: 'junction', name: 'Car park southwest' },
+    { id: 'carpark_se',  lng: -6.377400, lat: 53.403900, type: 'junction', name: 'Car park southeast' },
+    { id: 'carpark_s',   lng: -6.378100, lat: 53.403650, type: 'junction', name: 'Car park south exit' },
 ];
 
 const PATCHED_EDGES = [
@@ -45,6 +52,16 @@ const PATCHED_EDGES = [
     { from: 'ave_s4', to: 'ave_s5' },
     { from: 'ave_s5', to: 'ave_s6' },
     { from: 'ave_s6', to: 'main_1' },
+    // Car park connections
+    { from: 'main_1',      to: 'carpark_n' },
+    { from: 'carpark_n',   to: 'carpark_nw' },
+    { from: 'carpark_n',   to: 'carpark_ne' },
+    { from: 'carpark_nw',  to: 'carpark_mid' },
+    { from: 'carpark_ne',  to: 'carpark_mid' },
+    { from: 'carpark_mid', to: 'carpark_sw' },
+    { from: 'carpark_mid', to: 'carpark_se' },
+    { from: 'carpark_sw',  to: 'carpark_s' },
+    { from: 'carpark_se',  to: 'carpark_s' },
 ];
 
 const PATCHED_NODE_MAP = { 'a-block': 'a_block_entrance' };
@@ -77,7 +94,14 @@ function routeFromGraph(startLocation, endLocation) {
     }
     const result = routeBetweenNodeIds(startNodeId, endNodeId, campusNodes, campusEdges);
     if (result.error) return result;
-    return { coords: result.coords, pathIds: result.pathIds };
+
+    // The campus graph already terminates at the correct node for each building,
+    // so we only prepend the start icon coord to visually connect the line to the
+    // start marker. We do NOT append an end icon coord — locations.js coordinates
+    // can differ from the graph node position and would draw a spurious tail segment.
+    const startIconCoord = startLocation.coordinates || [startLocation.lng, startLocation.lat];
+    const coords = [startIconCoord, ...result.coords];
+    return { coords, pathIds: result.pathIds };
 }
 
 export function useNavigation({ isNavigating, navTarget, navStart, userLocation, mapRef, campusGraph, isIndoorActive }) {
@@ -94,6 +118,9 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
     const wasNavigatingRef   = useRef(false);
     const buildingARef       = useRef(null);
     const routeIdRef         = useRef(0);
+    // Track previous navTarget id and navStart id to avoid re-running on GPS ticks
+    const prevNavTargetIdRef = useRef(null);
+    const prevNavStartIdRef  = useRef(null);
 
     useEffect(() => { userLocationRef.current = userLocation; });
     useEffect(() => { isIndoorActiveRef.current = isIndoorActive; }, [isIndoorActive]);
@@ -127,47 +154,62 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
         }
     };
 
+    // Only re-run when navTarget or navStart actually changes — not on every GPS tick.
+    // userLocation is read via ref so GPS updates don't restart routing.
+    const navTargetId = navTarget?.id ?? null;
+    const navStartId  = navStart?.id  ?? null;
+
     useEffect(() => {
         if (isNavigating && navTarget) {
-            const isMidNavSwap = wasNavigatingRef.current;
-            wasNavigatingRef.current = true;
+            const targetChanged = navTargetId !== prevNavTargetIdRef.current;
+            const startChanged  = navStartId  !== prevNavStartIdRef.current;
+            const isMidNavSwap  = wasNavigatingRef.current;
 
-            setBuildingB(navTarget);
-            setRouteCoords(null);
-            setRouteStats(null);
-            setRouteError(null);
-            pickARequestedRef.current = false;
+            // Only do a full reset when destination or start actually changes
+            if (targetChanged || startChanged || !isMidNavSwap) {
+                prevNavTargetIdRef.current = navTargetId;
+                prevNavStartIdRef.current  = navStartId;
+                wasNavigatingRef.current   = true;
 
-            if (navStart) {
-                setBuildingA(navStart);
-                setRouteStep('ACTIVE');
-                return;
-            }
+                setBuildingB(navTarget);
+                setRouteCoords(null);
+                setRouteStats(null);
+                setRouteError(null);
+                pickARequestedRef.current = false;
 
-            if (isMidNavSwap && buildingARef.current) {
-                setRouteStep('ACTIVE');
-                return;
-            }
-
-            if (!pickARequestedRef.current && userLocation) {
-                const userCoords = [userLocation.lng, userLocation.lat];
-                const nearest    = snapToNearestBuilding(userCoords, locations);
-                if (nearest && nearest.id !== navTarget.id) {
-                    const nearestCoords  = nearest.coordinates || [nearest.lng, nearest.lat];
-                    const distToNearest  = haversineM(userCoords, nearestCoords);
-                    if (distToNearest <= 150) setBuildingA(nearest);
+                if (navStart) {
+                    setBuildingA(navStart);
+                    setRouteStep('ACTIVE');
+                    return;
                 }
-                setRouteStep('ACTIVE');
-                return;
-            }
 
-            setBuildingA(null);
-            setRouteStep('PICK_A');
+                if (isMidNavSwap && buildingARef.current && !targetChanged) {
+                    setRouteStep('ACTIVE');
+                    return;
+                }
+
+                // Read userLocation from ref — does not add it as a dependency.
+                // Do NOT snap to a building here — let the routing effect handle GPS→campus
+                // routing directly so there's no async state race between setBuildingA and
+                // setRouteStep. buildingA stays null and the !buildingA branch in the
+                // routing effect calls buildHybridRouteFromCoordsToCampus with the live GPS.
+                const currentUserLocation = userLocationRef.current;
+                if (!pickARequestedRef.current && currentUserLocation) {
+                    setBuildingA(null);
+                    setRouteStep('ACTIVE');
+                    return;
+                }
+
+                setBuildingA(null);
+                setRouteStep('PICK_A');
+            }
         }
 
         if (!isNavigating) {
-            wasNavigatingRef.current  = false;
-            pickARequestedRef.current = false;
+            prevNavTargetIdRef.current = null;
+            prevNavStartIdRef.current  = null;
+            wasNavigatingRef.current   = false;
+            pickARequestedRef.current  = false;
             setRouteStep('IDLE');
             setBuildingA(null);
             setBuildingB(null);
@@ -175,7 +217,8 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
             setRouteStats(null);
             setRouteError(null);
         }
-    }, [isNavigating, navTarget, navStart, userLocation]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isNavigating, navTargetId, navStartId]);
 
     useEffect(() => {
         if (!buildingB || routeStep !== 'ACTIVE') return;

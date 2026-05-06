@@ -24,7 +24,7 @@ function getRoomCategory(props) {
 export default function SearchDrawer({
     open, onClose, query, onQueryChange,
     results, onSelect,
-    rooms, onRoomSelect,
+    rooms, onRoomSelect, onRoomNavigate,
     roomNameMap,
 }) {
     const [activeFilter, setActiveFilter] = useState('All');
@@ -66,9 +66,13 @@ export default function SearchDrawer({
 
     const handleRoomClick = (room) => {
         const feature = rooms?.features?.find(f => f.properties.poiId === room.poiId);
-        if (feature && onRoomSelect) {
+        if (!feature) return;
+        onClose();
+        // Go straight to navigation drawer pre-filled with this room as destination
+        if (onRoomNavigate) {
+            onRoomNavigate(feature);
+        } else if (onRoomSelect) {
             onRoomSelect(feature);
-            onClose();
         }
     };
 

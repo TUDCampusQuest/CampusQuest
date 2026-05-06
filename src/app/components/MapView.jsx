@@ -223,6 +223,7 @@ function MapViewInner({
                     activeRoute={activeRoute}
                     currentStepIndex={currentStepIndex}
                     roomNameMap={roomNameMap}
+                    mapRef={mapRef}
                 />
             )}
 

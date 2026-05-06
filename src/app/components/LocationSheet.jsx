@@ -105,9 +105,9 @@ export default function LocationSheet({ location, onClose, onNavigate, onSetAsSt
                         overflow: 'hidden', touchAction: 'none',
                     }}
                 >
-                    {/* Drag handle — tap to expand in peek mode */}
+                    {/* Drag handle — tap to expand in peek mode, stop propagation so map click doesn't fire */}
                     <div
-                        onClick={() => !expanded && setExpanded(true)}
+                        onClick={(e) => { e.stopPropagation(); if (!expanded) setExpanded(true); }}
                         style={{
                             paddingTop: 10, paddingBottom: expanded ? 4 : 6,
                             display: 'flex', flexDirection: 'column', alignItems: 'center',
