@@ -1,6 +1,5 @@
 'use client';
-// Full-page building detail view showing rooms, floors, a QR share card, and a navigate button.
-
+// Full-page building detail view showing rooms by floor, a QR share card, and a navigate button.
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { locations } from "../../data/locations";
@@ -9,6 +8,7 @@ import { getRoomDisplayName } from "../../lib/roomUtils";
 import LocationHero from "../../components/LocationHero";
 import LocationShareCard from "../../components/LocationShareCard";
 import FloorAccordion from "../../components/FloorAccordion";
+import styles from "./locationDetails.module.css";
 
 const QR_LOCATION_IDS = new Set(['A-BLOCK','AG-BLOCK','C-BLOCK','CAFE','CONNECT','D-BLOCK','E-BLOCK','F-BLOCK','S-BLOCK']);
 const HIDDEN_TYPES    = new Set(['circulation', 'plant', 'storage']);
@@ -65,35 +65,28 @@ export default function LocationDetailsClient({ id }) {
     }, [rooms, location, roomNameMap]);
 
     if (loading) return (
-        <div style={{ height: '100dvh', background: 'var(--bg-primary)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <span style={{ color: 'var(--text-secondary)', fontSize: 15 }}>Loading...</span>
+        <div className={styles.loadingScreen}>
+            <span className={styles.loadingText}>Loading...</span>
         </div>
     );
 
     if (!location) return (
-        <div style={{ height: '100dvh', background: 'var(--bg-primary)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 16 }}>
-            <span style={{ color: 'var(--text-primary)', fontWeight: 700, fontSize: 20 }}>Location Not Found</span>
-            <button
-                onClick={() => router.push('/')}
-                style={{ background: 'var(--accent-teal)', color: '#fff', border: 'none', borderRadius: 14, padding: '12px 28px', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
-            >
-                Back to Map
-            </button>
+        <div className={styles.notFoundScreen}>
+            <span className={styles.notFoundTitle}>Location Not Found</span>
+            <button onClick={() => router.push('/')} className={styles.notFoundBtn}>Back to Map</button>
         </div>
     );
 
     const hasRooms = Object.keys(roomsByFloor).length > 0;
 
     return (
-        <div style={{ height: '100dvh', overflowY: 'auto', WebkitOverflowScrolling: 'touch', background: 'var(--bg-primary)', paddingBottom: 100 }}>
+        <div className={styles.page}>
 
             <LocationHero location={location} onBack={() => router.back()} />
 
             {hasRooms && (
-                <div style={{ padding: '20px 20px 0' }}>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 12 }}>
-                        Rooms in this building
-                    </div>
+                <div className={styles.roomsSection}>
+                    <div className={styles.roomsLabel}>Rooms in this building</div>
                     {Object.entries(roomsByFloor).map(([floor, rms]) => (
                         <FloorAccordion
                             key={floor}
@@ -112,29 +105,17 @@ export default function LocationDetailsClient({ id }) {
                 <LocationShareCard location={location} pageUrl={pageUrl} />
             )}
 
-            <div style={{ padding: '20px 20px 0', display: 'flex', flexDirection: 'column', gap: 10 }}>
+            <div className={styles.actions}>
                 <button
                     onClick={() => {
                         const coords = location.coordinates;
                         router.push(`/?navTo=${location.id}&lng=${coords[0]}&lat=${coords[1]}`);
                     }}
-                    style={{
-                        width: '100%', height: 52, background: '#7C3AED',
-                        color: '#fff', fontWeight: 700, fontSize: 15,
-                        border: 'none', borderRadius: 14, cursor: 'pointer', letterSpacing: '0.01em',
-                    }}
+                    className={styles.btnNavigate}
                 >
                     Navigate to Building
                 </button>
-                <button
-                    onClick={() => router.push('/')}
-                    style={{
-                        width: '100%', height: 52, background: 'transparent',
-                        border: '1px solid var(--border-color)',
-                        color: 'var(--text-primary)', fontWeight: 600, fontSize: 15,
-                        borderRadius: 14, cursor: 'pointer',
-                    }}
-                >
+                <button onClick={() => router.push('/')} className={styles.btnBack}>
                     Back to Map
                 </button>
             </div>

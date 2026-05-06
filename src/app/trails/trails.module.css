@@ -1,0 +1,132 @@
+.page {
+    min-height: 100vh;
+    background: var(--bg-primary);
+    overflow-y: auto;
+    padding-bottom: calc(80px + env(safe-area-inset-bottom, 20px));
+}
+
+.header {
+    padding: 20px 16px 0;
+}
+
+.pageTitle {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.pageSubtitle {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 4px 0 0;
+}
+
+.tabRow {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 16px;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+
+.tabRow::-webkit-scrollbar { display: none; }
+
+.tabBtn {
+    flex-shrink: 0;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s;
+}
+
+.cardList {
+    padding: 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.loadingText {
+    text-align: center;
+    padding: 48px 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.errorBox {
+    background: rgba(220,38,38,0.12);
+    border: 1px solid rgba(220,38,38,0.3);
+    border-radius: 14px;
+    padding: 16px;
+    color: #ef4444;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.emptyState {
+    text-align: center;
+    padding: 48px 0;
+    color: var(--text-secondary);
+}
+
+.emptyIcon {
+    font-size: 40px;
+    margin-bottom: 12px;
+}
+
+.emptyTitle {
+    font-weight: 700;
+    font-size: 16px;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+}
+
+.emptyHint {
+    font-size: 13px;
+}
+
+.filterEmpty {
+    text-align: center;
+    padding: 32px 0;
+    color: var(--text-secondary);
+    font-size: 14px;
+}
+
+.createBanner {
+    background: linear-gradient(135deg, var(--accent-purple), #4F46E5);
+    padding: 20px;
+    border-radius: 16px;
+    margin-top: 4px;
+}
+
+.createTitle {
+    font-size: 18px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 4px;
+}
+
+.createSubtitle {
+    font-size: 13px;
+    color: rgba(255,255,255,0.8);
+    margin-bottom: 12px;
+}
+
+.createBtn {
+    background: #fff;
+    color: var(--accent-purple);
+    border: none;
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: opacity 0.15s;
+}
+
+.createBtn:hover { opacity: 0.9; }

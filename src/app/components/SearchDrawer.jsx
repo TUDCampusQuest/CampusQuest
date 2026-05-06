@@ -1,4 +1,5 @@
 'use client';
+// Search drawer for finding buildings and indoor rooms by name or room code, with category filter tabs.
 import { useMemo, useState } from 'react';
 import {
     Box, Drawer, List, ListItem, ListItemText,
@@ -8,6 +9,7 @@ import NavigationIcon  from '@mui/icons-material/Navigation';
 import CloseIcon       from '@mui/icons-material/Close';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import { getRoomDisplayName } from '../lib/roomUtils';
+import styles from './SearchDrawer.module.css';
 
 const FILTER_TABS = ['All', 'Lectures', 'Labs', 'Toilets', 'Stairs'];
 
@@ -55,9 +57,9 @@ export default function SearchDrawer({
         const q = query.toLowerCase();
         return roomIndex.filter(r => {
             const matchesQuery =
-                r.roomCode.toLowerCase().includes(q)      ||
-                r.displayName.toLowerCase().includes(q)   ||
-                r.name.toLowerCase().includes(q)          ||
+                r.roomCode.toLowerCase().includes(q)    ||
+                r.displayName.toLowerCase().includes(q) ||
+                r.name.toLowerCase().includes(q)        ||
                 r.buildingName.toLowerCase().includes(q);
             const matchesFilter = activeFilter === 'All' || r.category === activeFilter;
             return matchesQuery && matchesFilter;
@@ -68,12 +70,8 @@ export default function SearchDrawer({
         const feature = rooms?.features?.find(f => f.properties.poiId === room.poiId);
         if (!feature) return;
         onClose();
-        // Go straight to navigation drawer pre-filled with this room as destination
-        if (onRoomNavigate) {
-            onRoomNavigate(feature);
-        } else if (onRoomSelect) {
-            onRoomSelect(feature);
-        }
+        if (onRoomNavigate) onRoomNavigate(feature);
+        else if (onRoomSelect) onRoomSelect(feature);
     };
 
     const showSectionLabels = results.length > 0 && filteredRooms.length > 0;
@@ -95,13 +93,11 @@ export default function SearchDrawer({
         >
             <Box sx={{ p: 3, display: 'flex', flexDirection: 'column', height: '100%' }}>
 
-                {/* Header */}
                 <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
                     <Typography variant="h5" sx={{ fontWeight: 800, color: 'var(--text-primary)' }}>Locations</Typography>
                     <IconButton onClick={onClose} sx={{ color: 'var(--text-secondary)' }}><CloseIcon /></IconButton>
                 </Stack>
 
-                {/* Search input */}
                 <TextField
                     fullWidth autoFocus
                     placeholder="Search by name or room code..."
@@ -110,43 +106,25 @@ export default function SearchDrawer({
                     variant="outlined"
                     sx={{
                         mb: 2,
-                        '& .MuiOutlinedInput-root': {
-                            borderRadius: '12px',
-                            bgcolor: 'var(--bg-card)',
-                            color: 'var(--text-primary)',
-                        },
-                        '& .MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'var(--border-color)',
-                        },
-                        '& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'var(--accent-purple)',
-                        },
-                        '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
-                            borderColor: 'var(--accent-purple)',
-                        },
+                        '& .MuiOutlinedInput-root': { borderRadius: '12px', bgcolor: 'var(--bg-card)', color: 'var(--text-primary)' },
+                        '& .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--border-color)' },
+                        '& .MuiOutlinedInput-root:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--accent-purple)' },
+                        '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'var(--accent-purple)' },
                         '& input': { color: 'var(--text-primary)' },
                         '& input::placeholder': { color: 'var(--text-secondary)', opacity: 1 },
                     }}
                 />
 
-                {/* Indoor filter tabs */}
                 {showFilterTabs && (
                     <Stack direction="row" spacing={1} sx={{ mb: 2, overflowX: 'auto', flexShrink: 0, pb: 0.5 }}>
                         {FILTER_TABS.map(tab => (
                             <button
                                 key={tab}
                                 onClick={() => setActiveFilter(tab)}
+                                className={styles.filterTab}
                                 style={{
-                                    flexShrink: 0,
-                                    cursor: 'pointer',
-                                    fontWeight: 600,
-                                    fontSize: 13,
-                                    borderRadius: 20,
-                                    padding: '5px 14px',
-                                    border: 'none',
                                     background: activeFilter === tab ? 'var(--accent-purple)' : 'var(--bg-card)',
                                     color: activeFilter === tab ? '#fff' : 'var(--text-secondary)',
-                                    transition: 'background 0.15s, color 0.15s',
                                 }}
                             >
                                 {tab}
@@ -155,18 +133,12 @@ export default function SearchDrawer({
                     </Stack>
                 )}
 
-                {/* Results list */}
                 <List sx={{ flex: 1, overflowY: 'auto' }}>
 
-                    {/* ── Outdoor / building results ── */}
                     {results.length > 0 && (
                         <>
                             {showSectionLabels && (
-                                <Typography sx={{
-                                    fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)',
-                                    letterSpacing: '0.09em', textTransform: 'uppercase',
-                                    mb: 1, px: 1,
-                                }}>
+                                <Typography sx={{ fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.09em', textTransform: 'uppercase', mb: 1, px: 1 }}>
                                     Buildings &amp; Locations
                                 </Typography>
                             )}
@@ -174,14 +146,7 @@ export default function SearchDrawer({
                                 <ListItem
                                     key={loc.id}
                                     onClick={() => onSelect(loc)}
-                                    sx={{
-                                        mb: 1, borderRadius: '12px',
-                                        borderBottom: '1px solid var(--border-color)',
-                                        bgcolor: 'transparent',
-                                        cursor: 'pointer',
-                                        px: 1,
-                                        '&:hover': { bgcolor: 'var(--bg-card)' },
-                                    }}
+                                    sx={{ mb: 1, borderRadius: '12px', borderBottom: '1px solid var(--border-color)', bgcolor: 'transparent', cursor: 'pointer', px: 1, '&:hover': { bgcolor: 'var(--bg-card)' } }}
                                 >
                                     <ListItemText
                                         primary={<Typography sx={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>{loc.name}</Typography>}
@@ -193,42 +158,26 @@ export default function SearchDrawer({
                         </>
                     )}
 
-                    {/* ── Indoor room results ── */}
                     {filteredRooms.length > 0 && (
                         <>
-                            <Typography sx={{
-                                fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)',
-                                letterSpacing: '0.09em', textTransform: 'uppercase',
-                                mb: 1, px: 1, mt: showSectionLabels ? 2 : 0,
-                            }}>
+                            <Typography sx={{ fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.09em', textTransform: 'uppercase', mb: 1, px: 1, mt: showSectionLabels ? 2 : 0 }}>
                                 Indoor Rooms
                             </Typography>
                             {filteredRooms.map(room => {
-                                const primary   = room.displayName || room.roomCode;
-                                const showCode  = primary !== room.roomCode;
+                                const primary  = room.displayName || room.roomCode;
+                                const showCode = primary !== room.roomCode;
                                 const secondary = (
                                     <span>
-                                        {showCode && (
-                                            <span style={{ color: 'var(--text-secondary)', marginRight: 6 }}>{room.roomCode}</span>
-                                        )}
+                                        {showCode && <span style={{ color: 'var(--text-secondary)', marginRight: 6 }}>{room.roomCode}</span>}
                                         {room.buildingName}
-                                        {room.floorName ? (
-                                            <span style={{ color: 'var(--text-secondary)' }}> · Floor {room.floorName}</span>
-                                        ) : null}
+                                        {room.floorName ? <span style={{ color: 'var(--text-secondary)' }}> · Floor {room.floorName}</span> : null}
                                     </span>
                                 );
                                 return (
                                     <ListItem
                                         key={room.poiId}
                                         onClick={() => handleRoomClick(room)}
-                                        sx={{
-                                            mb: 0, borderRadius: 0,
-                                            borderBottom: '1px solid var(--border-color)',
-                                            bgcolor: 'transparent',
-                                            cursor: 'pointer',
-                                            px: 1,
-                                            '&:hover': { bgcolor: 'var(--bg-card)' },
-                                        }}
+                                        sx={{ mb: 0, borderRadius: 0, borderBottom: '1px solid var(--border-color)', bgcolor: 'transparent', cursor: 'pointer', px: 1, '&:hover': { bgcolor: 'var(--bg-card)' } }}
                                     >
                                         <ListItemText
                                             primary={<Typography sx={{ fontWeight: 700, fontSize: 14, color: 'var(--text-primary)' }}>{primary}</Typography>}
@@ -241,7 +190,6 @@ export default function SearchDrawer({
                         </>
                     )}
 
-                    {/* Empty state */}
                     {query.trim() && results.length === 0 && filteredRooms.length === 0 && (
                         <Typography sx={{ textAlign: 'center', color: 'var(--text-secondary)', mt: 4, fontSize: 14 }}>
                             No results for &quot;{query}&quot;

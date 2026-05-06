@@ -1,7 +1,7 @@
 'use client';
+// Shared primitives for nav instruction panels: constants, step-coordinate math, and reusable UI sub-components.
 import { haversineM } from '../lib/routeUtils';
-
-// ── Utility ───────────────────────────────────────────────────────────────────
+import styles from './NavInstructionsShared.module.css';
 
 export const STEP_ICON = {
     walk:           '🚶',
@@ -17,7 +17,7 @@ export const DIR_ARROW = {
     south: '↓', southwest: '↙', west: '←', northwest: '↖',
 };
 
-// Walk the actual route polyline to find the coordinate at each step boundary.
+// Walks the route polyline to find the map coordinate at each step boundary.
 export function buildStepBendCoords(steps, routeCoords) {
     if (!steps?.length || !routeCoords?.length) return [];
     if (routeCoords.length === 1) return steps.map(() => routeCoords[0]);
@@ -43,55 +43,35 @@ export function buildStepBendCoords(steps, routeCoords) {
     });
 }
 
-// ── Shared sub-components ─────────────────────────────────────────────────────
-
 export function PullHandle({ expanded, label }) {
     return (
-        <div style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center',
-            paddingTop: 10, paddingBottom: 4, cursor: 'pointer', gap: 3, userSelect: 'none',
-        }}>
-            <div style={{
-                width: 36, height: 4, borderRadius: 99,
-                background: 'rgba(124,58,237,0.5)',
-            }} />
-            <span style={{
-                fontSize: 10, letterSpacing: '0.06em', textTransform: 'uppercase',
-                color: 'var(--text-muted)', fontWeight: 600,
-            }}>
-                {expanded ? 'hide steps' : label}
-            </span>
+        <div className={styles.pullHandle}>
+            <div className={styles.pullBar} />
+            <span className={styles.pullLabel}>{expanded ? 'hide steps' : label}</span>
         </div>
     );
 }
 
 export function PrevNextBar({ onPrev, onNext, isFirst, isLast }) {
     return (
-        <div style={{ display: 'flex', gap: 10, padding: '0 16px 16px' }}>
+        <div className={styles.prevNextBar}>
             <button
                 onClick={onPrev} disabled={isFirst}
+                className={styles.btnPrev}
                 style={{
-                    flex: 1, height: 44, borderRadius: 12,
-                    border: '1px solid var(--border-card)',
                     background: isFirst ? 'transparent' : 'var(--btn-ghost-bg)',
                     color: isFirst ? 'var(--text-muted)' : 'var(--text-primary)',
-                    fontWeight: 700, fontSize: 14,
                     cursor: isFirst ? 'not-allowed' : 'pointer',
-                    transition: 'all 0.15s',
                 }}
             >‹ Previous</button>
             <button
                 onClick={onNext} disabled={isLast}
+                className={styles.btnNext}
                 style={{
-                    flex: 1, height: 44, borderRadius: 12, border: 'none',
-                    background: isLast
-                        ? 'rgba(124,58,237,0.15)'
-                        : 'linear-gradient(135deg, var(--accent-purple) 0%, #5b21b6 100%)',
+                    background: isLast ? 'rgba(124,58,237,0.15)' : 'linear-gradient(135deg, var(--accent-purple) 0%, #5b21b6 100%)',
                     color: isLast ? 'var(--text-muted)' : '#fff',
-                    fontWeight: 700, fontSize: 14,
                     cursor: isLast ? 'not-allowed' : 'pointer',
                     boxShadow: isLast ? 'none' : '0 4px 14px rgba(124,58,237,0.4)',
-                    transition: 'all 0.15s',
                 }}
             >Next ›</button>
         </div>
@@ -99,19 +79,10 @@ export function PrevNextBar({ onPrev, onNext, isFirst, isLast }) {
 }
 
 export function StepIconBox({ icon, accent = 'purple' }) {
-    const border = accent === 'teal'
-        ? '1.5px solid rgba(0,180,180,0.45)'
-        : '1.5px solid rgba(124,58,237,0.45)';
-    const bg = accent === 'teal'
-        ? 'rgba(0,180,180,0.12)'
-        : 'rgba(124,58,237,0.14)';
+    const border = accent === 'teal' ? '1.5px solid rgba(0,180,180,0.45)' : '1.5px solid rgba(124,58,237,0.45)';
+    const bg     = accent === 'teal' ? 'rgba(0,180,180,0.12)' : 'rgba(124,58,237,0.14)';
     return (
-        <div style={{
-            width: 44, height: 44, borderRadius: 12, flexShrink: 0,
-            background: bg, border,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 20,
-        }}>
+        <div className={styles.stepIconBox} style={{ background: bg, border }}>
             {icon}
         </div>
     );

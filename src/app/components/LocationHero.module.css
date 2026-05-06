@@ -1,0 +1,114 @@
+.heroWrapper {
+    position: relative;
+    width: 100%;
+    height: 220px;
+    flex-shrink: 0;
+}
+
+.heroImg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.heroGradient {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(to top, var(--bg-primary) 0%, transparent 60%);
+    pointer-events: none;
+}
+
+.backBtn {
+    position: absolute;
+    top: 16px;
+    left: 16px;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #fff;
+    font-size: 20px;
+}
+
+.identity {
+    padding: 0 20px;
+    margin-top: -40px;
+    position: relative;
+    z-index: 2;
+}
+
+.nameRow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.name {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.idBadge {
+    background: var(--accent-purple);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    border-radius: 20px;
+    padding: 3px 10px;
+    display: inline-block;
+}
+
+.description {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 8px 0 0;
+    line-height: 1.6;
+}
+
+.infoCards {
+    padding: 16px 20px 0;
+    display: flex;
+    gap: 12px;
+}
+
+.infoCard {
+    flex: 1;
+    padding: 14px;
+    background: var(--glass-bg);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    box-shadow: var(--card-shadow);
+}
+
+.infoCardIcon {
+    font-size: 22px;
+    margin-bottom: 6px;
+}
+
+.infoCardLabel {
+    font-size: 11px;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    font-weight: 600;
+}
+
+.infoCardValue {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-top: 3px;
+}

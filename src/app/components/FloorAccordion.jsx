@@ -1,5 +1,7 @@
 'use client';
+// Collapsible floor accordion listing rooms within a building floor, with type badges and click-to-navigate.
 import { getRoomDisplayName, getRoomTypeName } from '../lib/roomUtils';
+import styles from './FloorAccordion.module.css';
 
 const FLOOR_LABELS = { G: 'Ground Floor', '0': 'Ground Floor', '1': 'First Floor', '2': 'Second Floor', '3': 'Third Floor' };
 
@@ -27,31 +29,21 @@ export default function FloorAccordion({ floor, rooms, openFloor, setOpenFloor, 
     const label  = getFloorLabel(floor);
 
     return (
-        <div style={{ marginBottom: 8 }}>
+        <div className={styles.accordionItem}>
             <button
                 onClick={() => setOpenFloor(isOpen ? null : floor)}
+                className={styles.accordionBtn}
                 style={{
-                    width: '100%', height: 48,
-                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                    padding: '0 16px',
                     background: isOpen ? 'var(--accent-teal)' : 'var(--bg-card)',
                     color: isOpen ? '#fff' : 'var(--text-primary)',
-                    border: 'none', borderRadius: 12,
-                    cursor: 'pointer', fontWeight: 600, fontSize: 14,
-                    transition: 'background 0.2s, color 0.2s',
                 }}
             >
                 <span>{label}</span>
-                <span style={{ fontSize: 11, opacity: 0.8 }}>{isOpen ? '▲' : '▼'}</span>
+                <span className={styles.accordionChevron}>{isOpen ? '▲' : '▼'}</span>
             </button>
 
-            <div style={{ maxHeight: isOpen ? 600 : 0, overflow: 'hidden', transition: 'max-height 0.3s ease' }}>
-                <div style={{
-                    background: 'var(--glass-bg)',
-                    backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-                    border: '1px solid var(--glass-border)', borderTop: 'none',
-                    borderRadius: '0 0 12px 12px', overflow: 'hidden',
-                }}>
+            <div className={styles.accordionBody} style={{ maxHeight: isOpen ? 600 : 0 }}>
+                <div className={styles.accordionInner}>
                     {rooms.map((f, i) => {
                         const p           = f.properties;
                         const displayName = getRoomDisplayName(p.roomCode, roomNameMap) || p.roomCode;
@@ -62,31 +54,14 @@ export default function FloorAccordion({ floor, rooms, openFloor, setOpenFloor, 
                             <div
                                 key={p.poiId}
                                 onClick={() => onRoomClick(f)}
-                                style={{
-                                    minHeight: 44,
-                                    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                                    padding: '8px 16px',
-                                    borderBottom: isLast ? 'none' : '1px solid var(--border-color)',
-                                    cursor: 'pointer', transition: 'background 0.15s',
-                                }}
+                                className={styles.roomRow}
+                                style={{ borderBottom: isLast ? 'none' : '1px solid var(--border-color)' }}
                                 onMouseEnter={e => e.currentTarget.style.background = 'var(--bg-card)'}
                                 onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                             >
-                                <span style={{
-                                    fontSize: 14, color: 'var(--text-primary)',
-                                    flex: 1, overflow: 'hidden',
-                                    textOverflow: 'ellipsis', whiteSpace: 'nowrap', paddingRight: 8,
-                                }}>
-                                    {displayName}
-                                </span>
+                                <span className={styles.roomName}>{displayName}</span>
                                 {typeName && (
-                                    <span style={{
-                                        ...badgeStyle, fontSize: 10, fontWeight: 600,
-                                        borderRadius: 20, padding: '2px 8px',
-                                        whiteSpace: 'nowrap', flexShrink: 0,
-                                    }}>
-                                        {typeName}
-                                    </span>
+                                    <span className={styles.roomBadge} style={badgeStyle}>{typeName}</span>
                                 )}
                             </div>
                         );

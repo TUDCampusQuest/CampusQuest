@@ -1,5 +1,7 @@
 'use client';
+// Trail card component with category badge, stop chips, and view/start action buttons.
 import GlassCard from './ui/GlassCard';
+import styles from './TrailCard.module.css';
 
 const CATEGORY_TABS = [
     { key: 'all',      label: 'All',      emoji: '🗺️' },
@@ -24,12 +26,7 @@ function CategoryBadge({ category }) {
     const c   = CATEGORY_COLORS[category] ?? { bg: 'rgba(255,255,255,0.1)', text: 'var(--text-secondary)' };
     const tab = CATEGORY_TABS.find(t => t.key === category);
     return (
-        <span style={{
-            background: c.bg, color: c.text,
-            borderRadius: 99, padding: '2px 10px',
-            fontSize: 11, fontWeight: 700,
-            display: 'inline-flex', alignItems: 'center', gap: 4,
-        }}>
+        <span className={styles.categoryBadge} style={{ background: c.bg, color: c.text }}>
             {tab?.emoji} {category ?? 'general'}
         </span>
     );
@@ -46,93 +43,44 @@ function estimateDistance(trail) {
 
 export default function TrailCard({ trail, onView, onStart }) {
     return (
-        <GlassCard style={{ padding: 0, overflow: 'hidden', borderRadius: 16 }}>
-            <div style={{ padding: 16 }}>
-                <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 8 }}>
-                    <span style={{
-                        fontSize: 16, fontWeight: 700, color: 'var(--text-primary)',
-                        flex: 1, marginRight: 8, lineHeight: 1.3,
-                    }}>
-                        {trail.name}
-                    </span>
-                    <span style={{
-                        background: 'rgba(124,58,237,0.18)', color: 'var(--accent-purple)',
-                        borderRadius: 99, padding: '3px 10px',
-                        fontSize: 11, fontWeight: 700, whiteSpace: 'nowrap', flexShrink: 0,
-                    }}>
+        <GlassCard className={styles.card}>
+            <div className={styles.cardBody}>
+                <div className={styles.nameRow}>
+                    <span className={styles.name}>{trail.name}</span>
+                    <span className={styles.pointsBadge}>
                         {trail.stops?.length ?? (typeof trail.points === 'number' ? trail.points : (trail.points?.length ?? 0))} pts
                     </span>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap', marginBottom: 8 }}>
+                <div className={styles.metaRow}>
                     {trail.category && <CategoryBadge category={trail.category} />}
-                    <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>📍 {estimateDistance(trail)}</span>
+                    <span className={styles.metaText}>📍 {estimateDistance(trail)}</span>
                     {trail.estimatedMinutes && (
-                        <span style={{ fontSize: 12, color: 'var(--text-secondary)' }}>🕐 {trail.estimatedMinutes} min</span>
+                        <span className={styles.metaText}>🕐 {trail.estimatedMinutes} min</span>
                     )}
                 </div>
 
                 {trail.description && (
-                    <div style={{
-                        fontSize: 13, color: 'var(--text-secondary)',
-                        overflow: 'hidden', display: '-webkit-box',
-                        WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', lineHeight: 1.5,
-                    }}>
-                        {trail.description}
-                    </div>
+                    <div className={styles.description}>{trail.description}</div>
                 )}
             </div>
 
             {trail.stops?.length > 0 && (
-                <div style={{ padding: '0 16px 10px', display: 'flex', gap: 6, overflowX: 'auto', scrollbarWidth: 'none' }}>
+                <div className={styles.stopsRow}>
                     {trail.stops.slice(0, 3).map(stop => (
-                        <span key={stop.id} style={{
-                            background: 'var(--bg-card)', color: 'var(--text-secondary)',
-                            borderRadius: 12, padding: '4px 10px', fontSize: 11,
-                            whiteSpace: 'nowrap', flexShrink: 0,
-                        }}>
-                            {stop.name}
-                        </span>
+                        <span key={stop.id} className={styles.stopChip}>{stop.name}</span>
                     ))}
                     {trail.stops.length > 3 && (
-                        <span style={{
-                            background: 'var(--bg-card)', color: 'var(--text-secondary)',
-                            borderRadius: 12, padding: '4px 10px', fontSize: 11,
-                            whiteSpace: 'nowrap', flexShrink: 0,
-                        }}>
-                            +{trail.stops.length - 3} more
-                        </span>
+                        <span className={styles.stopChip}>+{trail.stops.length - 3} more</span>
                     )}
                 </div>
             )}
 
-            <div style={{ height: 1, background: 'var(--border-color)' }} />
+            <div className={styles.divider} />
 
-            <div style={{ padding: '12px 16px', display: 'flex', gap: 8 }}>
-                <button
-                    className="trail-card-btn"
-                    onClick={onView}
-                    style={{
-                        flex: 1, height: 40,
-                        background: 'transparent', border: '1px solid var(--accent-teal)',
-                        color: 'var(--accent-teal)', borderRadius: 10,
-                        fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                    }}
-                >
-                    View on Map
-                </button>
-                <button
-                    className="trail-card-btn"
-                    onClick={onStart}
-                    style={{
-                        flex: 1, height: 40,
-                        background: 'var(--accent-purple)', border: 'none',
-                        color: '#fff', borderRadius: 10,
-                        fontSize: 13, fontWeight: 600, cursor: 'pointer',
-                    }}
-                >
-                    Start Trail
-                </button>
+            <div className={styles.actions}>
+                <button className={styles.btnView} onClick={onView}>View on Map</button>
+                <button className={styles.btnStart} onClick={onStart}>Start Trail</button>
             </div>
         </GlassCard>
     );

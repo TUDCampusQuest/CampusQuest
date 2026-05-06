@@ -1,9 +1,10 @@
 'use client';
-
+// Responsive location info sheet: side panel on desktop, draggable bottom sheet on mobile.
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import LocationSheetContent from './LocationSheetContent';
+import styles from './LocationSheet.module.css';
 
 const SPRING = { type: 'spring', stiffness: 300, damping: 35 };
 
@@ -25,7 +26,6 @@ export default function LocationSheet({ location, onClose, onNavigate, onSetAsSt
     const dragRef   = useRef(null);
     const [expanded, setExpanded] = useState(false);
 
-    // Reset to peek whenever a new location is opened
     useEffect(() => { setExpanded(false); }, [location?.id]);
 
     if (!location) return null;
@@ -45,25 +45,16 @@ export default function LocationSheet({ location, onClose, onNavigate, onSetAsSt
         return (
             <AnimatePresence>
                 {location && (
-                    <>
-                        <motion.div
-                            key="desk-panel"
-                            initial={{ x: 380, opacity: 0 }}
-                            animate={{ x: 0, opacity: 1 }}
-                            exit={{ x: 380, opacity: 0 }}
-                            transition={SPRING}
-                            style={{
-                                position: 'absolute', top: 0, right: 0, bottom: 0, width: 380, zIndex: 19,
-                                background: 'rgba(15,23,42,0.92)',
-                                backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
-                                borderLeft: '1px solid rgba(255,255,255,0.1)',
-                                boxShadow: '-8px 0 40px rgba(0,0,0,0.5)',
-                                display: 'flex', flexDirection: 'column', overflow: 'hidden',
-                            }}
-                        >
-                            <LocationSheetContent {...contentProps} />
-                        </motion.div>
-                    </>
+                    <motion.div
+                        key="desk-panel"
+                        className={styles.desktopPanel}
+                        initial={{ x: 380, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        exit={{ x: 380, opacity: 0 }}
+                        transition={SPRING}
+                    >
+                        <LocationSheetContent {...contentProps} />
+                    </motion.div>
                 )}
             </AnimatePresence>
         );
@@ -79,13 +70,9 @@ export default function LocationSheet({ location, onClose, onNavigate, onSetAsSt
                     dragConstraints={{ top: 0, bottom: 0 }}
                     dragElastic={{ top: 0.08, bottom: 0.35 }}
                     onDragEnd={(_, info) => {
-                        if (info.offset.y < -40 || info.velocity.y < -350) {
-                            setExpanded(true);
-                        } else if (info.offset.y > 70 && !expanded) {
-                            onClose();
-                        } else if (info.offset.y > 50 && expanded) {
-                            setExpanded(false);
-                        }
+                        if (info.offset.y < -40 || info.velocity.y < -350) setExpanded(true);
+                        else if (info.offset.y > 70 && !expanded) onClose();
+                        else if (info.offset.y > 50 && expanded) setExpanded(false);
                     }}
                     initial={{ y: '100%' }}
                     animate={{
@@ -105,22 +92,17 @@ export default function LocationSheet({ location, onClose, onNavigate, onSetAsSt
                         overflow: 'hidden', touchAction: 'none',
                     }}
                 >
-                    {/* Drag handle — tap to expand in peek mode, stop propagation so map click doesn't fire */}
                     <div
                         onClick={(e) => { e.stopPropagation(); if (!expanded) setExpanded(true); }}
+                        className={styles.dragHandle}
                         style={{
-                            paddingTop: 10, paddingBottom: expanded ? 4 : 6,
-                            display: 'flex', flexDirection: 'column', alignItems: 'center',
-                            flexShrink: 0, cursor: expanded ? 'default' : 'pointer',
-                            gap: 4,
+                            paddingTop: 10,
+                            paddingBottom: expanded ? 4 : 6,
+                            cursor: expanded ? 'default' : 'pointer',
                         }}
                     >
-                        <div style={{ width: 38, height: 4, borderRadius: 99, background: 'rgba(255,255,255,0.28)' }} />
-                        {!expanded && (
-                            <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.38)', letterSpacing: '0.05em' }}>
-                                swipe up for details
-                            </span>
-                        )}
+                        <div className={styles.handleBar} />
+                        {!expanded && <span className={styles.swipeHint}>swipe up for details</span>}
                     </div>
 
                     <LocationSheetContent {...contentProps} isMobile />

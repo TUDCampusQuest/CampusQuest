@@ -1,5 +1,5 @@
 'use client';
-// Slide-up drawer where users pick a start and destination to begin navigation.
+// Slide-up drawer for picking a start point and destination, with room/location search and map-tap mode.
 import { useState, useMemo, useEffect } from 'react';
 import { Box, Drawer, TextField, Typography, Stack, IconButton, List, ListItem, ListItemText } from '@mui/material';
 import CloseIcon              from '@mui/icons-material/Close';
@@ -70,7 +70,6 @@ export default function NavigationDrawer({
                 const bldA = (a.feature?.properties?.buildingName ?? '').toLowerCase();
                 const bldB = (b.feature?.properties?.buildingName ?? '').toLowerCase();
                 if (bldA !== bldB) return bldA.localeCompare(bldB);
-                // Sort floors numerically: G=0, 1=1, 2=2 … so Ground always comes first
                 const floorOrder = f => f === 'G' ? 0 : (parseInt(f, 10) || 99);
                 const flA = floorOrder(a.feature?.properties?.floorName ?? '');
                 const flB = floorOrder(b.feature?.properties?.floorName ?? '');

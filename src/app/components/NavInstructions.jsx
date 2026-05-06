@@ -45,7 +45,6 @@ export default function NavInstructions({
         setIndoorStepIndex(n); flyTo(activeRoute?.steps?.[n]?.location, 19);
     };
 
-    // ── INDOOR ────────────────────────────────────────────────────────────────
     if (activeRoute?.steps?.length > 0) {
         return (
             <IndoorInstructions
@@ -64,7 +63,6 @@ export default function NavInstructions({
         );
     }
 
-    // ── IDLE / PICK_A / ERROR / CALCULATING ───────────────────────────────────
     if (routeStep === 'IDLE') return null;
 
     if (routeStep === 'PICK_A') {
@@ -129,7 +127,6 @@ export default function NavInstructions({
         );
     }
 
-    // ── OUTDOOR ───────────────────────────────────────────────────────────────
     return (
         <OutdoorInstructions
             outdoorSteps={outdoorSteps}
