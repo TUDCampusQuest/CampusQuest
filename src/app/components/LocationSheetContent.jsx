@@ -33,7 +33,7 @@ function Btn({ label, onClick, primary }) {
 }
 
 export default function LocationSheetContent({
-    location, onClose, onNavigate, onViewDetails, isMobile,
+    location, onClose, onNavigate, onSetAsStart, onViewDetails, isMobile,
 }) {
     if (!location) return null;
 
@@ -124,6 +124,7 @@ export default function LocationSheetContent({
             }}>
                 <div style={{ display: 'flex', gap: 8 }}>
                     <Btn label="View Details" onClick={onViewDetails} />
+                    {onSetAsStart && <Btn label="Set as Start" onClick={onSetAsStart} />}
                     <Btn label="▲ Navigate" onClick={onNavigate} primary />
                 </div>
             </div>

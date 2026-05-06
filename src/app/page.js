@@ -273,10 +273,19 @@ function Home() {
     };
 
     const handleNavigateFromSheet = (loc) => {
-        setActiveNavSystem('outdoor');
-        setNavTarget(loc);
-        setIsNavigating(true);
+        const point = { type: 'location', label: loc.name || loc.id, loc };
+        setNavPointB(point);
+        setNavPointA(null);
         setSelectedLocation(null);
+        setNavDrawerOpen(true);
+    };
+
+    const handleSetAsStartFromSheet = (loc) => {
+        const point = { type: 'location', label: loc.name || loc.id, loc };
+        setNavPointA(point);
+        setNavPointB(null);
+        setSelectedLocation(null);
+        setNavDrawerOpen(true);
     };
 
     // Tap a different building while navigating → swap destination, keep
@@ -332,13 +341,18 @@ function Home() {
     }, [searchParams]);
 
     const handleRoomNavigateTo = useCallback((roomFeature) => {
-        setActiveNavSystem('indoor');
-        setIsNavigating(false);
-        setNavTarget(null);
+        const p = roomFeature.properties;
+        const point = {
+            type: 'room',
+            label: p.name || p.roomCode,
+            feature: roomFeature,
+        };
+        setNavPointB(point);
+        setNavPointA(null);
         setSelectedRoom(null);
         setHighlightedRoomId(null);
-        handleNavigateTo(roomFeature);
-    }, [handleNavigateTo]);
+        setNavDrawerOpen(true);
+    }, []);
 
     const handleRoomSetAsStart = useCallback((roomFeature) => {
         const p = roomFeature.properties;
@@ -498,37 +512,13 @@ function Home() {
                     />
                 )}
 
-                {((isNavigating && navTarget) || activeRoute) && (
-                    <button
-                        onClick={activeRoute
-                            ? () => { setActiveNavSystem(null); handleCancelNavigation(); }
-                            : () => { setActiveNavSystem(null); setNavTarget(null); setIsNavigating(false); }}
-                        style={{
-                            position: 'absolute', bottom: 24, left: '50%',
-                            transform: 'translateX(-50%)',
-                            zIndex: 25,
-                            display: 'flex', alignItems: 'center', gap: 8,
-                            padding: '12px 24px',
-                            background: 'rgba(239,68,68,0.92)',
-                            backdropFilter: 'blur(12px)',
-                            WebkitBackdropFilter: 'blur(12px)',
-                            border: '1px solid rgba(255,255,255,0.2)',
-                            borderRadius: 99,
-                            color: '#fff', fontWeight: 700, fontSize: 14,
-                            cursor: 'pointer',
-                            boxShadow: '0 4px 20px rgba(239,68,68,0.4)',
-                            whiteSpace: 'nowrap',
-                        }}
-                    >
-                        ✕ Cancel Navigation
-                    </button>
-                )}
 
                 {selectedLocation && !isNavigating && (
                     <LocationSheet
                         location={selectedLocation}
                         onClose={() => setSelectedLocation(null)}
                         onNavigate={handleNavigateFromSheet}
+                        onSetAsStart={handleSetAsStartFromSheet}
                     />
                 )}
 

@@ -19,7 +19,7 @@ function useIsDesktop() {
     return desktop;
 }
 
-export default function LocationSheet({ location, onClose, onNavigate }) {
+export default function LocationSheet({ location, onClose, onNavigate, onSetAsStart }) {
     const router    = useRouter();
     const isDesktop = useIsDesktop();
     const dragRef   = useRef(null);
@@ -32,10 +32,12 @@ export default function LocationSheet({ location, onClose, onNavigate }) {
 
     const handleViewDetails = () => { router.push(`/location/${location.id}`); onClose(); };
     const handleNavigate    = () => { onNavigate(location); onClose(); };
+    const handleSetAsStart  = () => { onSetAsStart?.(location); onClose(); };
 
     const contentProps = {
         location, onClose,
         onNavigate:    handleNavigate,
+        onSetAsStart:  onSetAsStart ? handleSetAsStart : undefined,
         onViewDetails: handleViewDetails,
     };
 

@@ -1,7 +1,5 @@
 // Bottom slide-up card showing room details with Navigate Here and Set as Start actions.
 'use client';
-import { IconButton } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
 import { getRoomDisplayName, getRoomTypeName } from '../lib/roomUtils';
 import GlassCard from './ui/GlassCard';
 
@@ -38,23 +36,12 @@ export default function RoomSheet({ selectedRoom, gpsLocation, onClose, onNaviga
                 padding: '0 16px 24px',
             }}
         >
-            {/* Drag handle row with X button */}
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: 10, paddingBottom: 4 }}>
-                <div style={{ width: 32 }} />
+            {/* Drag handle — tap to dismiss */}
+            <div
+                onClick={onClose}
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 10, paddingBottom: 4, cursor: 'pointer' }}
+            >
                 <div style={{ width: 40, height: 4, borderRadius: 4, background: 'var(--border-color)' }} />
-                <IconButton
-                    size="small"
-                    onClick={onClose}
-                    sx={{
-                        color: 'var(--text-secondary)',
-                        background: 'var(--bg-card)',
-                        border: '1px solid var(--border-color)',
-                        width: 32, height: 32,
-                        '&:hover': { background: 'var(--bg-secondary)', color: 'var(--text-primary)' },
-                    }}
-                >
-                    <CloseIcon sx={{ fontSize: 16 }} />
-                </IconButton>
             </div>
 
             {/* Room name + code pill */}

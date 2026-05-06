@@ -135,11 +135,14 @@ function MapViewInner({
         // 600 ms window works for both mouse double-click and mobile double-tap
         if (features?.length > 0 && delta < 600 && lastClickFeatureRef.current === clickedFeatureId) {
             const roomFeature = rooms?.features?.find(f => f.properties.poiId === features[0].properties.poiId);
-            // Double-tap/click goes straight to navigate — no RoomSheet step needed
+            // Double-tap/click goes straight to navigate
             if (roomFeature && onRoomNavigate) onRoomNavigate(roomFeature);
             lastClickTimeRef.current = 0;
             lastClickFeatureRef.current = null;
         } else if (features?.length > 0) {
+            const roomFeature = rooms?.features?.find(f => f.properties.poiId === features[0].properties.poiId);
+            // Single tap highlights the room and shows the RoomSheet
+            if (roomFeature && onRoomSelect) onRoomSelect(roomFeature);
             lastClickTimeRef.current = now;
             lastClickFeatureRef.current = clickedFeatureId;
         } else {
@@ -147,7 +150,7 @@ function MapViewInner({
             lastClickFeatureRef.current = null;
             onMapTap?.(e.lngLat);
         }
-    }, [onMapClick, onRoomNavigate, onMapTap, rooms]);
+    }, [onMapClick, onRoomSelect, onRoomNavigate, onMapTap, rooms]);
 
     useEffect(() => {
         if (!navTarget || !mapRef.current) return;
