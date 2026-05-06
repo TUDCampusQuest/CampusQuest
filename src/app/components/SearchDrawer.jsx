@@ -9,7 +9,7 @@ import NavigationIcon  from '@mui/icons-material/Navigation';
 import CloseIcon       from '@mui/icons-material/Close';
 import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
 import { getRoomDisplayName } from '../lib/roomUtils';
-import styles from './SearchDrawer.module.css';
+import styles from '../styles/SearchDrawer.module.css';
 
 const FILTER_TABS = ['All', 'Lectures', 'Labs', 'Toilets', 'Stairs'];
 

@@ -2,7 +2,7 @@
 // Builds indoor room-to-room routes, advances steps as the user walks, and falls back to outdoor routing when needed.
 import { useState, useEffect, useCallback } from 'react';
 import { locations } from '../data/locations';
-import { buildIndoorRoute } from '../lib/indoorRouter';
+import { buildIndoorRoute, buildExitBuildingSteps } from '../lib/indoorRouter';
 import { haversineM } from '../lib/routeUtils';
 import { buildCrossBuildingRoute } from '../lib/crossBuildingRoute';
 
@@ -80,9 +80,16 @@ export function useIndoorNavigation({
         const dist = haversineM([gpsLocation.lng, gpsLocation.lat], path[wpIdx]);
         if (dist > 8) return;
         if (currentStepIndex >= steps.length - 1) {
-            setArrivedMessage(true);
-            setActiveRoute(null);
-            setCurrentStepIndex(0);
+            if (activeRoute._pendingOutdoorFallback) {
+                const { destinationFeature, startFeature: sf } = activeRoute._pendingOutdoorFallback;
+                setActiveRoute(null);
+                setCurrentStepIndex(0);
+                onOutdoorFallback?.(destinationFeature, sf);
+            } else {
+                setArrivedMessage(true);
+                setActiveRoute(null);
+                setCurrentStepIndex(0);
+            }
         } else {
             const nextStep = steps[currentStepIndex + 1];
             setCurrentStepIndex(i => i + 1);
@@ -120,6 +127,27 @@ export function useIndoorNavigation({
         if (!startFeature) {
             onOutdoorFallback?.(destinationFeature);
             return;
+        }
+
+        const startFloorZ = startFeature.properties.floorName;
+        const isAboveGround = startFloorZ && startFloorZ !== 'G' && startFloorZ !== '0';
+        const startBuildingId = startFeature.properties.buildingId;
+        const destBuildingId  = destinationFeature?.properties?.buildingId;
+        const isCrossBuilding = destBuildingId != null && String(startBuildingId) !== String(destBuildingId);
+
+        if (isAboveGround && isCrossBuilding) {
+            const buildingLoc = (Array.isArray(locations) ? locations : [])
+                .find(l => String(l.buildingId) === String(startBuildingId));
+            const hasElevator = buildingLoc?.hasElevator ?? false;
+            const exitRoute = buildExitBuildingSteps(startFeature, stairs, hasElevator);
+            if (exitRoute) {
+                setActiveRoute({ ...exitRoute, _pendingOutdoorFallback: { destinationFeature, startFeature } });
+                setActiveDestination(destinationFeature);
+                setCurrentStepIndex(0);
+                setArrivedMessage(false);
+                onHighlightRoom?.(destinationFeature.properties.poiId);
+                return;
+            }
         }
 
         try {

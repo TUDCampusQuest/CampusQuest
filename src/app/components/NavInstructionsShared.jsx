@@ -1,7 +1,7 @@
 'use client';
 // Shared primitives for nav instruction panels: constants, step-coordinate math, and reusable UI sub-components.
 import { haversineM } from '../lib/routeUtils';
-import styles from './NavInstructionsShared.module.css';
+import styles from '../styles/NavInstructionsShared.module.css';
 
 export const STEP_ICON = {
     walk:           '🚶',

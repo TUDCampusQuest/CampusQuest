@@ -1,7 +1,7 @@
 'use client';
 // Trail card component with category badge, stop chips, and view/start action buttons.
 import GlassCard from './ui/GlassCard';
-import styles from './TrailCard.module.css';
+import styles from '../styles/TrailCard.module.css';
 
 const CATEGORY_TABS = [
     { key: 'all',      label: 'All',      emoji: '🗺️' },

@@ -1,4 +1,4 @@
-// Builds a turn-by-turn indoor route between two room features, tracing polygon boundaries to follow corridors.
+// Builds indoor routes between rooms and produces exit-building step sequences for room-to-outdoor navigation.
 const WALK_PACE_MPM = 80;
 
 const FLOOR_LABEL = {
@@ -110,4 +110,58 @@ export function buildIndoorRoute(startFeature, endFeature, stairsGeoJSON) {
     const requiresStairs = steps.some(s => s.type === 'stairs_up' || s.type === 'stairs_down');
 
     return { steps, path, totalMetres, totalMinutes, requiresStairs };
+}
+
+export function buildExitBuildingSteps(startFeature, stairsGeoJSON, hasElevator = false) {
+    const sp       = startFeature.properties;
+    const startC   = getCentroid(startFeature);
+    const startZ   = floorZ(sp);
+
+    if (startZ <= 1) return null;
+
+    const allStairs  = stairsGeoJSON?.features ?? [];
+    const bldStairs  = allStairs.filter(f => f.properties.buildingId === sp.buildingId);
+    const stair      = findNearestStair(startC, bldStairs);
+    const stairCode  = stair?.properties?.roomCode ?? null;
+    const stairC     = stair ? getCentroid(stair) : startC;
+
+    const steps = [];
+    const path  = [startC];
+
+    if (stair) {
+        const startWall = closestPointOnPolygon(startFeature.geometry, stairC) ?? startC;
+        path.push(startWall, stairC);
+        steps.push({
+            type: 'walk',
+            description: hasElevator
+                ? `Walk to the stairs or elevator`
+                : `Walk to the stairs`,
+            metres: haversineMetres(startC, stairC),
+            location: stairC,
+            stairRoomCode: stairCode,
+        });
+    }
+
+    steps.push({
+        type: 'stairs_down',
+        description: hasElevator
+            ? `Take the stairs or elevator down to the Ground Floor`
+            : `Go down the stairs to the Ground Floor`,
+        metres: 0,
+        location: stairC,
+        stairRoomCode: stairCode,
+    });
+
+    steps.push({
+        type: 'exit_building',
+        description: `Exit the building`,
+        metres: 0,
+        location: stairC,
+        stairRoomCode: null,
+    });
+
+    const totalMetres  = steps.reduce((sum, s) => sum + (s.metres ?? 0), 0);
+    const totalMinutes = Math.ceil(totalMetres / WALK_PACE_MPM) || 1;
+
+    return { steps, path, totalMetres, totalMinutes, requiresStairs: true };
 }

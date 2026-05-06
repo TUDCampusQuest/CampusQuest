@@ -1,8 +1,4 @@
 // Missing/wrong entries in the S3 campus graph — applied at runtime to avoid redeploying the data file.
-// A Block path: A Block entrance → campus avenue road (west) → south past BC building → main_1.
-// The south leg jogs east of BC's east wall (-6.37795) before cutting south, since BC blocks a
-// straight descent from ave_7 (-6.37843 which falls inside BC's lng range).
-// Car park path: from main_1 south through the campus car park to the south entrance/road.
 export const GRAPH_NODE_PATCHES = [
     { id: 'a_block_entrance', lng: -6.376366,  lat: 53.406213,  type: 'entrance', name: 'A Block entrance' },
     { id: 'ave_1', lng: -6.376465, lat: 53.406013, type: 'junction', name: 'Campus ave 1' },
@@ -12,13 +8,12 @@ export const GRAPH_NODE_PATCHES = [
     { id: 'ave_5', lng: -6.378081, lat: 53.406014, type: 'junction', name: 'Campus ave 5' },
     { id: 'ave_6', lng: -6.378286, lat: 53.405960, type: 'junction', name: 'Campus ave 6' },
     { id: 'ave_7', lng: -6.378434, lat: 53.405914, type: 'junction', name: 'Campus ave — south turn' },
-    { id: 'ave_s1', lng: -6.377900, lat: 53.405870, type: 'junction', name: 'Campus ave south 1 — jog east of BC' },
-    { id: 'ave_s2', lng: -6.377700, lat: 53.405700, type: 'junction', name: 'Campus ave south 2 — east of BC' },
-    { id: 'ave_s3', lng: -6.377700, lat: 53.405450, type: 'junction', name: 'Campus ave south 3 — clear BC south' },
+    { id: 'ave_s1', lng: -6.377900, lat: 53.405870, type: 'junction', name: 'Campus ave south 1' },
+    { id: 'ave_s2', lng: -6.377700, lat: 53.405700, type: 'junction', name: 'Campus ave south 2' },
+    { id: 'ave_s3', lng: -6.377700, lat: 53.405450, type: 'junction', name: 'Campus ave south 3' },
     { id: 'ave_s4', lng: -6.377900, lat: 53.405200, type: 'junction', name: 'Campus ave south 4' },
     { id: 'ave_s5', lng: -6.378300, lat: 53.405000, type: 'junction', name: 'Campus ave south 5' },
     { id: 'ave_s6', lng: -6.378700, lat: 53.404800, type: 'junction', name: 'Campus ave south 6' },
-    // Car park nodes — pedestrian path through campus car park
     { id: 'carpark_n',   lng: -6.378200, lat: 53.404550, type: 'junction', name: 'Car park north entrance' },
     { id: 'carpark_nw',  lng: -6.378800, lat: 53.404400, type: 'junction', name: 'Car park northwest' },
     { id: 'carpark_ne',  lng: -6.377500, lat: 53.404400, type: 'junction', name: 'Car park northeast' },
@@ -43,7 +38,6 @@ export const GRAPH_EDGE_PATCHES = [
     { from: 'ave_s4', to: 'ave_s5' },
     { from: 'ave_s5', to: 'ave_s6' },
     { from: 'ave_s6', to: 'main_1' },
-    // Car park connections — from main_1 south through car park
     { from: 'main_1',     to: 'carpark_n' },
     { from: 'carpark_n',  to: 'carpark_nw' },
     { from: 'carpark_n',  to: 'carpark_ne' },
@@ -55,7 +49,6 @@ export const GRAPH_EDGE_PATCHES = [
     { from: 'carpark_se', to: 'carpark_s' },
 ];
 
-// Overrides for wrong locationNodeMap entries in S3
 export const LOCATION_NODE_OVERRIDES = {
     'a-block': 'a_block_entrance',
 };

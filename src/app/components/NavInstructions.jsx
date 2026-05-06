@@ -5,6 +5,7 @@ import { deriveSteps } from '../lib/routeUtils';
 import { buildStepBendCoords } from './NavInstructionsShared';
 import IndoorInstructions from './IndoorInstructions';
 import OutdoorInstructions from './OutdoorInstructions';
+import styles from '../styles/NavInstructions.module.css';
 
 export default function NavInstructions({
     routeStep, routeStats, routeCoords,
@@ -67,17 +68,7 @@ export default function NavInstructions({
 
     if (routeStep === 'PICK_A') {
         return (
-            <div style={{
-                position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)',
-                zIndex: 20,
-                background: 'rgba(124,58,237,0.18)',
-                backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-                borderRadius: 99, padding: '11px 24px',
-                border: '1px solid rgba(124,58,237,0.4)',
-                color: 'var(--text-primary)',
-                fontWeight: 700, fontSize: 13, whiteSpace: 'nowrap',
-                boxShadow: '0 4px 20px rgba(124,58,237,0.25)',
-            }}>
+            <div className={`${styles.pill} ${styles.pillPickA}`}>
                 📍 Tap your start building on the map
             </div>
         );
@@ -85,43 +76,16 @@ export default function NavInstructions({
 
     if (routeStep === 'ERROR') {
         return (
-            <div style={{
-                position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)',
-                zIndex: 20, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
-                width: '90%', maxWidth: 400,
-            }}>
-                <div style={{
-                    padding: '11px 24px', borderRadius: 99, fontWeight: 700, fontSize: 13,
-                    background: 'rgba(239,68,68,0.15)',
-                    color: '#fca5a5',
-                    border: '1px solid rgba(239,68,68,0.35)',
-                    backdropFilter: 'blur(16px)',
-                    boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-                }}>{routeError ?? 'No route available'}</div>
-                <button onClick={onChangeStart} style={{
-                    padding: '8px 20px', borderRadius: 99,
-                    border: '1px solid var(--border-card)',
-                    background: 'var(--btn-ghost-bg)',
-                    backdropFilter: 'blur(12px)',
-                    color: 'var(--text-primary)', fontWeight: 700, fontSize: 12, cursor: 'pointer',
-                }}>↺ Change Start</button>
+            <div className={styles.errorWrapper}>
+                <div className={styles.errorPill}>{routeError ?? 'No route available'}</div>
+                <button onClick={onChangeStart} className={styles.changeStartBtn}>↺ Change Start</button>
             </div>
         );
     }
 
     if (!routeStats) {
         return (
-            <div style={{
-                position: 'absolute', bottom: 24, left: '50%', transform: 'translateX(-50%)',
-                zIndex: 20,
-                background: 'rgba(124,58,237,0.14)',
-                backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
-                borderRadius: 99, padding: '11px 24px',
-                border: '1px solid rgba(124,58,237,0.3)',
-                color: 'var(--text-secondary)',
-                fontWeight: 600, fontSize: 13, whiteSpace: 'nowrap',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.3)',
-            }}>
+            <div className={`${styles.pill} ${styles.pillCalculating}`}>
                 ⏳ Calculating route…
             </div>
         );

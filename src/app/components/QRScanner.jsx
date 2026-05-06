@@ -1,5 +1,5 @@
 "use client";
-
+// QR code scanner that resolves scanned URLs or location codes and navigates the app accordingly.
 import { useEffect, useRef } from "react";
 import { Html5QrcodeScanner } from "html5-qrcode";
 import { Box } from "@mui/material";

@@ -1,4 +1,5 @@
 'use client';
+// Dispatches nav drawer selections to indoor or outdoor routing based on destination type.
 import { useCallback } from 'react';
 import { locations } from '../data/locations';
 
@@ -55,36 +56,15 @@ export default function useNavDrawer({
             return null;
         };
 
-        if (pointA.type === 'room' && pointB.type === 'room') {
+        if (pointB.type === 'room') {
+            // Any start → room always uses indoor routing.
+            // The indoor router handles GPS snap, building entry, and cross-floor stairs.
             setIsNavigating(false);
             setNavTarget(null);
             setNavStartOverride(null);
             setActiveNavSystem('indoor');
-            handleNavigateTo(pointB.feature, pointA.feature);
-
-        } else if (pointB.type === 'room') {
-            if (pointA.type === 'gps' || pointA.type === 'room') {
-                setIsNavigating(false);
-                setNavTarget(null);
-                setNavStartOverride(null);
-                setActiveNavSystem('indoor');
-                const startOverride = pointA.type === 'room' ? pointA.feature : null;
-                handleNavigateTo(pointB.feature, startOverride);
-            } else {
-                const dp = pointB.feature?.properties;
-                if (dp?.centerLng != null && dp?.centerLat != null) {
-                    handleCancelNavigation();
-                    setActiveNavSystem('outdoor');
-                    setNavTarget({
-                        id: `room-${dp.poiId}`,
-                        name: dp.name || dp.roomCode || dp.buildingName || 'Destination',
-                        coordinates: [dp.centerLng, dp.centerLat],
-                    });
-                    setIsNavigating(true);
-                    const startLoc = toBuildingLoc(pointA);
-                    if (startLoc) setNavStartOverride(startLoc);
-                }
-            }
+            const startOverride = pointA.type === 'room' ? pointA.feature : null;
+            handleNavigateTo(pointB.feature, startOverride);
 
         } else {
             const destLoc = toBuildingLoc(pointB);

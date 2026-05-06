@@ -1,4 +1,5 @@
 'use client';
+// Handles session restore, GPS watch, trail deep-links, and room/building URL params on page load.
 import { useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { locations } from '../data/locations';
@@ -17,12 +18,10 @@ export default function usePageSetup({
 }) {
     const searchParams = useSearchParams();
 
-    // Session admin restore
     useEffect(() => {
         if (sessionStorage.getItem('cq_staff') === 'true') setIsAdmin(true);
     }, [setIsAdmin]);
 
-    // GPS watch
     useEffect(() => {
         if (typeof navigator === 'undefined' || !navigator.geolocation) return;
         let id = null;
@@ -44,7 +43,6 @@ export default function usePageSetup({
         };
     }, [setGpsLocation]);
 
-    // Trail restore from localStorage
     useEffect(() => {
         const storedView  = localStorage.getItem('activeTrail');
         const storedStart = localStorage.getItem('startTrail');
@@ -66,7 +64,6 @@ export default function usePageSetup({
         }
     }, [setActiveTrail, setCurrentTrailStopIndex]);
 
-    // Deep-link: ?selectedRoomId=
     useEffect(() => {
         const roomId = searchParams.get('selectedRoomId');
         if (!roomId || !rooms?.features) return;
@@ -74,7 +71,6 @@ export default function usePageSetup({
         if (feature) handleRoomSelect(feature);
     }, [searchParams, rooms, handleRoomSelect]);
 
-    // Deep-link: ?navTo=&lng=&lat=
     useEffect(() => {
         const navTo = searchParams.get('navTo');
         const lng   = parseFloat(searchParams.get('lng'));

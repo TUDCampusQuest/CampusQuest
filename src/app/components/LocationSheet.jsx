@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import LocationSheetContent from './LocationSheetContent';
-import styles from './LocationSheet.module.css';
+import styles from '../styles/LocationSheet.module.css';
 
 const SPRING = { type: 'spring', stiffness: 300, damping: 35 };
 

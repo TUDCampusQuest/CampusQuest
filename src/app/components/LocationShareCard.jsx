@@ -2,7 +2,7 @@
 // QR code display and share/copy button for a building location page.
 import { useState } from 'react';
 import GlassCard from './ui/GlassCard';
-import styles from './LocationShareCard.module.css';
+import styles from '../styles/LocationShareCard.module.css';
 
 export default function LocationShareCard({ location, pageUrl }) {
     const [copied, setCopied] = useState(false);

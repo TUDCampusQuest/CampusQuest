@@ -95,10 +95,6 @@ function routeFromGraph(startLocation, endLocation) {
     const result = routeBetweenNodeIds(startNodeId, endNodeId, campusNodes, campusEdges);
     if (result.error) return result;
 
-    // The campus graph already terminates at the correct node for each building,
-    // so we only prepend the start icon coord to visually connect the line to the
-    // start marker. We do NOT append an end icon coord — locations.js coordinates
-    // can differ from the graph node position and would draw a spurious tail segment.
     const startIconCoord = startLocation.coordinates || [startLocation.lng, startLocation.lat];
     const coords = [startIconCoord, ...result.coords];
     return { coords, pathIds: result.pathIds };
@@ -118,7 +114,6 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
     const wasNavigatingRef   = useRef(false);
     const buildingARef       = useRef(null);
     const routeIdRef         = useRef(0);
-    // Track previous navTarget id and navStart id to avoid re-running on GPS ticks
     const prevNavTargetIdRef = useRef(null);
     const prevNavStartIdRef  = useRef(null);
 
@@ -154,8 +149,6 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
         }
     };
 
-    // Only re-run when navTarget or navStart actually changes — not on every GPS tick.
-    // userLocation is read via ref so GPS updates don't restart routing.
     const navTargetId = navTarget?.id ?? null;
     const navStartId  = navStart?.id  ?? null;
 
@@ -165,8 +158,7 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
             const startChanged  = navStartId  !== prevNavStartIdRef.current;
             const isMidNavSwap  = wasNavigatingRef.current;
 
-            // Only do a full reset when destination or start actually changes
-            if (targetChanged || startChanged || !isMidNavSwap) {
+                if (targetChanged || startChanged || !isMidNavSwap) {
                 prevNavTargetIdRef.current = navTargetId;
                 prevNavStartIdRef.current  = navStartId;
                 wasNavigatingRef.current   = true;
@@ -188,11 +180,6 @@ export function useNavigation({ isNavigating, navTarget, navStart, userLocation,
                     return;
                 }
 
-                // Read userLocation from ref — does not add it as a dependency.
-                // Do NOT snap to a building here — let the routing effect handle GPS→campus
-                // routing directly so there's no async state race between setBuildingA and
-                // setRouteStep. buildingA stays null and the !buildingA branch in the
-                // routing effect calls buildHybridRouteFromCoordsToCampus with the live GPS.
                 const currentUserLocation = userLocationRef.current;
                 if (!pickARequestedRef.current && currentUserLocation) {
                     setBuildingA(null);

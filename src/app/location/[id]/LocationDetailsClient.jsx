@@ -8,7 +8,7 @@ import { getRoomDisplayName } from "../../lib/roomUtils";
 import LocationHero from "../../components/LocationHero";
 import LocationShareCard from "../../components/LocationShareCard";
 import FloorAccordion from "../../components/FloorAccordion";
-import styles from "./locationDetails.module.css";
+import styles from "../../styles/locationDetails.module.css";
 
 const QR_LOCATION_IDS = new Set(['A-BLOCK','AG-BLOCK','C-BLOCK','CAFE','CONNECT','D-BLOCK','E-BLOCK','F-BLOCK','S-BLOCK']);
 const HIDDEN_TYPES    = new Set(['circulation', 'plant', 'storage']);

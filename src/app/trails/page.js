@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { buildTrailPath, calcTrailDistance } from '../lib/trailRouter';
 import useIndoorData from '../hooks/useIndoorData';
 import TrailCard, { CATEGORY_TABS } from '../components/TrailCard';
-import styles from './trails.module.css';
+import styles from '../styles/trails.module.css';
 
 export default function TrailsPage() {
     const router = useRouter();

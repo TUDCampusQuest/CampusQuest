@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { DIR_ARROW, PullHandle, PrevNextBar, StepIconBox } from './NavInstructionsShared';
 import { fmtDist } from '../lib/routeUtils';
-import styles from './OutdoorInstructions.module.css';
+import styles from '../styles/OutdoorInstructions.module.css';
 
 export default function OutdoorInstructions({
     outdoorSteps, outdoorStepIndex, routeStats,

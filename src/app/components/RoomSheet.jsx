@@ -1,7 +1,8 @@
-// Bottom slide-up card showing room details with Navigate Here and Set as Start actions.
 'use client';
+// Bottom slide-up card showing room details with Navigate Here and Set as Start actions.
 import { getRoomDisplayName, getRoomTypeName } from '../lib/roomUtils';
 import GlassCard from './ui/GlassCard';
+import styles from '../styles/RoomSheet.module.css';
 
 function getRoomTypeBadgeStyle(typeName) {
     const t = (typeName || '').toLowerCase();
@@ -18,7 +19,7 @@ function getRoomTypeBadgeStyle(typeName) {
     return { background: 'var(--bg-card)', color: 'var(--text-secondary)' };
 }
 
-export default function RoomSheet({ selectedRoom, gpsLocation, onClose, onNavigateTo, onSetAsStart, roomNameMap }) {
+export default function RoomSheet({ selectedRoom, onClose, onNavigateTo, onSetAsStart, roomNameMap }) {
     if (!selectedRoom) return null;
     const p = selectedRoom.properties;
 
@@ -36,72 +37,31 @@ export default function RoomSheet({ selectedRoom, gpsLocation, onClose, onNaviga
                 padding: '0 16px 24px',
             }}
         >
-            {/* Drag handle — tap to dismiss */}
-            <div
-                onClick={onClose}
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', paddingTop: 10, paddingBottom: 4, cursor: 'pointer' }}
-            >
-                <div style={{ width: 40, height: 4, borderRadius: 4, background: 'var(--border-color)' }} />
+            <div onClick={onClose} className={styles.dragHandle}>
+                <div className={styles.dragBar} />
             </div>
 
-            {/* Room name + code pill */}
-            <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: 8, marginTop: 10 }}>
-                <span style={{ fontSize: 20, fontWeight: 700, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-                    {displayName}
-                </span>
-                {showCode && (
-                    <span style={{
-                        background: 'var(--accent-purple)', color: '#fff',
-                        fontSize: 12, fontWeight: 600, borderRadius: 20,
-                        padding: '3px 10px',
-                    }}>
-                        {p.roomCode}
-                    </span>
-                )}
+            <div className={styles.nameRow}>
+                <span className={styles.roomName}>{displayName}</span>
+                {showCode && <span className={styles.codePill}>{p.roomCode}</span>}
             </div>
 
-            {/* Building / floor / type */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 6, flexWrap: 'wrap' }}>
-                <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>
-                    {p.buildingName}
-                    {p.floorName ? ` · Floor ${p.floorName}` : ''}
+            <div className={styles.metaRow}>
+                <span className={styles.metaText}>
+                    {p.buildingName}{p.floorName ? ` · Floor ${p.floorName}` : ''}
                 </span>
                 {typeName && (
-                    <span style={{
-                        ...badgeStyle,
-                        fontSize: 11, fontWeight: 600,
-                        borderRadius: 20, padding: '2px 8px',
-                    }}>
-                        {typeName}
-                    </span>
+                    <span className={styles.typeBadge} style={badgeStyle}>{typeName}</span>
                 )}
             </div>
 
-            <div style={{ height: 1, background: 'var(--border-color)', margin: '14px 0' }} />
+            <div className={styles.divider} />
 
-            {/* Navigation buttons */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                <button
-                    onClick={() => onNavigateTo(selectedRoom)}
-                    style={{
-                        width: '100%', height: 48, borderRadius: 12, border: 'none',
-                        background: '#7C3AED', color: '#fff',
-                        fontWeight: 700, fontSize: 13,
-                        cursor: 'pointer', transition: 'background 0.2s',
-                    }}
-                >
+            <div className={styles.btns}>
+                <button onClick={() => onNavigateTo(selectedRoom)} className={styles.btnNavigate}>
                     Navigate Here
                 </button>
-                <button
-                    onClick={() => onSetAsStart(selectedRoom)}
-                    style={{
-                        width: '100%', height: 48, borderRadius: 12,
-                        border: '1.5px solid var(--border-color)',
-                        background: 'transparent', color: 'var(--text-primary)',
-                        fontWeight: 700, fontSize: 13,
-                        cursor: 'pointer', transition: 'all 0.2s',
-                    }}
-                >
+                <button onClick={() => onSetAsStart(selectedRoom)} className={styles.btnStart}>
                     Set as Start
                 </button>
             </div>

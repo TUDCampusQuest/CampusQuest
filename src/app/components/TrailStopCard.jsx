@@ -1,4 +1,5 @@
 'use client';
+// Fixed bottom card shown during an active trail, displaying the current stop and an I'm Here / Exit action.
 import { Box } from '@mui/material';
 
 export default function TrailStopCard({ activeTrail, currentTrailStopIndex, onAdvance, onClose }) {

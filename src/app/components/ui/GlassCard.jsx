@@ -1,4 +1,5 @@
 'use client';
+// Reusable frosted-glass card with a purple top border, used as a base surface for sheets and modals.
 export default function GlassCard({
   children, className = '', onClick, style = {}
 }) {

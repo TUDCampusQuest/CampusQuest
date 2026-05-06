@@ -3,7 +3,7 @@
 import { STEP_ICON, PullHandle, PrevNextBar, StepIconBox } from './NavInstructionsShared';
 import { fmtDist } from '../lib/routeUtils';
 import { getRoomDisplayName } from '../lib/roomUtils';
-import styles from './IndoorInstructions.module.css';
+import styles from '../styles/IndoorInstructions.module.css';
 
 const ROOM_CODE_RE = /[A-Z]{2}-\d{3}[A-Z]?$/;
 

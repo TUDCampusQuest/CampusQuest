@@ -1,6 +1,6 @@
 'use client';
 // Hero section for the location detail page: cover image, building name/ID badge, description, and info cards.
-import styles from './LocationHero.module.css';
+import styles from '../styles/LocationHero.module.css';
 
 export default function LocationHero({ location, onBack }) {
     return (

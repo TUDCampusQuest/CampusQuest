@@ -1,7 +1,7 @@
 'use client';
 // Collapsible floor accordion listing rooms within a building floor, with type badges and click-to-navigate.
 import { getRoomDisplayName, getRoomTypeName } from '../lib/roomUtils';
-import styles from './FloorAccordion.module.css';
+import styles from '../styles/FloorAccordion.module.css';
 
 const FLOOR_LABELS = { G: 'Ground Floor', '0': 'Ground Floor', '1': 'First Floor', '2': 'Second Floor', '3': 'Third Floor' };
 

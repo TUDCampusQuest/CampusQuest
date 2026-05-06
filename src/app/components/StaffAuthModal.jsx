@@ -1,5 +1,5 @@
 'use client';
-
+// Staff login modal with email/password fields, focus ring styles, countdown on auth failure, and portal rendering.
 import { useState, useEffect, useRef } from 'react';
 import { createPortal }                 from 'react-dom';
 import { motion, AnimatePresence }      from 'framer-motion';

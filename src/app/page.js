@@ -56,8 +56,6 @@ function Home() {
     const [showStairsPrompt,    setShowStairsPrompt] = useState(false);
     const [pickFromMapField,    setPickFromMapField] = useState(null);
 
-    // Stabilise navStartOverride so a new object with the same id doesn't
-    // cause useNavigation to re-run routing on every GPS tick.
     const navStartOverride = useMemo(() => navStartOverrideRaw, [navStartOverrideRaw?.id]);
 
     const [activeNavSystem, setActiveNavSystem] = useState(null);

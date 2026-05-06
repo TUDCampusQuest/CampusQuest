@@ -1,0 +1,97 @@
+.dragHandle {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding-top: 10px;
+    padding-bottom: 4px;
+    cursor: pointer;
+}
+
+.dragBar {
+    width: 40px;
+    height: 4px;
+    border-radius: 4px;
+    background: var(--border-color);
+}
+
+.nameRow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.roomName {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.codePill {
+    background: var(--accent-purple);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    border-radius: 20px;
+    padding: 3px 10px;
+}
+
+.metaRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 6px;
+    flex-wrap: wrap;
+}
+
+.metaText {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.typeBadge {
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 20px;
+    padding: 2px 8px;
+}
+
+.divider {
+    height: 1px;
+    background: var(--border-color);
+    margin: 14px 0;
+}
+
+.btns {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.btnNavigate {
+    width: 100%;
+    height: 48px;
+    border-radius: 12px;
+    border: none;
+    background: #7C3AED;
+    color: #fff;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.btnStart {
+    width: 100%;
+    height: 48px;
+    border-radius: 12px;
+    border: 1.5px solid var(--border-color);
+    background: transparent;
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}

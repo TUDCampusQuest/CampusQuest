@@ -1,0 +1,69 @@
+.pill {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    border-radius: 99px;
+    padding: 11px 24px;
+    font-weight: 700;
+    font-size: 13px;
+    white-space: nowrap;
+}
+
+.pillPickA {
+    background: rgba(124,58,237,0.18);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(124,58,237,0.4);
+    color: var(--text-primary);
+    box-shadow: 0 4px 20px rgba(124,58,237,0.25);
+}
+
+.pillCalculating {
+    background: rgba(124,58,237,0.14);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(124,58,237,0.3);
+    color: var(--text-secondary);
+    font-weight: 600;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.errorWrapper {
+    position: absolute;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 20;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 90%;
+    max-width: 400px;
+}
+
+.errorPill {
+    padding: 11px 24px;
+    border-radius: 99px;
+    font-weight: 700;
+    font-size: 13px;
+    background: rgba(239,68,68,0.15);
+    color: #fca5a5;
+    border: 1px solid rgba(239,68,68,0.35);
+    backdrop-filter: blur(16px);
+    box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+}
+
+.changeStartBtn {
+    padding: 8px 20px;
+    border-radius: 99px;
+    border: 1px solid var(--border-card);
+    background: var(--btn-ghost-bg);
+    backdrop-filter: blur(12px);
+    color: var(--text-primary);
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+}

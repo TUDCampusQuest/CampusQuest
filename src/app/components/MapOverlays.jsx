@@ -1,6 +1,6 @@
 'use client';
 // Floating UI overlays rendered on top of the map: arrived toast, pick-from-map banner, and stairs floor-change prompt.
-import styles from './MapOverlays.module.css';
+import styles from '../styles/MapOverlays.module.css';
 
 export function ArrivedToast({ show }) {
     if (!show) return null;
