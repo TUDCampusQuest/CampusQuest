@@ -26,7 +26,7 @@ function getRoomCategory(props) {
 export default function SearchDrawer({
     open, onClose, query, onQueryChange,
     results, onSelect,
-    rooms, onRoomSelect, onRoomNavigate,
+    rooms, onRoomSelect,
     roomNameMap,
 }) {
     const [activeFilter, setActiveFilter] = useState('All');
@@ -53,15 +53,18 @@ export default function SearchDrawer({
     }, [rooms, roomNameMap]);
 
     const filteredRooms = useMemo(() => {
-        if (!query.trim()) return [];
-        const q = query.toLowerCase();
+        const q = query.toLowerCase().trim();
+        const hasQuery  = q.length > 0;
+        const hasFilter = activeFilter !== 'All';
+        if (!hasQuery && !hasFilter) return [];
         return roomIndex.filter(r => {
-            const matchesQuery =
+            const matchesQuery = !hasQuery || (
                 r.roomCode.toLowerCase().includes(q)    ||
                 r.displayName.toLowerCase().includes(q) ||
                 r.name.toLowerCase().includes(q)        ||
-                r.buildingName.toLowerCase().includes(q);
-            const matchesFilter = activeFilter === 'All' || r.category === activeFilter;
+                r.buildingName.toLowerCase().includes(q)
+            );
+            const matchesFilter = !hasFilter || r.category === activeFilter;
             return matchesQuery && matchesFilter;
         });
     }, [roomIndex, query, activeFilter]);
@@ -70,11 +73,11 @@ export default function SearchDrawer({
         const feature = rooms?.features?.find(f => f.properties.poiId === room.poiId);
         if (!feature) return;
         onClose();
-        if (onRoomNavigate) onRoomNavigate(feature);
-        else if (onRoomSelect) onRoomSelect(feature);
+        onRoomSelect?.(feature);
     };
 
-    const showSectionLabels = results.length > 0 && filteredRooms.length > 0;
+    const showBuildings     = activeFilter === 'All' && results.length > 0;
+    const showSectionLabels = showBuildings && filteredRooms.length > 0;
     const showFilterTabs    = roomIndex.length > 0;
 
     return (
@@ -135,7 +138,7 @@ export default function SearchDrawer({
 
                 <List sx={{ flex: 1, overflowY: 'auto' }}>
 
-                    {results.length > 0 && (
+                    {showBuildings && (
                         <>
                             {showSectionLabels && (
                                 <Typography sx={{ fontSize: 10, fontWeight: 700, color: 'var(--text-secondary)', letterSpacing: '0.09em', textTransform: 'uppercase', mb: 1, px: 1 }}>
@@ -190,9 +193,11 @@ export default function SearchDrawer({
                         </>
                     )}
 
-                    {query.trim() && results.length === 0 && filteredRooms.length === 0 && (
+                    {(query.trim() || activeFilter !== 'All') && !showBuildings && filteredRooms.length === 0 && (
                         <Typography sx={{ textAlign: 'center', color: 'var(--text-secondary)', mt: 4, fontSize: 14 }}>
-                            No results for &quot;{query}&quot;
+                            {query.trim()
+                                ? `No results for "${query}"${activeFilter !== 'All' ? ` in ${activeFilter}` : ''}`
+                                : `No ${activeFilter} rooms found`}
                         </Typography>
                     )}
                 </List>
