@@ -1,5 +1,6 @@
 'use client';
-// Trail card component with category badge, stop chips, and view/start action buttons.
+// Trail card showing name, category badge, distance, description, stop chips, and view/start buttons.
+
 import GlassCard from './ui/GlassCard';
 import styles from '../styles/TrailCard.module.css';
 
@@ -17,16 +18,16 @@ export { CATEGORY_TABS };
 const CATEGORY_COLORS = {
     nature:   { bg: 'rgba(109,189,69,0.13)',  text: '#6DBD45' },
     tech:     { bg: 'rgba(0,180,180,0.13)',   text: '#00B4B4' },
-    academic: { bg: 'rgba(124,58,237,0.13)', text: 'var(--accent-purple)' },
-    social:   { bg: 'rgba(230,126,34,0.13)', text: '#E67E22' },
-    fitness:  { bg: 'rgba(233,30,99,0.13)',  text: '#E91E63' },
+    academic: { bg: 'rgba(124,58,237,0.13)',  text: 'var(--accent-purple)' },
+    social:   { bg: 'rgba(230,126,34,0.13)',  text: '#E67E22' },
+    fitness:  { bg: 'rgba(233,30,99,0.13)',   text: '#E91E63' },
 };
 
 function CategoryBadge({ category }) {
-    const c   = CATEGORY_COLORS[category] ?? { bg: 'rgba(255,255,255,0.1)', text: 'var(--text-secondary)' };
+    const colors = CATEGORY_COLORS[category] ?? { bg: 'rgba(255,255,255,0.1)', text: 'var(--text-secondary)' };
     const tab = CATEGORY_TABS.find(t => t.key === category);
     return (
-        <span className={styles.categoryBadge} style={{ background: c.bg, color: c.text }}>
+        <span className={styles.categoryBadge} style={{ background: colors.bg, color: colors.text }}>
             {tab?.emoji} {category ?? 'general'}
         </span>
     );
@@ -35,21 +36,22 @@ function CategoryBadge({ category }) {
 function estimateDistance(trail) {
     if (trail.distance) return `${trail.distance}m`;
     if (trail.points?.length) {
-        const m = trail.points.length * 8;
-        return m >= 1000 ? `~${(m / 1000).toFixed(1)}km` : `~${m}m`;
+        const metres = trail.points.length * 8;
+        return metres >= 1000 ? `~${(metres / 1000).toFixed(1)}km` : `~${metres}m`;
     }
     return '—';
 }
 
 export default function TrailCard({ trail, onView, onStart }) {
+    const pointCount = trail.stops?.length
+        ?? (typeof trail.points === 'number' ? trail.points : (trail.points?.length ?? 0));
+
     return (
         <GlassCard className={styles.card}>
             <div className={styles.cardBody}>
                 <div className={styles.nameRow}>
                     <span className={styles.name}>{trail.name}</span>
-                    <span className={styles.pointsBadge}>
-                        {trail.stops?.length ?? (typeof trail.points === 'number' ? trail.points : (trail.points?.length ?? 0))} pts
-                    </span>
+                    <span className={styles.pointsBadge}>{pointCount} pts</span>
                 </div>
 
                 <div className={styles.metaRow}>

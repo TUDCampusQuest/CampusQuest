@@ -1,18 +1,23 @@
 'use client';
-// Collapsible panel that lists available trails and lets admins toggle the trail designer.
+// Collapsible map overlay listing saved trails by name; admins also get the Trail Designer toggle.
+
 import { useState } from 'react';
 import styles from '../styles/TrailsPanel.module.css';
 
-function trailLabel(key) {
+function toLabel(key) {
     return key.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
 export default function TrailsPanel({
-    trailPaths, selectedTrailName, setTrailInUrl,
-    isAdmin, showCaptureUI, onToggleCaptureUI,
+    trailPaths,
+    selectedTrailName,
+    setTrailInUrl,
+    isAdmin,
+    showCaptureUI,
+    onToggleCaptureUI,
 }) {
     const [collapsed, setCollapsed] = useState(true);
-    const trailKeys = Object.keys(trailPaths);
+    const keys = Object.keys(trailPaths);
 
     return (
         <div className={styles.panel}>
@@ -23,22 +28,24 @@ export default function TrailsPanel({
                 <div className={styles.toggleLeft}>
                     <span className={styles.trailIcon}>🗺</span>
                     <span className={styles.trailsLabel}>Trails</span>
-                    {trailKeys.length > 0 && (
-                        <span className={styles.countBadge}>{trailKeys.length}</span>
+                    {keys.length > 0 && (
+                        <span className={styles.countBadge}>{keys.length}</span>
                     )}
                 </div>
                 <span
                     className={styles.chevron}
                     style={{ transform: collapsed ? 'rotate(0deg)' : 'rotate(180deg)' }}
-                >▼</span>
+                >
+                    ▼
+                </span>
             </button>
 
             {!collapsed && (
                 <>
                     <div className={styles.list}>
-                        {trailKeys.length === 0 ? (
+                        {keys.length === 0 ? (
                             <p className={styles.emptyText}>No trails yet</p>
-                        ) : trailKeys.map(key => {
+                        ) : keys.map(key => {
                             const active = selectedTrailName === key;
                             return (
                                 <button
@@ -50,7 +57,7 @@ export default function TrailsPanel({
                                         className={styles.trailDot}
                                         style={{ background: active ? 'rgba(255,255,255,0.9)' : '#1BA39C' }}
                                     />
-                                    {trailLabel(key)}
+                                    {toLabel(key)}
                                 </button>
                             );
                         })}

@@ -1,12 +1,12 @@
 "use client";
-// App header with the Campus Quest logo, navigate/search/info buttons, and a dark mode toggle.
+// Top navigation bar with the Campus Quest logo, staff badge, nav/search/info/trails buttons, and dark mode toggle.
 
 import { Box, Stack, Typography, Tooltip } from "@mui/material";
 import { useRouter } from "next/navigation";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import SearchIcon       from "@mui/icons-material/Search";
-import DirectionsIcon   from "@mui/icons-material/Directions";
-import { useTheme }     from "../context/ThemeContext";
+import SearchIcon from "@mui/icons-material/Search";
+import DirectionsIcon from "@mui/icons-material/Directions";
+import { useTheme } from "../context/ThemeContext";
 
 function HeaderBtn({ icon, label, onClick, tooltip }) {
     return (
@@ -14,18 +14,28 @@ function HeaderBtn({ icon, label, onClick, tooltip }) {
             <Box
                 onClick={onClick}
                 sx={{
-                    display: "flex", alignItems: "center", gap: "5px",
-                    px: 1.5, py: 0.6, borderRadius: "20px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "5px",
+                    px: 1.5,
+                    py: 0.6,
+                    borderRadius: "20px",
                     border: "1px solid var(--border-card)",
                     bgcolor: "var(--btn-ghost-bg)",
-                    cursor: "pointer", transition: "all 0.15s",
-                    "&:hover": { bgcolor: "var(--room-item-hover)", borderColor: "var(--accent-teal)" },
+                    cursor: "pointer",
+                    transition: "all 0.15s",
+                    "&:hover": {
+                        bgcolor: "var(--room-item-hover)",
+                        borderColor: "var(--accent-teal)",
+                    },
                 }}
             >
                 {icon}
                 {label && (
                     <Typography sx={{
-                        fontSize: 12, fontWeight: 700, color: "var(--text-secondary)",
+                        fontSize: 12,
+                        fontWeight: 700,
+                        color: "var(--text-secondary)",
                         display: { xs: "none", sm: "block" },
                     }}>
                         {label}
@@ -43,13 +53,22 @@ function ThemeToggle() {
             <Box
                 onClick={toggleTheme}
                 sx={{
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    width: 36, height: 36, borderRadius: "12px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: 36,
+                    height: 36,
+                    borderRadius: "12px",
                     border: "1px solid var(--border-card)",
                     bgcolor: "var(--btn-ghost-bg)",
-                    cursor: "pointer", transition: "all 0.2s",
+                    cursor: "pointer",
                     fontSize: 16,
-                    "&:hover": { bgcolor: "var(--accent-purple)", borderColor: "var(--accent-purple)", transform: "scale(1.05)" },
+                    transition: "all 0.2s",
+                    "&:hover": {
+                        bgcolor: "var(--accent-purple)",
+                        borderColor: "var(--accent-purple)",
+                        transform: "scale(1.05)",
+                    },
                 }}
             >
                 {isDark ? "☀️" : "🌙"}
@@ -68,7 +87,8 @@ export default function AppHeader({ isAdmin, onStaffClick, onSearchClick, onNavi
             bgcolor: "var(--header-bg)",
             backdropFilter: "blur(12px)",
             WebkitBackdropFilter: "blur(12px)",
-            display: "flex", alignItems: "center",
+            display: "flex",
+            alignItems: "center",
             px: { xs: 1.5, sm: 2.5 },
             borderBottom: "1px solid var(--header-border)",
             zIndex: 1100,
@@ -77,11 +97,17 @@ export default function AppHeader({ isAdmin, onStaffClick, onSearchClick, onNavi
                 <Box
                     onDoubleClick={onStaffClick}
                     sx={{
-                        width: 32, height: 32, borderRadius: "10px",
+                        width: 32,
+                        height: 32,
+                        borderRadius: "10px",
                         background: "linear-gradient(135deg, #7C3AED 0%, #5B21B6 100%)",
-                        display: "flex", alignItems: "center", justifyContent: "center",
-                        fontSize: 16, flexShrink: 0,
-                        cursor: "default", userSelect: "none",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        fontSize: 16,
+                        flexShrink: 0,
+                        cursor: "default",
+                        userSelect: "none",
                         boxShadow: "0 2px 8px rgba(124,58,237,0.4)",
                     }}
                 >
@@ -99,13 +125,18 @@ export default function AppHeader({ isAdmin, onStaffClick, onSearchClick, onNavi
                     <Box
                         onClick={onStaffClick}
                         sx={{
-                            px: 1, py: "2px", borderRadius: "6px",
-                            bgcolor: "#7C3AED", color: "#fff",
-                            fontSize: 10, fontWeight: 800,
-                            letterSpacing: "0.08em", textTransform: "uppercase",
+                            px: 1,
+                            py: "2px",
+                            borderRadius: "6px",
+                            bgcolor: "#7C3AED",
+                            color: "#fff",
+                            fontSize: 10,
+                            fontWeight: 800,
+                            letterSpacing: "0.08em",
+                            textTransform: "uppercase",
                             cursor: "pointer",
-                            "&:hover": { bgcolor: "#dc2626" },
                             transition: "background 0.15s",
+                            "&:hover": { bgcolor: "#dc2626" },
                         }}
                     >
                         Staff — Sign Out

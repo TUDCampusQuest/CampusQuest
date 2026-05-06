@@ -1,5 +1,6 @@
 'use client';
-// Trails listing page: browse, filter by category, and launch campus trails on the map.
+// Trails listing page — browse and filter campus trails by category, then load one onto the map.
+
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { buildTrailPath, calcTrailDistance } from '../lib/trailRouter';
@@ -18,18 +19,18 @@ function useIsAdmin() {
 export default function TrailsPage() {
     const router = useRouter();
     const { campusGraph } = useIndoorData();
-
-    const [trails, setTrails]       = useState([]);
-    const [loading, setLoading]     = useState(true);
-    const [error, setError]         = useState(null);
-    const [activeTab, setActiveTab] = useState('all');
     const isAdmin = useIsAdmin();
+
+    const [trails, setTrails] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [activeTab, setActiveTab] = useState('all');
 
     const fetchTrails = useCallback(async () => {
         setLoading(true);
         setError(null);
         try {
-            const res  = await fetch('/api/trails', { cache: 'no-store' });
+            const res = await fetch('/api/trails', { cache: 'no-store' });
             if (!res.ok) throw new Error(`Server error ${res.status}`);
             const data = await res.json();
             setTrails(Array.isArray(data) ? data : []);
@@ -43,11 +44,12 @@ export default function TrailsPage() {
 
     useEffect(() => { fetchTrails(); }, [fetchTrails]);
 
-    const filtered = activeTab === 'all' ? trails : trails.filter(t => t.category?.toLowerCase() === activeTab);
+    const filtered = activeTab === 'all'
+        ? trails
+        : trails.filter(t => t.category?.toLowerCase() === activeTab);
 
     function buildAndStore(trail, key) {
-        // Trails from the designer have raw `points` but no `stops`.
-        // Fall back to the raw coordinate array as the path so they render on the map.
+        // trails from the designer only have raw points, no stops
         let path;
         if (trail.stops?.length >= 2) {
             path = buildTrailPath(trail.stops, campusGraph);
@@ -92,10 +94,13 @@ export default function TrailsPage() {
             </div>
 
             <div className={styles.cardList}>
+                {loading && (
+                    <div className={styles.loadingText}>Loading trails...</div>
+                )}
 
-                {loading && <div className={styles.loadingText}>Loading trails...</div>}
-
-                {!loading && error && <div className={styles.errorBox}>⚠ {error}</div>}
+                {!loading && error && (
+                    <div className={styles.errorBox}>⚠ {error}</div>
+                )}
 
                 {!loading && !error && trails.length === 0 && (
                     <div className={styles.emptyState}>
@@ -104,7 +109,7 @@ export default function TrailsPage() {
                         <div className={styles.emptyHint}>
                             {isAdmin
                                 ? 'Open the Trail Designer on the map to record your first trail.'
-                                : 'Check back soon — trails will appear here once they\'ve been added.'}
+                                : "Check back soon — trails will appear here once they've been added."}
                         </div>
                     </div>
                 )}

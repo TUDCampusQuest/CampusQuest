@@ -1,5 +1,6 @@
 'use client';
-// Admin-only overlay for recording, naming, and saving trail paths to S3.
+// Admin-only trail designer — record points on the map, then name, categorise, and save the trail to S3.
+
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from '../styles/TrailCaptureOverlay.module.css';
@@ -13,26 +14,31 @@ const CATEGORIES = [
     { value: 'fitness',  label: '🏃 Fitness' },
 ];
 
+const emptyForm = { name: '', description: '', category: 'general' };
+
 export default function TrailCaptureOverlay({
-    captureMode, setCaptureMode,
-    capturedPoints, setCapturedPoints,
-    onClose, onTrailSaved,
+    captureMode,
+    setCaptureMode,
+    capturedPoints,
+    setCapturedPoints,
+    onClose,
+    onTrailSaved,
 }) {
     const router = useRouter();
 
-    const [showSaveModal,  setShowSaveModal]  = useState(false);
-    const [formData,       setFormData]        = useState({ name: '', description: '', category: 'general' });
-    const [isSaving,       setIsSaving]        = useState(false);
-    const [saveError,      setSaveError]       = useState(null);
-    const [showToast,      setShowToast]       = useState(false);
-    const [savedTrails,    setSavedTrails]     = useState([]);
-    const [trailsLoading,  setTrailsLoading]   = useState(false);
-    const [showTrailsList, setShowTrailsList]  = useState(false);
+    const [showSaveModal, setShowSaveModal] = useState(false);
+    const [formData, setFormData] = useState(emptyForm);
+    const [isSaving, setIsSaving] = useState(false);
+    const [saveError, setSaveError] = useState(null);
+    const [showToast, setShowToast] = useState(false);
+    const [savedTrails, setSavedTrails] = useState([]);
+    const [trailsLoading, setTrailsLoading] = useState(false);
+    const [showTrailsList, setShowTrailsList] = useState(false);
 
     const fetchSavedTrails = useCallback(async () => {
         setTrailsLoading(true);
         try {
-            const res  = await fetch('/api/trails', { cache: 'no-store' });
+            const res = await fetch('/api/trails', { cache: 'no-store' });
             const data = await res.json();
             setSavedTrails(Array.isArray(data) ? data : []);
         } catch {
@@ -44,19 +50,30 @@ export default function TrailCaptureOverlay({
 
     useEffect(() => { fetchSavedTrails(); }, [fetchSavedTrails]);
 
-    const handleUndo      = () => setCapturedPoints(prev => prev.slice(0, -1));
-    const handleClear     = () => setCapturedPoints([]);
-    const handleLoadTrail = (trail) => { if (trail.points?.length) { setCapturedPoints(trail.points); setShowTrailsList(false); } };
+    const handleUndo = () => setCapturedPoints(prev => prev.slice(0, -1));
+    const handleClear = () => setCapturedPoints([]);
 
-    const handleOpenModal = () => {
+    const handleLoadTrail = (trail) => {
+        if (!trail.points?.length) return;
+        setCapturedPoints(trail.points);
+        setShowTrailsList(false);
+    };
+
+    const openSaveModal = () => {
         setSaveError(null);
-        setFormData({ name: '', description: '', category: 'general' });
+        setFormData(emptyForm);
         setShowSaveModal(true);
     };
 
     const handleSave = async () => {
-        if (!formData.name.trim()) { setSaveError('Please enter a trail name.'); return; }
-        setIsSaving(true); setSaveError(null);
+        if (!formData.name.trim()) {
+            setSaveError('Please enter a trail name.');
+            return;
+        }
+
+        setIsSaving(true);
+        setSaveError(null);
+
         try {
             const res = await fetch('/api/trails', {
                 method: 'POST',
@@ -67,13 +84,18 @@ export default function TrailCaptureOverlay({
                     points: capturedPoints,
                 }),
             });
+
             if (res.ok) {
                 setShowSaveModal(false);
-                setCapturedPoints([]); setCaptureMode(false);
+                setCapturedPoints([]);
+                setCaptureMode(false);
                 if (onTrailSaved) onTrailSaved();
                 fetchSavedTrails();
                 setShowToast(true);
-                setTimeout(() => { setShowToast(false); router.push('/'); }, 2200);
+                setTimeout(() => {
+                    setShowToast(false);
+                    router.push('/');
+                }, 2200);
             } else {
                 const body = await res.json().catch(() => ({}));
                 setSaveError(body.error ?? `Server error ${res.status}`);
@@ -109,7 +131,9 @@ export default function TrailCaptureOverlay({
                         background: captureMode
                             ? 'linear-gradient(135deg, #ef4444, #dc2626)'
                             : 'linear-gradient(135deg, #1BA39C, #0e6d68)',
-                        boxShadow: captureMode ? '0 2px 12px rgba(239,68,68,0.4)' : '0 2px 12px rgba(27,163,156,0.4)',
+                        boxShadow: captureMode
+                            ? '0 2px 12px rgba(239,68,68,0.4)'
+                            : '0 2px 12px rgba(27,163,156,0.4)',
                     }}
                 >
                     {captureMode ? '⏹ Stop Recording' : '⏺ Start Recording'}
@@ -120,16 +144,25 @@ export default function TrailCaptureOverlay({
                 </p>
 
                 <div className={styles.actionRow}>
-                    <button onClick={handleUndo} disabled={!hasPoints} className={styles.actionBtn} style={{ border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <button
+                        onClick={handleUndo}
+                        disabled={!hasPoints}
+                        className={styles.actionBtn}
+                        style={{ border: '1px solid rgba(255,255,255,0.1)' }}
+                    >
                         Undo Last
                     </button>
-                    <button onClick={handleClear} disabled={!hasPoints} className={`${styles.actionBtn} ${styles.clearBtn}`}>
+                    <button
+                        onClick={handleClear}
+                        disabled={!hasPoints}
+                        className={`${styles.actionBtn} ${styles.clearBtn}`}
+                    >
                         Clear All
                     </button>
                 </div>
 
                 <button
-                    onClick={handleOpenModal}
+                    onClick={openSaveModal}
                     disabled={!hasPoints}
                     className={styles.saveBtn}
                     style={{
@@ -161,10 +194,14 @@ export default function TrailCaptureOverlay({
                                     <div className={styles.savedTrailName}>{trail.name}</div>
                                     <div className={styles.savedTrailPts}>{trail.points?.length ?? 0} pts</div>
                                 </div>
-                                <button onClick={() => handleLoadTrail(trail)} className={styles.loadBtn}>Load</button>
+                                <button onClick={() => handleLoadTrail(trail)} className={styles.loadBtn}>
+                                    Load
+                                </button>
                             </div>
                         ))}
-                        <button onClick={fetchSavedTrails} className={styles.refreshBtn}>↻ Refresh list</button>
+                        <button onClick={fetchSavedTrails} className={styles.refreshBtn}>
+                            ↻ Refresh list
+                        </button>
                     </div>
                 )}
             </div>
@@ -218,7 +255,11 @@ export default function TrailCaptureOverlay({
                             >
                                 {isSaving ? 'Saving…' : 'Save Trail'}
                             </button>
-                            <button onClick={() => setShowSaveModal(false)} disabled={isSaving} className={styles.modalCancelBtn}>
+                            <button
+                                onClick={() => setShowSaveModal(false)}
+                                disabled={isSaving}
+                                className={styles.modalCancelBtn}
+                            >
                                 Cancel
                             </button>
                         </div>
