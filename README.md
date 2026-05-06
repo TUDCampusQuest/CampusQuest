@@ -5,3 +5,5 @@ CampusQuest
 Paul Adebalu, Aaron Dignam, Chidozie Onyejelem
 
 Check out the app here: https://campusquest-flax.vercel.app/
+
+Description Of Project
