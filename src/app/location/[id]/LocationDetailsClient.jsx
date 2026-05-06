@@ -1,34 +1,22 @@
 'use client';
-// Full-page building detail view showing rooms by floor, a QR share card, and a navigate button.
+// Full-page building detail view showing rooms by floor and a navigate button.
 import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { locations } from "../../data/locations";
 import useIndoorData from "../../hooks/useIndoorData";
 import { getRoomDisplayName } from "../../lib/roomUtils";
 import LocationHero from "../../components/LocationHero";
-import LocationShareCard from "../../components/LocationShareCard";
 import FloorAccordion from "../../components/FloorAccordion";
 import styles from "../../styles/locationDetails.module.css";
 
-const QR_LOCATION_IDS = new Set(['A-BLOCK','AG-BLOCK','C-BLOCK','CAFE','CONNECT','D-BLOCK','E-BLOCK','F-BLOCK','S-BLOCK']);
-const HIDDEN_TYPES    = new Set(['circulation', 'plant', 'storage']);
-const HIDDEN_KINDS    = new Set(['circulation_room']);
+const HIDDEN_TYPES = new Set(['circulation', 'plant', 'storage']);
+const HIDDEN_KINDS = new Set(['circulation_room']);
 
 export default function LocationDetailsClient({ id }) {
     const router = useRouter();
     const [location,  setLocation]  = useState(null);
     const [loading,   setLoading]   = useState(true);
     const [openFloor, setOpenFloor] = useState('G');
-    const [pageUrl,   setPageUrl]   = useState(
-        `${process.env.NEXT_PUBLIC_APP_URL || 'https://campusquest.vercel.app'}/location/${id}`
-    );
-
-    useEffect(() => {
-        const base = process.env.NEXT_PUBLIC_APP_URL ||
-            (typeof window !== 'undefined' ? window.location.origin : '') ||
-            'https://campusquest.vercel.app';
-        setPageUrl(`${base.replace(/\/$/, '')}/location/${id}`);
-    }, [id]);
 
     const { rooms, roomNameMap } = useIndoorData();
 
@@ -99,10 +87,6 @@ export default function LocationDetailsClient({ id }) {
                         />
                     ))}
                 </div>
-            )}
-
-            {QR_LOCATION_IDS.has(location.id) && (
-                <LocationShareCard location={location} pageUrl={pageUrl} />
             )}
 
             <div className={styles.actions}>
