@@ -7,6 +7,14 @@ import useIndoorData from '../hooks/useIndoorData';
 import TrailCard, { CATEGORY_TABS } from '../components/TrailCard';
 import styles from '../styles/trails.module.css';
 
+function useIsAdmin() {
+    const [isAdmin, setIsAdmin] = useState(false);
+    useEffect(() => {
+        setIsAdmin(sessionStorage.getItem('cq_staff') === 'true');
+    }, []);
+    return isAdmin;
+}
+
 export default function TrailsPage() {
     const router = useRouter();
     const { campusGraph } = useIndoorData();
@@ -15,6 +23,7 @@ export default function TrailsPage() {
     const [loading, setLoading]     = useState(true);
     const [error, setError]         = useState(null);
     const [activeTab, setActiveTab] = useState('all');
+    const isAdmin = useIsAdmin();
 
     const fetchTrails = useCallback(async () => {
         setLoading(true);
@@ -34,10 +43,19 @@ export default function TrailsPage() {
 
     useEffect(() => { fetchTrails(); }, [fetchTrails]);
 
-    const filtered = activeTab === 'all' ? trails : trails.filter(t => t.category === activeTab);
+    const filtered = activeTab === 'all' ? trails : trails.filter(t => t.category?.toLowerCase() === activeTab);
 
     function buildAndStore(trail, key) {
-        const path     = buildTrailPath(trail.stops ?? [], campusGraph);
+        // Trails from the designer have raw `points` but no `stops`.
+        // Fall back to the raw coordinate array as the path so they render on the map.
+        let path;
+        if (trail.stops?.length >= 2) {
+            path = buildTrailPath(trail.stops, campusGraph);
+        } else if (trail.points?.length >= 2) {
+            path = trail.points;
+        } else {
+            path = [];
+        }
         const distance = calcTrailDistance(path);
         localStorage.setItem(key, JSON.stringify({ ...trail, computedPath: path, computedDistance: distance }));
         router.push('/');
@@ -45,6 +63,12 @@ export default function TrailsPage() {
 
     return (
         <div className={styles.page}>
+            <div className={styles.topBar}>
+                <button className={styles.backBtn} onClick={() => router.push('/')}>
+                    ← Map
+                </button>
+            </div>
+
             <div className={styles.header}>
                 <h1 className={styles.pageTitle}>Campus Trails</h1>
                 <p className={styles.pageSubtitle}>Explore TUD Blanchardstown your way</p>
@@ -77,7 +101,11 @@ export default function TrailsPage() {
                     <div className={styles.emptyState}>
                         <div className={styles.emptyIcon}>🗺️</div>
                         <div className={styles.emptyTitle}>No trails saved yet</div>
-                        <div className={styles.emptyHint}>Open the Trail Designer on the map to record your first trail.</div>
+                        <div className={styles.emptyHint}>
+                            {isAdmin
+                                ? 'Open the Trail Designer on the map to record your first trail.'
+                                : 'Check back soon — trails will appear here once they\'ve been added.'}
+                        </div>
                     </div>
                 )}
 
@@ -94,7 +122,7 @@ export default function TrailsPage() {
                     />
                 ))}
 
-                {!loading && (
+                {!loading && isAdmin && (
                     <div className={styles.createBanner}>
                         <div className={styles.createTitle}>Create Your Own Trail</div>
                         <div className={styles.createSubtitle}>Add stops, name it, share with others</div>

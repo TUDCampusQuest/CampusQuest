@@ -137,14 +137,12 @@ export default function AppHeader({ isAdmin, onStaffClick, onSearchClick, onNavi
                     onClick={() => router.push("/info")}
                 />
 
-                {isAdmin && (
-                    <HeaderBtn
-                        icon={<span style={{ fontSize: 13 }}>🗺</span>}
-                        label="Trails"
-                        tooltip="Campus trails"
-                        onClick={() => router.push("/trails")}
-                    />
-                )}
+                <HeaderBtn
+                    icon={<span style={{ fontSize: 13 }}>🗺</span>}
+                    label="Trails"
+                    tooltip="Campus trails"
+                    onClick={() => router.push("/trails")}
+                />
 
                 <ThemeToggle />
             </Stack>

@@ -4,6 +4,15 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import styles from '../styles/TrailCaptureOverlay.module.css';
 
+const CATEGORIES = [
+    { value: 'general',  label: '🗺️ General' },
+    { value: 'nature',   label: '🌿 Nature' },
+    { value: 'tech',     label: '💻 Tech' },
+    { value: 'academic', label: '🎓 Academic' },
+    { value: 'social',   label: '☕ Social' },
+    { value: 'fitness',  label: '🏃 Fitness' },
+];
+
 export default function TrailCaptureOverlay({
     captureMode, setCaptureMode,
     capturedPoints, setCapturedPoints,
@@ -12,7 +21,7 @@ export default function TrailCaptureOverlay({
     const router = useRouter();
 
     const [showSaveModal,  setShowSaveModal]  = useState(false);
-    const [formData,       setFormData]        = useState({ name: '', description: '', category: 'General' });
+    const [formData,       setFormData]        = useState({ name: '', description: '', category: 'general' });
     const [isSaving,       setIsSaving]        = useState(false);
     const [saveError,      setSaveError]       = useState(null);
     const [showToast,      setShowToast]       = useState(false);
@@ -41,7 +50,7 @@ export default function TrailCaptureOverlay({
 
     const handleOpenModal = () => {
         setSaveError(null);
-        setFormData({ name: '', description: '', category: 'General' });
+        setFormData({ name: '', description: '', category: 'general' });
         setShowSaveModal(true);
     };
 
@@ -174,6 +183,17 @@ export default function TrailCaptureOverlay({
                             placeholder="e.g. Sports Block Loop"
                             className={styles.input}
                         />
+
+                        <label className={styles.fieldLabel}>Category</label>
+                        <select
+                            value={formData.category}
+                            onChange={e => setFormData({ ...formData, category: e.target.value })}
+                            className={styles.input}
+                        >
+                            {CATEGORIES.map(c => (
+                                <option key={c.value} value={c.value}>{c.label}</option>
+                            ))}
+                        </select>
 
                         <label className={styles.fieldLabel}>Description</label>
                         <textarea

@@ -53,7 +53,7 @@ export default function TrailCard({ trail, onView, onStart }) {
                 </div>
 
                 <div className={styles.metaRow}>
-                    {trail.category && <CategoryBadge category={trail.category} />}
+                    <CategoryBadge category={trail.category ?? 'general'} />
                     <span className={styles.metaText}>📍 {estimateDistance(trail)}</span>
                     {trail.estimatedMinutes && (
                         <span className={styles.metaText}>🕐 {trail.estimatedMinutes} min</span>
