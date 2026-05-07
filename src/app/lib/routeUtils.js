@@ -1,5 +1,6 @@
 // Shared routing utilities — distance math, step derivation, Dijkstra, and Mapbox route fetching.
 
+// straight-line distance between two [lng, lat] points in metres
 export function haversineM([lng1, lat1], [lng2, lat2]) {
     const R = 6371000;
     const r = d => d * Math.PI / 180;
@@ -9,6 +10,7 @@ export function haversineM([lng1, lat1], [lng2, lat2]) {
     return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+// compass bearing in degrees between two [lng, lat] points
 export function getBearing(a, b) {
     const r = d => d * Math.PI / 180;
     const dLng = r(b[0] - a[0]);
@@ -17,26 +19,28 @@ export function getBearing(a, b) {
     return (Math.atan2(y, x) * 180 / Math.PI + 360) % 360;
 }
 
+// converts a bearing angle to a readable direction label
 export function bearingToLabel(deg) {
     const dirs = ['north', 'northeast', 'east', 'southeast', 'south', 'southwest', 'west', 'northwest'];
     return dirs[Math.round(deg / 45) % 8];
 }
 
+// groups a coordinate array into readable turn-by-turn steps
 export function deriveSteps(coords) {
     if (!coords || coords.length < 2) return [];
     const steps = [];
-    let accumulated  = 0;
+    let accumulated = 0;
     let groupBearing = getBearing(coords[0], coords[1]);
 
     for (let i = 1; i < coords.length; i++) {
-        const dist    = haversineM(coords[i - 1], coords[i]);
+        const dist = haversineM(coords[i - 1], coords[i]);
         const bearing = i < coords.length - 1 ? getBearing(coords[i - 1], coords[i]) : groupBearing;
-        const diff    = Math.abs(bearing - groupBearing);
-        const turn    = diff > 180 ? 360 - diff : diff;
+        const diff = Math.abs(bearing - groupBearing);
+        const turn = diff > 180 ? 360 - diff : diff;
 
         if (turn > 28 && accumulated > 8) {
             steps.push({ metres: Math.round(accumulated), dir: bearingToLabel(groupBearing) });
-            accumulated  = dist;
+            accumulated = dist;
             groupBearing = bearing;
         } else {
             accumulated += dist;
@@ -69,30 +73,32 @@ export function snapToNearestBuilding(userCoords, buildings) {
     return nearest;
 }
 
+// builds a weighted adjacency list from the campus edge/node data
 export function buildAdjacency(edges, nodes) {
-    const graph   = {};
+    const graph = {};
     const nodeMap = Object.fromEntries(nodes.map(n => [n.id, n]));
     for (const edge of edges) {
         if (!graph[edge.from]) graph[edge.from] = [];
-        if (!graph[edge.to])   graph[edge.to]   = [];
-        const nodeA  = nodeMap[edge.from];
-        const nodeB  = nodeMap[edge.to];
+        if (!graph[edge.to]) graph[edge.to] = [];
+        const nodeA = nodeMap[edge.from];
+        const nodeB = nodeMap[edge.to];
         const weight = nodeA && nodeB ? haversineM([nodeA.lng, nodeA.lat], [nodeB.lng, nodeB.lat]) : 1;
-        graph[edge.from].push({ target: edge.to,   weight });
-        graph[edge.to].push(  { target: edge.from, weight });
+        graph[edge.from].push({ target: edge.to, weight });
+        graph[edge.to].push({ target: edge.from, weight });
     }
     return graph;
 }
 
+// shortest path between two node IDs using Dijkstra on the campus graph
 export function findPathDijkstra(startId, endId, edges, nodes) {
-    const graph     = buildAdjacency(edges, nodes);
+    const graph = buildAdjacency(edges, nodes);
     const distances = {};
-    const previous  = {};
+    const previous = {};
     const unvisited = new Set();
 
     for (const edge of edges) {
         distances[edge.from] = Infinity;
-        distances[edge.to]   = Infinity;
+        distances[edge.to] = Infinity;
         unvisited.add(edge.from);
         unvisited.add(edge.to);
     }
@@ -110,7 +116,7 @@ export function findPathDijkstra(startId, endId, edges, nodes) {
             const alt = distances[current] + neighbor.weight;
             if (alt < distances[neighbor.target]) {
                 distances[neighbor.target] = alt;
-                previous[neighbor.target]  = current;
+                previous[neighbor.target] = current;
             }
         }
     }
@@ -134,7 +140,7 @@ export function routeBetweenNodeIds(startNodeId, endNodeId, campusNodes, campusE
         return { error: 'No graph path found between node ids.' };
     }
     const nodeMap = Object.fromEntries(campusNodes.map(n => [n.id, n]));
-    const coords  = pathIds.map(id => {
+    const coords = pathIds.map(id => {
         const node = nodeMap[id];
         if (!node) throw new Error(`Node "${id}" was referenced but not found in campusNodes.`);
         return [node.lng, node.lat];
@@ -142,6 +148,7 @@ export function routeBetweenNodeIds(startNodeId, endNodeId, campusNodes, campusE
     return { coords, pathIds };
 }
 
+// fetches a walking route from the Mapbox Directions API for off-campus segments
 export async function fetchMapboxRoute(startCoords, endCoords) {
     const token = process.env.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN;
     if (!token) return { error: 'Missing Mapbox access token.' };
@@ -164,6 +171,7 @@ export async function fetchMapboxRoute(startCoords, endCoords) {
     }
 }
 
+// for a hybrid route, Mapbox walking to the nearest campus entry, then campus graph to the destination
 export async function buildHybridRouteFromCoordsToCampus(startCoords, endLocation, campusNodes, campusEdges, locationNodeMap, campusEntryNodeIds) {
     const endNodeId = locationNodeMap[toLocationMapKey(endLocation.id)];
     if (!endNodeId) {
@@ -175,13 +183,13 @@ export async function buildHybridRouteFromCoordsToCampus(startCoords, endLocatio
     for (const entryNodeId of campusEntryNodeIds) {
         const entryNode = campusNodes.find(n => n.id === entryNodeId);
         if (!entryNode) continue;
-        const entryCoords  = [entryNode.lng, entryNode.lat];
-        const mapboxPart   = await fetchMapboxRoute(startCoords, entryCoords);
+        const entryCoords = [entryNode.lng, entryNode.lat];
+        const mapboxPart = await fetchMapboxRoute(startCoords, entryCoords);
         if (mapboxPart.error) continue;
-        const campusPart   = routeBetweenNodeIds(entryNodeId, endNodeId, campusNodes, campusEdges);
+        const campusPart = routeBetweenNodeIds(entryNodeId, endNodeId, campusNodes, campusEdges);
         if (campusPart.error) continue;
         const mergedCoords = [...mapboxPart.coords, ...campusPart.coords.slice(1)];
-        const totalMetres  = walkingStats(mergedCoords).metres;
+        const totalMetres = walkingStats(mergedCoords).metres;
         if (!bestOption || totalMetres < bestOption.totalMetres) {
             bestOption = { coords: mergedCoords, totalMetres, entryNodeId, campusPathIds: campusPart.pathIds };
         }
@@ -191,6 +199,7 @@ export async function buildHybridRouteFromCoordsToCampus(startCoords, endLocatio
     return { coords: bestOption.coords, entryNodeId: bestOption.entryNodeId, campusPathIds: bestOption.campusPathIds };
 }
 
+// for another hybrid route ,campus graph to the nearest exit node, then Mapbox walking to the off-campus destination
 export async function buildHybridRouteFromCampusToCoords(startLocation, endCoords, campusNodes, campusEdges, locationNodeMap, campusEntryNodeIds) {
     const startNodeId = locationNodeMap[toLocationMapKey(startLocation.id)];
     if (!startNodeId) {
@@ -202,13 +211,13 @@ export async function buildHybridRouteFromCampusToCoords(startLocation, endCoord
     for (const entryNodeId of campusEntryNodeIds) {
         const entryNode = campusNodes.find(n => n.id === entryNodeId);
         if (!entryNode) continue;
-        const entryCoords  = [entryNode.lng, entryNode.lat];
-        const campusPart   = routeBetweenNodeIds(startNodeId, entryNodeId, campusNodes, campusEdges);
+        const entryCoords = [entryNode.lng, entryNode.lat];
+        const campusPart = routeBetweenNodeIds(startNodeId, entryNodeId, campusNodes, campusEdges);
         if (campusPart.error) continue;
-        const mapboxPart   = await fetchMapboxRoute(entryCoords, endCoords);
+        const mapboxPart = await fetchMapboxRoute(entryCoords, endCoords);
         if (mapboxPart.error) continue;
         const mergedCoords = [...campusPart.coords, ...mapboxPart.coords.slice(1)];
-        const totalMetres  = walkingStats(mergedCoords).metres;
+        const totalMetres = walkingStats(mergedCoords).metres;
         if (!bestOption || totalMetres < bestOption.totalMetres) {
             bestOption = { coords: mergedCoords, totalMetres, entryNodeId, campusPathIds: campusPart.pathIds };
         }

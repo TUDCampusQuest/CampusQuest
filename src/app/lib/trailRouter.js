@@ -1,6 +1,6 @@
-// BFS-based trail path builder using the campus graph.
-// Self-contained — does not import from useNavigation or hooks.
+// Builds a coordinate path between trail stops using BFS on the campus graph, with haversine distance calc.
 
+// graph traversal — finds shortest node sequence between two IDs
 function findPathBFS(startId, endId, edges) {
   const adj = {};
   for (const e of edges) {
@@ -25,6 +25,7 @@ function findPathBFS(startId, endId, edges) {
   return null;
 }
 
+// snaps a coordinate to the nearest graph node by haversine distance
 function findNearestNodeId(lng, lat, nodes) {
   const R = 6371000;
   const r = d => d * Math.PI / 180;
@@ -41,6 +42,7 @@ function findNearestNodeId(lng, lat, nodes) {
   return best;
 }
 
+// walks each stop pair through the graph and stitches the segments into one coordinate array
 export function buildTrailPath(stops, campusGraph) {
   if (!stops || stops.length < 2) return [];
   if (!campusGraph) return stops.map(s => [s.lng, s.lat]);
@@ -57,10 +59,10 @@ export function buildTrailPath(stops, campusGraph) {
 
   for (let i = 0; i < stops.length - 1; i++) {
     const fromStop = stops[i];
-    const toStop   = stops[i + 1];
+    const toStop = stops[i + 1];
 
     const fromNodeId = findNearestNodeId(fromStop.lng, fromStop.lat, nodes);
-    const toNodeId   = findNearestNodeId(toStop.lng,   toStop.lat,   nodes);
+    const toNodeId = findNearestNodeId(toStop.lng, toStop.lat, nodes);
 
     if (!fromNodeId || !toNodeId) {
       if (fullPath.length === 0) fullPath.push([fromStop.lng, fromStop.lat]);
@@ -88,6 +90,7 @@ export function buildTrailPath(stops, campusGraph) {
   return fullPath;
 }
 
+// sums haversine distances across the full path and returns total metres
 export function calcTrailDistance(path) {
   const R = 6371000;
   const r = d => d * Math.PI / 180;

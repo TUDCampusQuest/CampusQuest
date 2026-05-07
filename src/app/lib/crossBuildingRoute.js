@@ -4,6 +4,7 @@ import { buildIndoorRoute } from './indoorRouter';
 import { haversineM } from './routeUtils';
 import { GRAPH_NODE_PATCHES, GRAPH_EDGE_PATCHES, LOCATION_NODE_OVERRIDES } from '../data/graphPatches';
 
+// BFS across the outdoor campus graph to connect the two building nodes
 function findPathBFS(startId, endId, edges) {
     const adj = {};
     for (const e of edges) {
@@ -28,6 +29,7 @@ function findPathBFS(startId, endId, edges) {
     return null;
 }
 
+// finds a ground-floor entrance or circulation room to use as the indoor start point
 function findStartRoomForBuilding(buildingId, roomsFeatures) {
     const candidates = roomsFeatures.filter(f => {
         const p = f.properties;
@@ -50,6 +52,7 @@ function findStartRoomForBuilding(buildingId, roomsFeatures) {
     ) ?? null;
 }
 
+// stitches the outdoor graph path and destination indoor leg into one full route
 export async function buildCrossBuildingRoute(startFeature, destFeature, stairs, rooms, campusGraph) {
     const sp = startFeature.properties;
     const ep = destFeature.properties;

@@ -1,4 +1,4 @@
-// Looks up human-readable room names and type labels from the room name map.
+// Looks up readable room names and type labels from the room name map.
 export function getRoomDisplayName(roomCode, roomNameMap) {
     if (!roomNameMap || !roomCode) return roomCode;
     const entry = roomNameMap[roomCode];

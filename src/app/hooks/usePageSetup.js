@@ -18,10 +18,12 @@ export default function usePageSetup({
 }) {
     const searchParams = useSearchParams();
 
+    // restore staff session from sessionStorage
     useEffect(() => {
         if (sessionStorage.getItem('cq_staff') === 'true') setIsAdmin(true);
     }, [setIsAdmin]);
 
+    // watch device GPS and push updates to state
     useEffect(() => {
         if (typeof navigator === 'undefined' || !navigator.geolocation) return;
         let id = null;
@@ -43,6 +45,7 @@ export default function usePageSetup({
         };
     }, [setGpsLocation]);
 
+    // load a trail that was saved to localStorage from the trails page
     useEffect(() => {
         const storedView  = localStorage.getItem('activeTrail');
         const storedStart = localStorage.getItem('startTrail');
@@ -64,6 +67,7 @@ export default function usePageSetup({
         }
     }, [setActiveTrail, setCurrentTrailStopIndex]);
 
+    // for deeplinks select a room if selectedRoomId is in the URL
     useEffect(() => {
         const roomId = searchParams.get('selectedRoomId');
         if (!roomId || !rooms?.features) return;
@@ -71,6 +75,7 @@ export default function usePageSetup({
         if (feature) handleRoomSelect(feature);
     }, [searchParams, rooms, handleRoomSelect]);
 
+    // start outdoor navigation if navTo/lng/lat are in the URL
     useEffect(() => {
         const navTo = searchParams.get('navTo');
         const lng   = parseFloat(searchParams.get('lng'));
@@ -88,7 +93,6 @@ export default function usePageSetup({
                 console.warn('flyTo navTo suppressed:', err?.message || err);
             }
         }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [searchParams]);
 
     const fetchTrails = useCallback(async () => {

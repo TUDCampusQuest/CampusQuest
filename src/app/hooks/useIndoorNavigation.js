@@ -9,6 +9,7 @@ import { buildCrossBuildingRoute } from '../lib/crossBuildingRoute';
 const R = 6371000;
 const MAX_SNAP_METRES = 300;
 
+// finds a ground-floor entrance/lobby room to snap GPS to as the indoor start
 function findStartRoomForBuilding(buildingId, roomsFeatures) {
     const candidates = roomsFeatures.filter(f => {
         const p = f.properties;
@@ -109,6 +110,7 @@ export function useIndoorNavigation({
         return () => clearTimeout(t);
     }, [arrivedMessage]);
 
+    // builds the indoor route, handling cross-building, above-ground exit, and GPS snap
     const handleNavigateTo = useCallback(async (destinationFeature, startFeatureOverride = null) => {
         if (!rooms?.features) return;
 
@@ -208,12 +210,13 @@ export function useIndoorNavigation({
         }
     }, [gpsLocation, rooms, stairs, campusGraph, mapRef, onHighlightRoom, onClearSelectedRoom, onOutdoorFallback, onFloorChange]);
 
+    // clears the active route and resets all nav state
     const handleCancelNavigation = useCallback(() => {
         setActiveRoute(null);
         setActiveDestination(null);
         setCurrentStepIndex(0);
         setArrivedMessage(false);
-        onHighlightRoom?.(null);
+        onHighlightRoom?.(null); 
     }, [onHighlightRoom]);
 
     return {

@@ -4,8 +4,8 @@ import { useState } from 'react';
 
 export default function useLocationSelection({ mapRef, setSearchOpen, setQuery, buildings = [], buildingLookup = {} }) {
     const [selectedLocation, setSelectedLocation] = useState(null);
-    const [activeBuilding,   setActiveBuilding]   = useState(null);
-    const [activeFloorName,  setActiveFloorName]  = useState(null);
+    const [activeBuilding, setActiveBuilding] = useState(null);
+    const [activeFloorName, setActiveFloorName] = useState(null);
 
     const matchBuildingFromLocation = (loc) => {
         if (!loc) return null;
@@ -57,8 +57,8 @@ export default function useLocationSelection({ mapRef, setSearchOpen, setQuery, 
 
     return {
         selectedLocation, setSelectedLocation,
-        activeBuilding,   setActiveBuilding,
-        activeFloorName,  setActiveFloorName,
+        activeBuilding, setActiveBuilding,
+        activeFloorName, setActiveFloorName,
         handleSelectLocation,
         matchBuildingFromLocation,
     };

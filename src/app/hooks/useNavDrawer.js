@@ -3,13 +3,14 @@
 import { useCallback } from 'react';
 import { locations } from '../data/locations';
 
+// converts a room feature into a nav-compatible location object for outdoor routing
 function buildOutdoorFallback(destFeature, startFeature = null) {
     const dp = destFeature?.properties;
     if (!dp || dp.centerLng == null || dp.centerLat == null) return null;
 
     const navDest = {
-        id:          `room-${dp.poiId}`,
-        name:        dp.name || dp.roomCode || dp.buildingName || 'Destination',
+        id: `room-${dp.poiId}`,
+        name: dp.name || dp.roomCode || dp.buildingName || 'Destination',
         coordinates: [dp.centerLng, dp.centerLat],
     };
 
@@ -18,8 +19,8 @@ function buildOutdoorFallback(destFeature, startFeature = null) {
         const sp = startFeature.properties;
         if (sp?.centerLng != null && sp?.centerLat != null) {
             navStart = {
-                id:          `room-${sp.poiId}`,
-                name:        sp.name || sp.roomCode || sp.buildingName || 'Start',
+                id: `room-${sp.poiId}`,
+                name: sp.name || sp.roomCode || sp.buildingName || 'Start',
                 coordinates: [sp.centerLng, sp.centerLat],
             };
         }
@@ -41,6 +42,7 @@ export default function useNavDrawer({
     setNavPointA,
     setNavPointB,
 }) {
+    // routes to indoor nav for room destinations, outdoor nav for everything else
     const handleNavDrawerNavigate = useCallback((pointA, pointB) => {
         const toBuildingLoc = (pt) => {
             if (!pt) return null;
@@ -57,8 +59,6 @@ export default function useNavDrawer({
         };
 
         if (pointB.type === 'room') {
-            // Any start → room always uses indoor routing.
-            // The indoor router handles GPS snap, building entry, and cross-floor stairs.
             setIsNavigating(false);
             setNavTarget(null);
             setNavStartOverride(null);

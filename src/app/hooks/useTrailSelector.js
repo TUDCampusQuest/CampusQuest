@@ -12,6 +12,7 @@ export function useTrailSelector({ captureMode, setCapturedPoints, mapRef }) {
     const [s3Trails,    setS3Trails]    = useState([]);
     const [readyToShow, setReadyToShow] = useState(false);
 
+    // fetch trails from S3 on mount
     useEffect(() => {
         fetch('/api/trails', { cache: 'no-store' })
             .then(r => r.json())
@@ -25,6 +26,7 @@ export function useTrailSelector({ captureMode, setCapturedPoints, mapRef }) {
         return () => clearTimeout(t);
     }, [s3Trails]);
 
+    // merge hardcoded trailPaths with any S3-saved trails
     const allTrailCoords = useMemo(() => {
         const map = {};
         Object.entries(trailPaths).forEach(([key, coords]) => { map[key] = coords; });
@@ -62,6 +64,7 @@ export function useTrailSelector({ captureMode, setCapturedPoints, mapRef }) {
         } catch (err) { console.error('Bounds error:', err); }
     }, [selectedTrailCoords, mapRef]);
 
+    // capture map clicks as trail points when the designer is recording
     const onMapClick = useCallback((e) => {
         if (!captureMode) return;
         const { lng, lat } = e.lngLat;

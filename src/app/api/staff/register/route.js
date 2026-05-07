@@ -1,9 +1,9 @@
+// Creates a new staff account in DynamoDB after validating fields and checking for duplicates.
 import { GetCommand, PutCommand } from "@aws-sdk/lib-dynamodb";
 import bcrypt from "bcryptjs";
 import { db, STAFF_TABLE } from "../../../../lib/dynamo";
 
 export const dynamic = "force-dynamic";
-
 
 export async function POST(request) {
     let body;
@@ -40,10 +40,10 @@ export async function POST(request) {
         await db.send(new PutCommand({
             TableName: STAFF_TABLE,
             Item: {
-                email:        normalisedEmail,
-                name:         name.trim(),
+                email: normalisedEmail,
+                name: name.trim(),
                 passwordHash,
-                createdAt:    new Date().toISOString(),
+                createdAt: new Date().toISOString(),
             },
         }));
 

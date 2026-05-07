@@ -59,6 +59,7 @@ function floorZ(props) {
     return isNaN(n) ? 1 : n + 1;
 }
 
+// routes between two rooms, handling same-floor walks and stair changes between floors
 export function buildIndoorRoute(startFeature, endFeature, stairsGeoJSON) {
     const sp       = startFeature.properties;
     const ep       = endFeature.properties;
@@ -112,6 +113,7 @@ export function buildIndoorRoute(startFeature, endFeature, stairsGeoJSON) {
     return { steps, path, totalMetres, totalMinutes, requiresStairs };
 }
 
+// produces a stair-descent + exit sequence when the user is above the ground floor
 export function buildExitBuildingSteps(startFeature, stairsGeoJSON, hasElevator = false) {
     const sp       = startFeature.properties;
     const startC   = getCentroid(startFeature);

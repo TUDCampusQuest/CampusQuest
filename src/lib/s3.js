@@ -1,3 +1,4 @@
+// S3 client helpers for reading and writing JSON files in the app's bucket.
 import { S3Client, GetObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 
 const s3Client = new S3Client({

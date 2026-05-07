@@ -1,3 +1,4 @@
+// Verifies staff email and password against DynamoDB and returns ok/name on success.
 import { GetCommand } from "@aws-sdk/lib-dynamodb";
 import bcrypt from "bcryptjs";
 import { db, STAFF_TABLE } from "../../../lib/dynamo";
@@ -30,17 +31,13 @@ export async function POST(request) {
             return Response.json({ ok: false, error: "Incorrect email or password." }, { status: 401 });
         }
 
-
         const valid = await bcrypt.compare(password, staff.passwordHash);
 
         if (!valid) {
             return Response.json({ ok: false, error: "Incorrect email or password." }, { status: 401 });
         }
 
-        return Response.json({
-            ok:   true,
-            name: staff.name ?? "Staff",
-        }, { status: 200 });
+        return Response.json({ ok: true, name: staff.name ?? "Staff" }, { status: 200 });
 
     } catch (err) {
         console.error("Auth error:", err);
