@@ -4,6 +4,7 @@ import { getRoomDisplayName, getRoomTypeName } from '../lib/roomUtils';
 import GlassCard from './ui/GlassCard';
 import styles from '../styles/RoomSheet.module.css';
 
+// returns background and text colour for the room type badge based on its typeName
 function getRoomTypeBadgeStyle(typeName) {
     const t = (typeName || '').toLowerCase();
     if (t.includes('lecture') || t.includes('theatre') || t.includes('auditorium'))
@@ -24,9 +25,9 @@ export default function RoomSheet({ selectedRoom, onClose, onNavigateTo, onSetAs
     const p = selectedRoom.properties;
 
     const displayName = getRoomDisplayName(p.roomCode, roomNameMap) || p.roomCode;
-    const typeName    = getRoomTypeName(p.roomCode, roomNameMap) || p.typeName || '';
-    const showCode    = displayName !== p.roomCode;
-    const badgeStyle  = getRoomTypeBadgeStyle(typeName);
+    const typeName = getRoomTypeName(p.roomCode, roomNameMap) || p.typeName || '';
+    const showCode = displayName !== p.roomCode;
+    const badgeStyle = getRoomTypeBadgeStyle(typeName);
 
     return (
         <GlassCard

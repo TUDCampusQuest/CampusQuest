@@ -13,22 +13,24 @@ export default function NavInstructions({
     onChangeStart, activeRoute,
     roomNameMap, mapRef,
 }) {
-    const [expanded,         setExpanded]        = useState(false);
+    const [expanded, setExpanded] = useState(false);
     const [outdoorStepIndex, setOutdoorStepIndex] = useState(0);
-    const [indoorStepIndex,  setIndoorStepIndex]  = useState(0);
+    const [indoorStepIndex, setIndoorStepIndex] = useState(0);
 
-    const outdoorSteps      = useMemo(() => deriveSteps(routeCoords), [routeCoords]);
+    const outdoorSteps = useMemo(() => deriveSteps(routeCoords), [routeCoords]);
     const outdoorBendCoords = useMemo(() => buildStepBendCoords(outdoorSteps, routeCoords), [outdoorSteps, routeCoords]);
 
     useEffect(() => { setOutdoorStepIndex(0); setExpanded(false); }, [routeCoords]);
-    useEffect(() => { setIndoorStepIndex(0);  setExpanded(false); }, [activeRoute]);
+    useEffect(() => { setIndoorStepIndex(0); setExpanded(false); }, [activeRoute]);
 
+    // pans the map to a coordinate at a given zoom level
     const flyTo = useCallback((coord, zoom = 18) => {
         if (!coord || !mapRef?.current) return;
         try { mapRef.current.flyTo({ center: coord, zoom, duration: 900, pitch: 45 }); }
         catch (_) {}
     }, [mapRef]);
 
+    // step navigation handlers for outdoor and indoor instructions
     const handleOutdoorPrev = () => {
         const n = Math.max(0, outdoorStepIndex - 1);
         setOutdoorStepIndex(n); flyTo(outdoorBendCoords[n]);

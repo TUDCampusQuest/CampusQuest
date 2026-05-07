@@ -2,14 +2,14 @@
 // Slide-up drawer for picking a start point and destination, with room/location search and map-tap mode.
 import { useState, useMemo, useEffect } from 'react';
 import { Box, Drawer, TextField, Typography, Stack, IconButton, List, ListItem, ListItemText } from '@mui/material';
-import CloseIcon              from '@mui/icons-material/Close';
-import MeetingRoomIcon        from '@mui/icons-material/MeetingRoom';
-import NavigationIcon         from '@mui/icons-material/Navigation';
-import MyLocationIcon         from '@mui/icons-material/MyLocation';
-import SwapVertIcon           from '@mui/icons-material/SwapVert';
+import CloseIcon from '@mui/icons-material/Close';
+import MeetingRoomIcon from '@mui/icons-material/MeetingRoom';
+import NavigationIcon from '@mui/icons-material/Navigation';
+import MyLocationIcon from '@mui/icons-material/MyLocation';
+import SwapVertIcon from '@mui/icons-material/SwapVert';
 import RadioButtonCheckedIcon from '@mui/icons-material/RadioButtonChecked';
-import FmdGoodIcon            from '@mui/icons-material/FmdGood';
-import { isWithinCampus }     from '../lib/campusBounds';
+import FmdGoodIcon from '@mui/icons-material/FmdGood';
+import { isWithinCampus } from '../lib/campusBounds';
 
 const PURPLE = '#7C3AED';
 
@@ -21,8 +21,8 @@ export default function NavigationDrawer({
     onPickFromMap,
     onNavigate,
 }) {
-    const [activeField,          setActiveField]          = useState('B');
-    const [query,                setQuery]                = useState('');
+    const [activeField, setActiveField] = useState('B');
+    const [query, setQuery] = useState('');
     const [showOffCampusWarning, setShowOffCampusWarning] = useState(false);
 
     const gpsOnCampus = !!gpsLocation && isWithinCampus(gpsLocation.lng, gpsLocation.lat);
@@ -33,15 +33,16 @@ export default function NavigationDrawer({
         setQuery('');
     }, [open]);
 
+    // flat list of rooms and locations used for search results
     const roomIndex = useMemo(() => {
         if (!rooms?.features) return [];
         return rooms.features.map(f => {
             const p = f.properties;
             return {
-                key:     `r-${p.poiId}`,
-                type:    'room',
-                label:   p.name || p.roomCode || '',
-                sub:     `${p.buildingName ?? ''}${p.floorName ? ` · Floor ${p.floorName}` : ''}`,
+                key: `r-${p.poiId}`,
+                type: 'room',
+                label: p.name || p.roomCode || '',
+                sub: `${p.buildingName ?? ''}${p.floorName ? ` · Floor ${p.floorName}` : ''}`,
                 feature: f,
             };
         });
@@ -49,14 +50,15 @@ export default function NavigationDrawer({
 
     const locationIndex = useMemo(() =>
         (Array.isArray(locations) ? locations : []).map(loc => ({
-            key:   `l-${loc.id}`,
-            type:  'location',
+            key: `l-${loc.id}`,
+            type: 'location',
             label: loc.name || loc.id || '',
-            sub:   loc.id || '',
+            sub: loc.id || '',
             loc,
         }))
     , [locations]);
 
+    // filtered and sorted search results from both rooms and locations
     const results = useMemo(() => {
         const q = query.trim().toLowerCase();
         if (!q) return [];
@@ -83,6 +85,7 @@ export default function NavigationDrawer({
         return [...matchedRooms, ...matchedLocs];
     }, [roomIndex, locationIndex, query]);
 
+    // assigns selected item to whichever field is active, then advances focus
     const handleSelect = (item) => {
         const point = item.type === 'room'
             ? { type: 'room',     label: item.label, feature: item.feature }
@@ -96,6 +99,7 @@ export default function NavigationDrawer({
         setQuery('');
     };
 
+    // swaps the start and destination fields
     const handleSwap = () => {
         const tmp = pointA;
         onSetPointA(pointB ?? null);
@@ -104,6 +108,7 @@ export default function NavigationDrawer({
 
     const canNavigate = !!(pointA && pointB);
 
+    // renders an input field box for either the start or destination slot
     const fieldBox = (field, point, icon, placeholder) => (
         <Box
             onClick={() => { setActiveField(field); setQuery(''); }}
@@ -261,7 +266,7 @@ export default function NavigationDrawer({
                             />
                             {item.type === 'room'
                                 ? <MeetingRoomIcon sx={{ color: '#0ea5e9', fontSize: 18, flexShrink: 0 }} />
-                                : <NavigationIcon  sx={{ color: PURPLE,    fontSize: 18, flexShrink: 0 }} />}
+                                : <NavigationIcon sx={{ color: PURPLE, fontSize: 18, flexShrink: 0 }} />}
                         </ListItem>
                     ))}
                     {query.trim() && results.length === 0 && (

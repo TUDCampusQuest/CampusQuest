@@ -8,6 +8,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import DirectionsIcon from "@mui/icons-material/Directions";
 import { useTheme } from "../context/ThemeContext";
 
+// pill-shaped header button with icon and optional text label
 function HeaderBtn({ icon, label, onClick, tooltip }) {
     return (
         <Tooltip title={tooltip} placement="bottom">
@@ -46,6 +47,7 @@ function HeaderBtn({ icon, label, onClick, tooltip }) {
     );
 }
 
+// icon button that switches between light and dark mode
 function ThemeToggle() {
     const { isDark, toggleTheme } = useTheme();
     return (

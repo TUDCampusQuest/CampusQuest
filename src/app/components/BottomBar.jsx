@@ -3,14 +3,15 @@
 
 import { Box, Tooltip } from "@mui/material";
 import { useRouter } from "next/navigation";
-import SearchIcon        from "@mui/icons-material/Search";
+import SearchIcon from "@mui/icons-material/Search";
 import QrCodeScannerIcon from "@mui/icons-material/QrCodeScanner";
-import MyLocationIcon    from "@mui/icons-material/MyLocation";
-import ViewInArIcon      from "@mui/icons-material/ViewInAr";
-import DirectionsIcon    from "@mui/icons-material/Directions";
+import MyLocationIcon from "@mui/icons-material/MyLocation";
+import ViewInArIcon from "@mui/icons-material/ViewInAr";
+import DirectionsIcon from "@mui/icons-material/Directions";
 
 const PURPLE = "#7C3AED";
 
+// single pressable nav button with an icon, label, and active highlight
 function NavBtn({ icon, label, onClick, active, tooltip }) {
     return (
         <Tooltip title={tooltip} placement="top" arrow>

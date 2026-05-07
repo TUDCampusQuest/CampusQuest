@@ -4,20 +4,20 @@ import Map, { Marker, Popup } from 'react-map-gl';
 import 'mapbox-gl/dist/mapbox-gl.css';
 import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from 'react';
 
-import { useGPS }             from '../hooks/useGPS';
-import { useNavigation }      from '../hooks/useNavigation';
-import { useTrailSelector }   from '../hooks/useTrailSelector';
+import { useGPS } from '../hooks/useGPS';
+import { useNavigation } from '../hooks/useNavigation';
+import { useTrailSelector } from '../hooks/useTrailSelector';
 import { useBuildingMarkers } from '../hooks/useBuildingMarkers';
-import MapLayers              from './MapLayers';
-import NavInstructions        from './NavInstructions';
-import TrailCaptureOverlay    from './TrailCaptureOverlay';
-import TrailsPanel            from './TrailsPanel';
-import IndoorOverlay          from './IndoorOverlay';
-import { useTheme }           from '../context/ThemeContext';
+import MapLayers from './MapLayers';
+import NavInstructions from './NavInstructions';
+import TrailCaptureOverlay from './TrailCaptureOverlay';
+import TrailsPanel from './TrailsPanel';
+import IndoorOverlay from './IndoorOverlay';
+import { useTheme } from '../context/ThemeContext';
 
 const STYLE_LIGHT = process.env.NEXT_PUBLIC_MAPBOX_STYLE || 'mapbox://styles/mapbox/light-v11';
-const STYLE_DARK  = 'mapbox://styles/mapbox/dark-v11';
-const STYLE_3D    = 'mapbox://styles/mapbox/standard';
+const STYLE_DARK = 'mapbox://styles/mapbox/dark-v11';
+const STYLE_3D = 'mapbox://styles/mapbox/standard';
 
 const CAMPUS_BOUNDS = [[-6.395, 53.398], [-6.360, 53.415]];
 
@@ -37,12 +37,12 @@ function MapViewInner({
     const { isDark } = useTheme();
     const flatStyle = isDark ? STYLE_DARK : STYLE_LIGHT;
 
-    const [selectedLoc,    setSelectedLoc]    = useState(null);
-    const [captureMode,    setCaptureMode]    = useState(false);
+    const [selectedLoc, setSelectedLoc] = useState(null);
+    const [captureMode, setCaptureMode] = useState(false);
     const [capturedPoints, setCapturedPoints] = useState([]);
-    const [showCaptureUI,  setShowCaptureUI]  = useState(false);
-    const [styleLoaded,    setStyleLoaded]    = useState(false);
-    const [prevIs3D,       setPrevIs3D]       = useState(is3D);
+    const [showCaptureUI, setShowCaptureUI] = useState(false);
+    const [styleLoaded, setStyleLoaded] = useState(false);
+    const [prevIs3D, setPrevIs3D] = useState(is3D);
 
     if (prevIs3D !== is3D) {
         setPrevIs3D(is3D);
@@ -65,11 +65,12 @@ function MapViewInner({
         onMapClick, trailGeoJSON, routeGeoJSON, capturedGeoJSON, trailPaths,
     } = useTrailSelector({ captureMode, setCapturedPoints, mapRef });
 
-    const pickModeRef    = useRef(pickMode);
+    const pickModeRef = useRef(pickMode);
     const onPickPointRef = useRef(onPickPoint);
-    pickModeRef.current    = pickMode;
+    pickModeRef.current = pickMode;
     onPickPointRef.current = onPickPoint;
 
+    // routes location taps to pick-mode, route-start selection, or the normal select handler
     const handleLocationSelect = useCallback((loc) => {
         if (pickModeRef.current) {
             onPickPointRef.current?.({ type: 'location', loc });
@@ -88,6 +89,7 @@ function MapViewInner({
 
     useBuildingMarkers({ map: mapRef.current?.getMap?.(), styleLoaded, onLocationSelect: handleLocationSelect, buildingA, buildingB });
 
+    // marks the style as loaded so layers can be added
     const handleMapLoad = useCallback((e) => {
         setStyleLoaded(true);
         if (onMapLoad) onMapLoad(e.target);
@@ -100,6 +102,7 @@ function MapViewInner({
     const lastClickTimeRef    = useRef(0);
     const lastClickFeatureRef = useRef(null);
 
+    // handles map taps — single tap selects a room, double tap navigates to it
     const handleClick = useCallback((e) => {
         onMapClick(e);
 
@@ -116,22 +119,22 @@ function MapViewInner({
             return;
         }
 
-        const now             = Date.now();
-        const delta           = now - lastClickTimeRef.current;
+        const now = Date.now();
+        const delta = now - lastClickTimeRef.current;
         const clickedFeatureId = features?.[0]?.properties?.poiId ?? null;
 
         if (features?.length > 0 && delta < 600 && lastClickFeatureRef.current === clickedFeatureId) {
             const roomFeature = rooms?.features?.find(f => f.properties.poiId === features[0].properties.poiId);
             if (roomFeature && onRoomNavigate) onRoomNavigate(roomFeature);
-            lastClickTimeRef.current    = 0;
+            lastClickTimeRef.current = 0;
             lastClickFeatureRef.current = null;
         } else if (features?.length > 0) {
             const roomFeature = rooms?.features?.find(f => f.properties.poiId === features[0].properties.poiId);
             if (roomFeature && onRoomSelect) onRoomSelect(roomFeature);
-            lastClickTimeRef.current    = now;
+            lastClickTimeRef.current = now;
             lastClickFeatureRef.current = clickedFeatureId;
         } else {
-            lastClickTimeRef.current    = 0;
+            lastClickTimeRef.current = 0;
             lastClickFeatureRef.current = null;
             onMapTap?.(e.lngLat);
         }
@@ -149,6 +152,7 @@ function MapViewInner({
 
     const activeCursor = (captureMode || pickMode) ? 'crosshair' : 'inherit';
 
+    // GeoJSON for the active trail line drawn on the map
     const trailPathGeoJSON = useMemo(() => {
         if (!activeTrail?.computedPath?.length) return null;
         return {

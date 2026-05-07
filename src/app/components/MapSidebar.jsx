@@ -2,12 +2,12 @@
 // Right-side map controls column (zoom, 3D, recenter) and floor switcher buttons.
 
 import { Tooltip, Box } from "@mui/material";
-import AddIcon        from "@mui/icons-material/Add";
-import RemoveIcon     from "@mui/icons-material/Remove";
-import ViewInArIcon   from "@mui/icons-material/ViewInAr";
+import AddIcon from "@mui/icons-material/Add";
+import RemoveIcon from "@mui/icons-material/Remove";
+import ViewInArIcon from "@mui/icons-material/ViewInAr";
 import MyLocationIcon from "@mui/icons-material/MyLocation";
 
-const PURPLE   = "#7C3AED";
+const PURPLE = "#7C3AED";
 const PURPLE_BG = "rgba(124,58,237,0.12)";
 
 const FLOOR_NAMES = ["2", "1", "G"];
@@ -48,6 +48,7 @@ const labelStyle = {
     color: "inherit",
 };
 
+// square icon button with hover highlight and optional label
 function SqBtn({ icon, label, onClick, active, tooltip }) {
     return (
         <Tooltip title={tooltip} placement="left" arrow>
@@ -76,6 +77,7 @@ function SqBtn({ icon, label, onClick, active, tooltip }) {
     );
 }
 
+// floor selector button - same shape as SqButton but shows a floor name label
 function FloorSqBtn({ name, active, onClick }) {
     return (
         <Tooltip title={`Floor ${name}`} placement="left" arrow>
@@ -157,7 +159,7 @@ export default function MapSidebar({
                 </Box>
             </div>
 
-            {/* Floor switcher column — always visible, z-index 22 keeps it above LocationSheet (19) */}
+            {/* Floor switcher column - always visible, z-index 22 keeps it above LocationSheet */}
             <div style={{ position: "absolute", right: 12, bottom: 160, display: "flex", flexDirection: "column", gap: 8, zIndex: 22 }}>
                 {FLOOR_NAMES.map(name => (
                     <FloorSqBtn

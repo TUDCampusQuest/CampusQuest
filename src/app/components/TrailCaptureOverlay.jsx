@@ -6,12 +6,12 @@ import { useRouter } from 'next/navigation';
 import styles from '../styles/TrailCaptureOverlay.module.css';
 
 const CATEGORIES = [
-    { value: 'general',  label: '🗺️ General' },
-    { value: 'nature',   label: '🌿 Nature' },
-    { value: 'tech',     label: '💻 Tech' },
+    { value: 'general', label: '🗺️ General' },
+    { value: 'nature', label: '🌿 Nature' },
+    { value: 'tech', label: '💻 Tech' },
     { value: 'academic', label: '🎓 Academic' },
-    { value: 'social',   label: '☕ Social' },
-    { value: 'fitness',  label: '🏃 Fitness' },
+    { value: 'social', label: '☕ Social' },
+    { value: 'fitness', label: '🏃 Fitness' },
 ];
 
 const emptyForm = { name: '', description: '', category: 'general' };
@@ -35,6 +35,7 @@ export default function TrailCaptureOverlay({
     const [trailsLoading, setTrailsLoading] = useState(false);
     const [showTrailsList, setShowTrailsList] = useState(false);
 
+    // loads existing trails from S3 to populate the trails list panel
     const fetchSavedTrails = useCallback(async () => {
         setTrailsLoading(true);
         try {
@@ -65,6 +66,7 @@ export default function TrailCaptureOverlay({
         setShowSaveModal(true);
     };
 
+    // validates the form and POSTs the trail to the API, then redirects on success
     const handleSave = async () => {
         if (!formData.name.trim()) {
             setSaveError('Please enter a trail name.');

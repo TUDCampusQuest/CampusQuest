@@ -14,6 +14,7 @@ import styles from '../styles/SearchDrawer.module.css';
 
 const FILTER_TABS = ['All', 'Lectures', 'Labs', 'Toilets', 'Stairs'];
 
+// maps a room's typeName/kind to one of the filter tab categories
 function getRoomCategory(props) {
     const type = (props.typeName || '').toLowerCase().trim();
     const kind = (props.kind || '').toLowerCase().trim();
@@ -39,27 +40,29 @@ export default function SearchDrawer({
 }) {
     const [activeFilter, setActiveFilter] = useState('All');
 
+    // flat searchable index built from room features and their display names
     const roomIndex = useMemo(() => {
         if (!rooms?.features) return [];
         return rooms.features.map(f => {
             const p = f.properties;
             const displayName = getRoomDisplayName(p.roomCode, roomNameMap) || p.name || p.roomCode || '';
             return {
-                poiId:        p.poiId,
-                roomCode:     p.roomCode     || '',
-                name:         p.name         || '',
+                poiId: p.poiId,
+                roomCode: p.roomCode || '',
+                name: p.name || '',
                 displayName,
                 buildingName: p.buildingName || '',
-                floorName:    p.floorName    || '',
-                centerLng:    p.centerLng,
-                centerLat:    p.centerLat,
-                floorId:      p.floorId,
-                typeName:     p.typeName     || '',
-                category:     getRoomCategory(p),
+                floorName: p.floorName || '',
+                centerLng: p.centerLng,
+                centerLat: p.centerLat,
+                floorId: p.floorId,
+                typeName: p.typeName || '',
+                category: getRoomCategory(p),
             };
         });
     }, [rooms, roomNameMap]);
 
+    // rooms matching the current query text and active category filter
     const filteredRooms = useMemo(() => {
         const q = query.toLowerCase().trim();
         const hasQuery = q.length > 0;
@@ -79,6 +82,7 @@ export default function SearchDrawer({
         });
     }, [roomIndex, query, activeFilter]);
 
+    // closes the drawer and flies the map to the selected room
     const handleRoomClick = (room) => {
         const feature = rooms?.features?.find(f => f.properties.poiId === room.poiId);
         if (!feature) return;
