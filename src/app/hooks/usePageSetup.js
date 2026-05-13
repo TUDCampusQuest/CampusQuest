@@ -67,7 +67,7 @@ export default function usePageSetup({
         }
     }, [setActiveTrail, setCurrentTrailStopIndex]);
 
-    // for deeplinks select a room if selectedRoomId is in the URL
+    // select a room if selectedRoomId is in the URL (deep link)
     useEffect(() => {
         const roomId = searchParams.get('selectedRoomId');
         if (!roomId || !rooms?.features) return;

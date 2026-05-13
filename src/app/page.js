@@ -1,31 +1,32 @@
 'use client';
-// Root page — wires together the map, navigation, search, indoor routing, and all sheet/drawer UI.
+// Root page - wires together the map, navigation, search, indoor routing, and all UI panels.
 
 import { useState, useEffect, useRef, useCallback, useMemo, Suspense } from "react";
 import { Box } from "@mui/material";
 import dynamic from "next/dynamic";
 
-import { locations }         from "./data/locations";
-import AppHeader             from "./components/AppHeader";
-import MapSidebar            from "./components/MapSidebar";
-import BottomBar             from "./components/BottomBar";
-import NavHUD                from "./components/NavHUD";
-import LocationSheet         from "./components/LocationSheet";
-import RoomSheet             from "./components/RoomSheet";
-import SearchDrawer          from "./components/SearchDrawer";
-import StaffAuthModal        from "./components/StaffAuthModal";
-import OnboardingTour        from "./components/OnboardingTour";
-import NavigationDrawer      from "./components/NavigationDrawer";
-import TrailStopCard         from "./components/TrailStopCard";
+import { locations } from "./data/locations";
+import AppHeader from "./components/AppHeader";
+import MapSidebar from "./components/MapSidebar";
+import BottomBar from "./components/BottomBar";
+import NavHUD from "./components/NavHUD";
+import LocationSheet from "./components/LocationSheet";
+import RoomSheet from "./components/RoomSheet";
+import SearchDrawer from "./components/SearchDrawer";
+import StaffAuthModal from "./components/StaffAuthModal";
+import OnboardingTour from "./components/OnboardingTour";
+import NavigationDrawer from "./components/NavigationDrawer";
+import TrailStopCard from "./components/TrailStopCard";
 import { ArrivedToast, PickFromMapBanner, StairsPrompt } from "./components/MapOverlays";
-import useIndoorData         from "./hooks/useIndoorData";
+import useIndoorData from "./hooks/useIndoorData";
 import { useIndoorNavigation } from "./hooks/useIndoorNavigation";
-import useMapControls        from "./hooks/useMapControls";
-import useLocationSelection  from "./hooks/useLocationSelection";
+import useMapControls from "./hooks/useMapControls";
+import useLocationSelection from "./hooks/useLocationSelection";
 import useNavDrawer, { buildOutdoorFallback } from "./hooks/useNavDrawer";
-import usePageSetup          from "./hooks/usePageSetup";
-import { isWithinCampus }    from "./lib/campusBounds";
+import usePageSetup from "./hooks/usePageSetup";
+import { isWithinCampus } from "./lib/campusBounds";
 
+// Mapbox can't run on the server so MapView is loaded client-side only
 const MapView = dynamic(() => import("./components/MapView"), {
     ssr: false,
     loading: () => <Box sx={{ height: "100dvh", width: "100vw", bgcolor: "#f1f5f9" }} />,
@@ -37,30 +38,30 @@ function Home() {
     const { rooms, stairs, floorplans, campusGraph, roomNameMap,
             buildings, buildingLookup, loading, error } = useIndoorData();
 
-    const [isMounted,    setIsMounted]    = useState(false);
-    const [searchOpen,   setSearchOpen]   = useState(false);
-    const [query,        setQuery]        = useState("");
-    const [authOpen,     setAuthOpen]     = useState(false);
-    const [isAdmin,      setIsAdmin]      = useState(false);
+    const [isMounted, setIsMounted] = useState(false);
+    const [searchOpen, setSearchOpen] = useState(false);
+    const [query, setQuery] = useState("");
+    const [authOpen, setAuthOpen] = useState(false);
+    const [isAdmin, setIsAdmin] = useState(false);
 
-    const [navTarget,         setNavTarget]         = useState(null);
-    const [isNavigating,      setIsNavigating]      = useState(false);
-    const [gpsLocation,       setGpsLocation]       = useState(null);
+    const [navTarget, setNavTarget] = useState(null);
+    const [isNavigating, setIsNavigating] = useState(false);
+    const [gpsLocation, setGpsLocation] = useState(null);
     const [highlightedRoomId, setHighlightedRoomId] = useState(null);
-    const [selectedRoom,      setSelectedRoom]      = useState(null);
+    const [selectedRoom, setSelectedRoom] = useState(null);
 
-    const [navDrawerOpen,       setNavDrawerOpen]    = useState(false);
-    const [navPointA,           setNavPointA]        = useState(null);
-    const [navPointB,           setNavPointB]        = useState(null);
+    const [navDrawerOpen, setNavDrawerOpen] = useState(false);
+    const [navPointA, setNavPointA] = useState(null);
+    const [navPointB, setNavPointB] = useState(null);
     const [navStartOverrideRaw, setNavStartOverride] = useState(null);
-    const [showStairsPrompt,    setShowStairsPrompt] = useState(false);
-    const [pickFromMapField,    setPickFromMapField] = useState(null);
+    const [showStairsPrompt, setShowStairsPrompt] = useState(false);
+    const [pickFromMapField, setPickFromMapField] = useState(null);
 
+    // Only recomputes when the override id actually changes, not every render
     const navStartOverride = useMemo(() => navStartOverrideRaw, [navStartOverrideRaw?.id]);
 
     const [activeNavSystem, setActiveNavSystem] = useState(null);
-
-    const [activeTrail,           setActiveTrail]           = useState(null);
+    const [activeTrail, setActiveTrail] = useState(null);
     const [currentTrailStopIndex, setCurrentTrailStopIndex] = useState(0);
 
     const {
@@ -70,7 +71,7 @@ function Home() {
         rooms, stairs, gpsLocation, mapRef,
         campusGraph,
         activeNavSystem,
-        onHighlightRoom:     setHighlightedRoomId,
+        onHighlightRoom: setHighlightedRoomId,
         onClearSelectedRoom: () => setSelectedRoom(null),
         onOutdoorFallback: (destFeature, startFeature = null) => {
             const result = buildOutdoorFallback(destFeature, startFeature);
@@ -93,10 +94,11 @@ function Home() {
     const {
         selectedLocation, setSelectedLocation,
         activeBuilding,
-        activeFloorName,  setActiveFloorName,
+        activeFloorName, setActiveFloorName,
         handleSelectLocation,
     } = useLocationSelection({ mapRef, setSearchOpen, setQuery, buildings, buildingLookup });
 
+    // Highlights the tapped room, switches to its floor, and flies the camera in
     const handleRoomSelect = useCallback((feature) => {
         const p = feature.properties;
         setHighlightedRoomId(p.poiId);
@@ -133,6 +135,7 @@ function Home() {
         }
     }, [isNavigating]);
 
+    // Auto-dismiss the stairs floor-change prompt after 4 seconds
     useEffect(() => {
         if (!showStairsPrompt) return;
         const t = setTimeout(() => setShowStairsPrompt(false), 4000);
@@ -196,6 +199,7 @@ function Home() {
         setPickFromMapField(field);
     }, []);
 
+    // Assigns the tapped map point to A or B then re-opens the nav drawer
     const handlePickPoint = useCallback((picked) => {
         const point = picked.type === 'room'
             ? { type: 'room', label: picked.feature.properties.name || picked.feature.properties.roomCode, feature: picked.feature }

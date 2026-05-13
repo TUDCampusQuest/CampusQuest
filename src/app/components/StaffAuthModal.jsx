@@ -1,14 +1,14 @@
 'use client';
 // Staff login modal with email/password fields, focus ring styles, countdown on auth failure, and portal rendering.
 import { useState, useEffect, useRef } from 'react';
-import { createPortal }                 from 'react-dom';
-import { motion, AnimatePresence }      from 'framer-motion';
-import { Box, Typography, Stack }       from '@mui/material';
-import LockIcon          from '@mui/icons-material/Lock';
-import LockOpenIcon      from '@mui/icons-material/LockOpen';
-import VisibilityIcon    from '@mui/icons-material/Visibility';
+import { createPortal } from 'react-dom';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Box, Typography, Stack } from '@mui/material';
+import LockIcon from '@mui/icons-material/Lock';
+import LockOpenIcon from '@mui/icons-material/LockOpen';
+import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import CloseIcon         from '@mui/icons-material/Close';
+import CloseIcon from '@mui/icons-material/Close';
 
 export default function StaffAuthModal({ open, onClose, onSuccess }) {
     const [email,     setEmail]     = useState('');
