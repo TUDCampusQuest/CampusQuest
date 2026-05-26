@@ -1,5 +1,6 @@
 import './globals.css';
 import { ThemeProvider } from './context/ThemeContext';
+import { Analytics } from '@vercel/analytics/next';
 
 export const metadata = {
     title: 'Campus Quest',
@@ -13,6 +14,7 @@ export default function RootLayout({ children }) {
                 <ThemeProvider>
                     {children}
                 </ThemeProvider>
+                <Analytics />
             </body>
         </html>
     );
